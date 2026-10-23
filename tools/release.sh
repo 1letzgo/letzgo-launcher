@@ -17,7 +17,7 @@ export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/opt/openjdk@25/libexec/openjdk.jdk/
 
 apk=app/build/outputs/apk/release/app-release.apk
 aapt2="$(ls -d "$HOME"/Library/Android/sdk/build-tools/*/ | sort -V | tail -1)aapt2"
-badging="$("$aapt2" dump badging "$apk" | head -1)"
+badging="$("$aapt2" dump badging "$apk" | sed -n 1p)"
 code="$(sed -E "s/.*versionCode='([0-9]+)'.*/\1/" <<<"$badging")"
 name="$(sed -E "s/.*versionName='([^']+)'.*/\1/" <<<"$badging")"
 tag="launcher-android-$code"
