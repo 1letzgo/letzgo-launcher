@@ -5,6 +5,19 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+/** Monoton ohne manuelles Hochzählen: Anzahl Commits (-PletzgoVersionCode=… überschreibt). */
+fun gitCommitCount(): Int =
+    runCatching {
+            providers
+                .exec { commandLine("git", "rev-list", "--count", "HEAD") }
+                .standardOutput
+                .asText
+                .get()
+                .trim()
+                .toInt()
+        }
+        .getOrDefault(1)
+
 val aosp = rootProject.file("aosp")
 val launcher = aosp.resolve("Launcher3")
 
@@ -33,8 +46,9 @@ android {
     defaultConfig {
         applicationId = "de.letzgo.launcher"
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode =
+            (project.findProperty("letzgoVersionCode") as String?)?.toIntOrNull() ?: gitCommitCount()
+        versionName = project.property("letzgoVersionName") as String
 
         // Entspricht Launcher3/tools/buildconfig.sh, ohne Suchleiste auf der ersten Seite
         buildConfigField("boolean", "IS_STUDIO_BUILD", "false")
@@ -58,9 +72,16 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("boolean", "UPDATE_CHECK", "false")
+        }
         release {
+            // Prüft beim Start auf neue GitHub-Releases (de.letzgo.launcher.update)
+            buildConfigField("boolean", "UPDATE_CHECK", "true")
             // Wie in AOSP: Proguard aus, bis die Keep-Regeln für den Gradle-Build geprüft sind
             isMinifyEnabled = false
+            // GitHub-Releases (wie abstand) mit dem Debug-Key dieses Macs (~/.android/debug.keystore).
+            // Er darf sich nie ändern, sonst lehnt Android die In-App-Updates ab.
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -118,4 +139,8 @@ dependencies {
     implementation(libs.compose.material.icons.extended)
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
+
+    testImplementation(libs.junit)
+    // org.json aus android.jar ist im Unit-Test nur ein Stub
+    testImplementation(libs.org.json)
 }

@@ -3,6 +3,7 @@ package de.letzgo.launcher
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import com.android.launcher3.LauncherSettings.Favorites.CONTAINER_DESKTOP
 import com.android.launcher3.LauncherSettings.Favorites.CONTAINER_HOTSEAT
 import com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_APPLICATION
@@ -14,11 +15,15 @@ import com.android.launcher3.popup.SystemShortcut
 import com.android.launcher3.popup.SystemShortcut.APP_INFO
 import com.android.launcher3.popup.SystemShortcut.INSTALL
 import com.android.launcher3.popup.SystemShortcut.WIDGETS
+import com.android.launcher3.util.Executors.MAIN_EXECUTOR
+import com.android.launcher3.util.Executors.THREAD_POOL_EXECUTOR
 import com.android.launcher3.util.TouchController
 import de.letzgo.launcher.model.AllAppsOnHomeScreen
 import de.letzgo.launcher.model.HomeScreenRemovals
 import de.letzgo.launcher.popup.RemoveAppShortcut
 import de.letzgo.launcher.ui.DockBackground
+import de.letzgo.launcher.update.AppUpdate
+import de.letzgo.launcher.update.AppUpdateDialog
 import java.util.stream.Stream
 
 /**
@@ -29,11 +34,33 @@ class LetzgoLauncher : Launcher() {
 
     private val syncAllApps = Runnable { AllAppsOnHomeScreen.sync(this) }
     private val appsUpdateListener = AllAppsStore.OnUpdateListener(::scheduleSync)
+    private var updateDialog: AppUpdateDialog? = null
+    private var checkingForUpdate = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Feuert nach dem Laden und bei jeder Paketänderung
         appsView.appsStore.addUpdateListener(appsUpdateListener)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateDialog?.onResume() ?: checkForUpdate()
+    }
+
+    /** Neue Version auf GitHub? [AppUpdate.checkOnLaunch] fragt höchstens alle sechs Stunden. */
+    private fun checkForUpdate() {
+        if (checkingForUpdate) return
+        checkingForUpdate = true
+        THREAD_POOL_EXECUTOR.execute {
+            val release = AppUpdate.checkOnLaunch(this)
+            MAIN_EXECUTOR.execute {
+                checkingForUpdate = false
+                if (release != null && updateDialog == null && !isDestroyed) {
+                    updateDialog = AppUpdateDialog(this, release) { updateDialog = null }.also { it.show() }
+                }
+            }
+        }
     }
 
     override fun onDestroy() {
@@ -46,6 +73,7 @@ class LetzgoLauncher : Launcher() {
         super.setupViews()
         DockBackground(hotseat).attach()
         showPageDots()
+        keepPageDotsAboveDock()
     }
 
     override fun onStateSetStart(state: LauncherState) {
@@ -57,6 +85,24 @@ class LetzgoLauncher : Launcher() {
     private fun showPageDots() {
         workspace.pageIndicator.setShouldAutoHide(false)
         workspace.pageIndicator.setPaintColor(Color.WHITE)
+    }
+
+    /**
+     * Launcher3 setzt die Seitenpunkte direkt auf das Dock ([com.android.launcher3.Workspace]
+     * `setPageIndicatorInset`). Wegen der Dock-Kapsel brauchen sie mehr Luft; der Abstand wird nach
+     * jedem Neusetzen wieder ergänzt.
+     */
+    private fun keepPageDotsAboveDock() {
+        val indicator = workspace.pageIndicator as View
+        val extra = (PAGE_DOTS_EXTRA_SPACING_DP * resources.displayMetrics.density).toInt()
+        indicator.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
+            val lp = v.layoutParams as ViewGroup.MarginLayoutParams
+            val wanted = deviceProfile.hotseatProfile.barSizePx + extra
+            if (lp.bottomMargin != wanted) {
+                lp.bottomMargin = wanted
+                v.post { v.layoutParams = lp }
+            }
+        }
     }
 
     private fun scheduleSync() {
@@ -88,5 +134,6 @@ class LetzgoLauncher : Launcher() {
 
     private companion object {
         const val SYNC_DELAY_MS = 300L
+        const val PAGE_DOTS_EXTRA_SPACING_DP = 10f
     }
 }

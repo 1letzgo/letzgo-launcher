@@ -4,4 +4,19 @@
     <string name="remove_app_title">Remove “%1$s”?</string>
     <string name="remove_from_home">Remove from Home Screen</string>
     <string name="delete_app">Delete App</string>
+
+    <!-- Updates (de.letzgo.launcher.update) -->
+    <string name="update_check">Check for updates</string>
+    <string name="update_version">Version %1$s (%2$d)</string>
+    <string name="update_none">You have the latest version.</string>
+    <string name="update_check_failed">Could not check for updates.</string>
+    <string name="update_title">New version available</string>
+    <string name="update_action">Update</string>
+    <string name="update_install">Install</string>
+    <string name="update_retry">Try again</string>
+    <string name="update_later">Later</string>
+    <string name="update_downloading">Downloading…</string>
+    <string name="update_downloaded">Downloaded. Android will ask whether to install the new version.</string>
+    <string name="update_permission">Allow letzgo to install apps in the Android settings, then come back.</string>
+    <string name="update_failed">The new version could not be downloaded.</string>
 </resources>

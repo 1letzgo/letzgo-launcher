@@ -47,6 +47,8 @@ javax-inject = "javax.inject:javax.inject:1"
 guava = "com.google.guava:guava:33.7.2-android"
 jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
 androidx-graphics-shapes = "androidx.graphics:graphics-shapes:1.1.0"
+junit = "junit:junit:4.13.2"
+org-json = "org.json:json:20260814"
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobuf" }
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
 

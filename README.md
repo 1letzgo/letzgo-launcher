@@ -19,6 +19,21 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 Danach in den Android-Einstellungen „letzgo“ als Standard-Startbildschirm wählen.
 
+## Releases und Updates
+
+Fertige APKs liegen als [GitHub-Releases](https://github.com/1letzgo/letzgo-launcher/releases)
+(Tag `launcher-android-<versionCode>`). Release-Builds prüfen beim Start höchstens alle sechs Stunden
+auf eine neue Version, laden sie in der App (Prüfsumme gegen den GitHub-Digest) und übergeben sie
+dem Paketinstaller; in den Launcher-Einstellungen gibt es zusätzlich „Nach Updates suchen“.
+
+```sh
+tools/release.sh "Was ist neu"
+```
+
+- `versionCode` = Anzahl Commits, `versionName` steht in `gradle.properties` (`letzgoVersionName`).
+- Release-APKs sind mit dem Debug-Key dieses Macs (`~/.android/debug.keystore`) signiert. Der Key
+  darf sich nicht ändern, sonst lehnt Android die Updates ab.
+
 ## Aufbau
 
 | Verzeichnis | Inhalt |

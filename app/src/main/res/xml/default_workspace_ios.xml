@@ -3,7 +3,11 @@
     Standardbelegung: nur das Dock (Telefon, Nachrichten, Browser, Kamera). Alle übrigen Apps
     verteilt AllAppsOnHomeScreen auf die Seiten.
 -->
-<favorites xmlns:launcher="http://schemas.android.com/apk/res-auto/com.android.launcher3">
+<!-- Der Namespace mit Paketnamen ist Absicht: so liest ihn Launcher3 (util/XmlElement.kt). -->
+<favorites
+    xmlns:launcher="http://schemas.android.com/apk/res-auto/com.android.launcher3"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="ResAuto">
 
     <resolve launcher:container="-101" launcher:screen="0" launcher:x="0" launcher:y="0" >
         <favorite launcher:uri="#Intent;action=android.intent.action.DIAL;end" />
