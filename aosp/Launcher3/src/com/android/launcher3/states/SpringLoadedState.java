@@ -18,6 +18,7 @@ package com.android.launcher3.states;
 import static com.android.launcher3.Flags.centerSpringLoadedStateVertically;
 import static com.android.launcher3.logging.StatsLogManager.LAUNCHER_STATE_HOME;
 
+import com.android.launcher3.BuildConfig;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherState;
@@ -52,7 +53,7 @@ public class SpringLoadedState extends LauncherState {
     public ScaleAndTranslation getWorkspaceScaleAndTranslation(Launcher launcher) {
         DeviceProfile grid = launcher.getDeviceProfile();
         Workspace<?> ws = launcher.getWorkspace();
-        if (ws.getChildCount() == 0) {
+        if (ws.getChildCount() == 0 || !BuildConfig.SPRING_LOADED_SHRINK) {
             return super.getWorkspaceScaleAndTranslation(launcher);
         }
 
@@ -117,6 +118,7 @@ public class SpringLoadedState extends LauncherState {
 
     @Override
     protected float getDepthUnchecked(ActivityContext context) {
+        if (!BuildConfig.SPRING_LOADED_SHRINK) return 0f;
         return DEPTH_15_PERCENT;
     }
 
@@ -127,6 +129,7 @@ public class SpringLoadedState extends LauncherState {
 
     @Override
     public float getWorkspaceBackgroundAlpha(Launcher launcher) {
+        if (!BuildConfig.SPRING_LOADED_SHRINK) return 0f;
         return 0.2f;
     }
 }

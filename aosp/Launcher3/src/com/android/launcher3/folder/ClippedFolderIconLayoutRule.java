@@ -1,10 +1,17 @@
 package com.android.launcher3.folder;
 
+import com.android.launcher3.BuildConfig;
 import com.android.launcher3.Flags;
 
 public class ClippedFolderIconLayoutRule {
 
-    public static final int MAX_NUM_ITEMS_IN_PREVIEW = 4;
+    public static final int MAX_NUM_ITEMS_IN_PREVIEW = BuildConfig.FOLDER_PREVIEW_GRID ? 9 : 4;
+
+    // Raster-Vorschau (BuildConfig.FOLDER_PREVIEW_GRID): 3 x 3 kleine Icons wie auf iOS, Anteile
+    // bezogen auf die Vorschaufläche
+    private static final int GRID_COLUMNS = 3;
+    private static final float GRID_PADDING = 0.16f;
+    private static final float GRID_GAP = 0.06f;
     private static final int MIN_NUM_ITEMS_IN_PREVIEW = 2;
 
     public static final float MIN_SCALE = 0.44f;
@@ -60,11 +67,12 @@ public class ClippedFolderIconLayoutRule {
         if (index == EXIT_INDEX) {
             // 0 1 * <-- Exit position (row 0, col 2)
             // 2 3
-            getGridPosition(0, 2, mTmpPoint);
+            getGridPosition(0, BuildConfig.FOLDER_PREVIEW_GRID ? GRID_COLUMNS : 2, mTmpPoint);
         } else if (index == ENTER_INDEX) {
             // 0 1
             // 2 3 * <-- Enter position (row 1, col 2)
-            getGridPosition(1, 2, mTmpPoint);
+            getGridPosition(BuildConfig.FOLDER_PREVIEW_GRID ? GRID_COLUMNS - 1 : 1,
+                    BuildConfig.FOLDER_PREVIEW_GRID ? GRID_COLUMNS : 2, mTmpPoint);
         } else if (index >= MAX_NUM_ITEMS_IN_PREVIEW) {
             // Items beyond those displayed in the preview are animated to the center
             mTmpPoint[0] = mTmpPoint[1] = mAvailableSpace / 2 - (mIconSize * totalScale) / 2;
@@ -123,6 +131,12 @@ public class ClippedFolderIconLayoutRule {
      * 2 3  // 3 is row 1, col 1`
      */
     private void getGridPosition(int row, int col, float[] result) {
+        if (BuildConfig.FOLDER_PREVIEW_GRID) {
+            float cell = getGridCellSize();
+            result[0] = mAvailableSpace * GRID_PADDING + col * (cell + mAvailableSpace * GRID_GAP);
+            result[1] = mAvailableSpace * GRID_PADDING + row * (cell + mAvailableSpace * GRID_GAP);
+            return;
+        }
         // We use position 0 and 3 to calculate the x and y distances between items.
         getPosition(0, 4, result);
         float left = result[0];
@@ -137,6 +151,10 @@ public class ClippedFolderIconLayoutRule {
     }
 
     private void getPosition(int index, int curNumItems, float[] result) {
+        if (BuildConfig.FOLDER_PREVIEW_GRID) {
+            getGridPosition(index / GRID_COLUMNS, index % GRID_COLUMNS, result);
+            return;
+        }
         // The case of two items is homomorphic to the case of one.
         curNumItems = Math.max(curNumItems, 2);
 
@@ -195,6 +213,9 @@ public class ClippedFolderIconLayoutRule {
      * @return scale for icons in Folder
      */
     public float scaleForItem(int numItems, int page) {
+        if (BuildConfig.FOLDER_PREVIEW_GRID) {
+            return getGridCellSize() / mIconSize;
+        }
         float scale;
         if (page > 0) {
             scale = MIN_SCALE;
@@ -214,6 +235,12 @@ public class ClippedFolderIconLayoutRule {
         } else {
             return 0;
         }
+    }
+
+    /** Kantenlänge eines Icons in der Raster-Vorschau. */
+    private float getGridCellSize() {
+        return mAvailableSpace * (1 - 2 * GRID_PADDING - (GRID_COLUMNS - 1) * GRID_GAP)
+                / GRID_COLUMNS;
     }
 
     public float getIconSize() {

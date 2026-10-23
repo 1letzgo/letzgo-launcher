@@ -21,6 +21,7 @@ import static com.android.launcher3.folder.ClippedFolderIconLayoutRule.MAX_NUM_I
 import android.graphics.Point;
 import android.util.Log;
 
+import com.android.launcher3.BuildConfig;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.model.data.FolderInfo;
 import com.android.launcher3.model.data.ItemInfo;
@@ -42,8 +43,8 @@ public class FolderGridOrganizer {
     private int mCountX;
     private int mCountY;
     private boolean mDisplayingUpperLeftQuadrant = false;
-    private static final int PREVIEW_MAX_ROWS = 2;
-    private static final int PREVIEW_MAX_COLUMNS = 2;
+    private static final int PREVIEW_MAX_ROWS = BuildConfig.FOLDER_PREVIEW_GRID ? 3 : 2;
+    private static final int PREVIEW_MAX_COLUMNS = BuildConfig.FOLDER_PREVIEW_GRID ? 3 : 2;
 
     /**
      * Note: must call {@link #setFolderInfo(FolderInfo)} manually for verifier to work.
@@ -106,7 +107,8 @@ public class FolderGridOrganizer {
         int gridCountX = mCountX;
         int gridCountY = mCountY;
 
-        if (count >= mMaxItemsPerPage) {
+        // Raster-Ordner (BuildConfig.FOLDER_PREVIEW_GRID) haben wie auf iOS immer volle Seiten
+        if (count >= mMaxItemsPerPage || BuildConfig.FOLDER_PREVIEW_GRID) {
             gridCountX = mMaxCountX;
             gridCountY = mMaxCountY;
             done = true;

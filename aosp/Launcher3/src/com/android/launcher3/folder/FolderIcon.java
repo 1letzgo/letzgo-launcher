@@ -49,6 +49,7 @@ import androidx.annotation.Nullable;
 import com.android.app.animation.Interpolators;
 import com.android.launcher3.Alarm;
 import com.android.launcher3.BubbleTextView;
+import com.android.launcher3.BuildConfig;
 import com.android.launcher3.CellLayout;
 import com.android.launcher3.CheckLongPressHelper;
 import com.android.launcher3.DeviceProfile;
@@ -650,6 +651,7 @@ public class FolderIcon extends FrameLayout implements FloatingIconViewCompanion
 
             // If we are animating to the accepting state, animate the dot out.
             mDotParams.scale = Math.max(0, mDotScale - mBackground.getAcceptScaleProgress());
+            mDotParams.count = BuildConfig.NUMERIC_BADGES ? mDotInfo.getNotificationCount() : 0;
             mDotRenderer.draw(canvas, mDotParams);
         }
     }

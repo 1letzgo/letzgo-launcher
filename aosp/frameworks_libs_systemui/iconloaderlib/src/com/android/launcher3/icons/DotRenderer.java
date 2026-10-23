@@ -33,6 +33,7 @@ import android.graphics.RadialGradient;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader.TileMode;
+import android.graphics.Typeface;
 import android.util.Log;
 import android.view.ViewDebug;
 
@@ -60,6 +61,15 @@ public class DotRenderer {
     private static final float SHADOW_FACTOR = 1f / 12;
 
     private final Paint mCirclePaint = new Paint(ANTI_ALIAS_FLAG | FILTER_BITMAP_FLAG);
+
+    // Zahlen-Badge (siehe drawCountBadge)
+    private static final float BADGE_SIZE_PERCENTAGE = 0.38f;
+    private static final float BADGE_TEXT_SIZE_FACTOR = 0.64f;
+    private static final int BADGE_COLOR = 0xFFFF3B30;
+    private static final int MAX_BADGE_COUNT = 999;
+    private final Paint mBadgePaint = new Paint(ANTI_ALIAS_FLAG);
+    private final Paint mBadgeTextPaint = new Paint(ANTI_ALIAS_FLAG);
+    private final RectF mBadgeRect = new RectF();
     private final float mCircleRadius;
     private final float mDrawnRadius;
 
@@ -75,6 +85,10 @@ public class DotRenderer {
         mShadowDrawRect = new RectF(-mDrawnRadius, -mDrawnRadius, mDrawnRadius, mDrawnRadius);
 
         int shadowBitmapSize = Math.max(MIN_DOT_SIZE, Math.round(2 * mDrawnRadius));
+        mBadgePaint.setColor(BADGE_COLOR);
+        mBadgeTextPaint.setColor(Color.WHITE);
+        mBadgeTextPaint.setTextAlign(Paint.Align.CENTER);
+        mBadgeTextPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
         mShadowBitmap = getCachedShadowBitmap(shadowBitmapSize);
     }
 
@@ -123,6 +137,10 @@ public class DotRenderer {
             Log.e(TAG, "Invalid null argument(s) passed in call to draw.");
             return;
         }
+        if (params.count > 0) {
+            drawCountBadge(canvas, params);
+            return;
+        }
 
         mCirclePaint.setColor(params.mDotColor);
 
@@ -150,7 +168,40 @@ public class DotRenderer {
         canvas.restore();
     }
 
+    /**
+     * Rotes Badge mit Anzahl an der oberen rechten Ecke des Icons, wie auf iOS. Wird statt des
+     * Punkts gezeichnet, wenn {@link DrawParams#count} gesetzt ist.
+     */
+    private void drawCountBadge(Canvas canvas, DrawParams params) {
+        Rect iconBounds = params.iconBounds;
+        float height = iconBounds.width() * BADGE_SIZE_PERCENTAGE;
+        String text = params.count > MAX_BADGE_COUNT ? MAX_BADGE_COUNT + "+"
+                : Integer.toString(params.count);
+        mBadgeTextPaint.setTextSize(height * BADGE_TEXT_SIZE_FACTOR);
+        float width = Math.max(height, mBadgeTextPaint.measureText(text) + height * 0.6f);
+
+        // Mittelpunkt leicht innerhalb der Ecke, das Badge darf über das Icon hinausragen
+        float centerX = iconBounds.right - height * 0.2f;
+        float centerY = iconBounds.top + height * 0.2f;
+        Rect canvasBounds = canvas.getClipBounds();
+        centerX = Math.min(centerX + width / 2, canvasBounds.right) - width / 2;
+        centerY = Math.max(centerY - height / 2, canvasBounds.top) + height / 2;
+
+        canvas.save();
+        canvas.translate(centerX, centerY);
+        canvas.scale(params.scale, params.scale);
+        mBadgeRect.set(-width / 2, -height / 2, width / 2, height / 2);
+        canvas.drawRoundRect(mBadgeRect, height / 2, height / 2, mBadgePaint);
+        Paint.FontMetrics metrics = mBadgeTextPaint.getFontMetrics();
+        canvas.drawText(text, 0, -(metrics.ascent + metrics.descent) / 2, mBadgeTextPaint);
+        canvas.restore();
+    }
+
     public static class DrawParams {
+        /** Anzahl der Mitteilungen; größer 0 zeichnet ein Zahlen-Badge statt des Punkts. */
+        @ViewDebug.ExportedProperty(category = "notification dot")
+        public int count;
+
         @ViewDebug.ExportedProperty(category = "notification dot", formatToHexString = true)
         private int mDotColor;
         /** The bounds of the icon that the dot is drawn on top of. */
