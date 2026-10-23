@@ -48,7 +48,7 @@ Ziel: Bedienlogik und Optik möglichst nah am iOS-26-Homescreen.
 | Icons | `IconShape`, `ThemeManager`, iconloader | Squircle-Maske (superelliptisch), größere Icons, keine Schatten |
 | Beschriftung | `BubbleTextView` | kleine Schrift, einzeilig, Ellipsis |
 | Suchleiste | QSB (`QSB_ON_FIRST_SCREEN`) | entfernen (`buildConfigField` auf `false`) |
-| Seitenindikator | `PageIndicatorDots` | Punkte über dem Dock; im Ruhezustand „Suchen“-Pille (iOS 26), Wischen über Punkte scrollt Seiten |
+| Seitenindikator | `PageIndicatorDots` | Punkte über dem Dock, immer sichtbar. Die „Suchen“-Pille (iOS 26) kommt mit der Suche in Phase 6 |
 
 ### 2 – Kein App-Drawer: alle Apps auf dem Homescreen
 

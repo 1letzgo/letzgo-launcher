@@ -36,12 +36,14 @@ android {
         versionCode = 1
         versionName = "0.1.0"
 
-        // Entspricht Launcher3/tools/buildconfig.sh
+        // Entspricht Launcher3/tools/buildconfig.sh, ohne Suchleiste auf der ersten Seite
         buildConfigField("boolean", "IS_STUDIO_BUILD", "false")
-        buildConfigField("boolean", "QSB_ON_FIRST_SCREEN", "true")
+        buildConfigField("boolean", "QSB_ON_FIRST_SCREEN", "false")
         buildConfigField("boolean", "IS_DEBUG_DEVICE", "false")
         buildConfigField("boolean", "WIDGETS_ENABLED", "true")
         buildConfigField("boolean", "NOTIFICATION_DOTS_ENABLED", "true")
+        // Eigene Ergänzung: kein App-Drawer (siehe WorkspaceLongPressOptions)
+        buildConfigField("boolean", "ALL_APPS_ENABLED", "false")
     }
 
     buildFeatures {
@@ -52,7 +54,7 @@ android {
     (sourceSets.getByName("main") as com.android.build.api.dsl.AndroidSourceSet).apply {
         java.setSrcDirs(launcherSources)
         kotlin.setSrcDirs(launcherSources)
-        res.setSrcDirs(listOf("src/main/res"))
+        res.setSrcDirs(emptyList<String>())
     }
 
     buildTypes {
@@ -68,6 +70,8 @@ android {
 
 androidComponents.onVariants { variant ->
     variant.sources.res?.addGeneratedSourceDirectory(publicizeResources, PublicizeResources::outputDir)
+    // Eigene Ressourcen nach den Launcher3-Ressourcen registrieren, damit sie Vorrang haben
+    variant.sources.res?.addStaticSourceDirectory("src/main/res")
 }
 
 dependencies {

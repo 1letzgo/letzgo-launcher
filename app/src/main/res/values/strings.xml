@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="remove_app">Remove App</string>
+    <string name="remove_app_title">Remove “%1$s”?</string>
+    <string name="remove_from_home">Remove from Home Screen</string>
+    <string name="delete_app">Delete App</string>
+</resources>

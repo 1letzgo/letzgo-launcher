@@ -14,7 +14,7 @@ subprojects {
     pluginManager.withPlugin("com.android.base") {
         extensions.configure<com.android.build.api.dsl.CommonExtension>("android") {
             compileSdk { version = release(37) { minorApiLevel = 1 } }
-            defaultConfig.minSdk = 31
+            defaultConfig.minSdk = 34
             compileOptions.sourceCompatibility = JavaVersion.VERSION_21
             compileOptions.targetCompatibility = JavaVersion.VERSION_21
         }

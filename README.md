@@ -3,7 +3,9 @@
 Ein schlanker Android Launcher auf Basis von AOSP Launcher3, der sich wie der iOS-Homescreen anfühlt
 (Ziel: möglichst nah an der Logik von iOS 26).
 
-Status: im Aufbau. Launcher3 aus AOSP (ohne Quickstep) baut als eigenständige Gradle-App.
+Status: im Aufbau. Launcher3 aus AOSP (ohne Quickstep) baut als eigenständige Gradle-App;
+Meilenstein M1 des [Umbau-Plans](docs/ios26-umbau.md) ist umgesetzt (iOS-Raster, alle Apps auf dem
+Homescreen, kein App-Drawer).
 
 ## Bauen
 
@@ -15,14 +17,14 @@ Voraussetzungen: JDK 21 oder neuer (getestet mit JDK 25), Android SDK mit Plattf
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Danach in den Android-Einstellungen „letzgo“/Launcher3 als Standard-Startbildschirm wählen.
+Danach in den Android-Einstellungen „letzgo“ als Standard-Startbildschirm wählen.
 
 ## Aufbau
 
 | Verzeichnis | Inhalt |
 |---|---|
 | `aosp/` | AOSP-Snapshot (git subtree vom Branch `aosp/<tag>`), mit wenigen markierten Anpassungen |
-| `app/` | App-Modul: baut Launcher3 aus `aosp/Launcher3` (`src`, `src_no_quickstep`, …), eigenes Manifest, eigener Code unter `de.letzgo.launcher` |
+| `app/` | App-Modul: baut Launcher3 aus `aosp/Launcher3` (`src`, `src_no_quickstep`, …), eigenes Manifest, eigener Code unter `de.letzgo.launcher`, eigene Ressourcen in `app/src/main/res` (überschreiben die von Launcher3) |
 | `flags/` | aconfig-Flags als Java-Klassen, erzeugt von `buildSrc/GenerateAconfigFlags.kt`; Werte in `flags/overrides.properties` |
 | `compat/` | Stubs für Klassen aus `frameworks/base`, die nicht im Snapshot liegen |
 | `systemui/*` | Bibliotheken aus `frameworks/libs/systemui` (iconloader, animation, dynamiccolors, usertype) |
@@ -49,13 +51,18 @@ Boot-Classpath und sind dort hidden API. Launcher3 referenziert sie deshalb übe
 AOSP-Ressourcen verweisen teils auf private Framework-Ressourcen (`@androidprv:`) und auf
 nicht-öffentliche `@android:color/system_*`-Farben, deren IDs auf Geräten nicht stabil sind. Der
 Task `PublicizeResources` (buildSrc) kopiert die Ressourcen von Launcher3 und dynamiccolors nach
-`build/generated/res` und bildet diese Verweise auf öffentliche Farben ab. Eigene Ressourcen der
-App liegen in `app/src/main/res`.
+`build/generated/res` und bildet diese Verweise auf öffentliche Farben ab.
+
+Eigene Ressourcen der App liegen in `app/src/main/res`. Sie werden nach den generierten
+Launcher3-Ressourcen registriert und haben deshalb Vorrang; so lassen sich Launcher3-Ressourcen
+(z. B. `xml/device_profiles.xml`, Dimensionen, Themes) gezielt ersetzen.
 
 ### Änderungen an `aosp/`
 
 - Plattform-Flags auf `de.letzgo.launcher.fwflags.*` umgebogen (7 Dateien)
 - App-Lock-APIs (nicht im öffentlichen SDK) über `de.letzgo.launcher.compat.AppLockCompat`
+- `BuildConfig.ALL_APPS_ENABLED` blendet „Apps list“ im Homescreen-Menü aus
+  (`popup/WorkspaceLongPressOptions.kt`)
 
 ### AOSP aktualisieren
 

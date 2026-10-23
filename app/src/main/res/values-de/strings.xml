@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="remove_app">App entfernen</string>
+    <string name="remove_app_title">„%1$s“ entfernen?</string>
+    <string name="remove_from_home">Vom Home-Bildschirm entfernen</string>
+    <string name="delete_app">App löschen</string>
+</resources>

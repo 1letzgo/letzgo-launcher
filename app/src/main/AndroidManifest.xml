@@ -4,6 +4,7 @@
     Abweichungen von AOSP:
     - kein uses-sdk / android:debuggable (kommt aus Gradle)
     - LOCK_APPS ohne android:featureFlag (aapt2 kennt die Plattform-Flags nicht)
+    - Eigene Application/Activity (de.letzgo.launcher), kein ALL_APPS-Intent (kein App-Drawer)
     - App läuft nicht privilegiert; Rechte wie ROTATE_SURFACE_FLINGER bleiben deklariert,
       werden aber nicht erteilt
 -->
@@ -39,7 +40,7 @@
         android:protectionLevel="signature|privileged" />
 
     <application
-        android:name="com.android.launcher3.LauncherApplication"
+        android:name="de.letzgo.launcher.LetzgoApplication"
         android:backupAgent="com.android.launcher3.LauncherBackupAgent"
         android:fullBackupOnly="true"
         android:backupInForeground="true"
@@ -62,7 +63,7 @@
         attributes and intent filters the same
         -->
         <activity
-            android:name="com.android.launcher3.Launcher"
+            android:name="de.letzgo.launcher.LetzgoLauncher"
             android:launchMode="singleTask"
             android:clearTaskOnLaunch="true"
             android:stateNotNeeded="true"
@@ -77,7 +78,6 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.SHOW_WORK_APPS" />
-                <action android:name="android.intent.action.ALL_APPS" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.MONKEY"/>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Keine Google-Suchleiste unter dem Dock -->
+    <dimen name="qsb_widget_height">0dp</dimen>
+    <dimen name="qsb_shadow_height">0dp</dimen>
+
+    <!-- Dock wie bei iOS etwas über der Gestenleiste -->
+    <dimen name="dynamic_grid_hotseat_bottom_tall_padding">12dp</dimen>
+</resources>
