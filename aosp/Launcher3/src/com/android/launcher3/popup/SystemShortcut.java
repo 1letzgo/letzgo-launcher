@@ -616,7 +616,7 @@ public abstract class SystemShortcut<T extends ActivityContext> extends ItemInfo
 
     public static final Factory<ActivityContext> APP_LOCK =
             (activity, itemInfo, originalView) -> {
-                if (!android.security.Flags.appLockApis()) {
+                if (!de.letzgo.launcher.fwflags.security.Flags.appLockApis()) {
                     return null;
                 }
                 if (itemInfo instanceof ItemInfoWithIcon itemInfoWithIcon) {

@@ -25,7 +25,7 @@ import static com.android.launcher3.icons.IconNormalizer.ICON_VISIBLE_AREA_FACTO
 import static com.android.launcher3.util.SplitConfigurationOptions.STAGE_POSITION_BOTTOM_OR_RIGHT;
 import static com.android.launcher3.util.SplitConfigurationOptions.STAGE_POSITION_TOP_OR_LEFT;
 import static com.android.launcher3.util.SplitConfigurationOptions.STAGE_TYPE_MAIN;
-import static com.android.window.flags.Flags.enableNonDefaultDisplaySplitBugfix;
+import static de.letzgo.launcher.fwflags.window.Flags.enableNonDefaultDisplaySplitBugfix;
 
 import android.app.ActivityManager;
 import android.app.ActivityOptions;

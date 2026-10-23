@@ -59,10 +59,11 @@ sealed class AppLockShortcut<T : ActivityContext>(
             CompletableFuture.supplyAsync(
                 {
                     try {
-                        mTarget
-                            .asContext()
-                            .packageManager
-                            .getEnableAppLockIntentForPackage(packageName, newAppLockEnabled)
+                        de.letzgo.launcher.compat.AppLockCompat.getEnableAppLockIntentForPackage(
+                            mTarget.asContext().packageManager,
+                            packageName,
+                            newAppLockEnabled,
+                        )
                     } catch (e: SecurityException) {
                         Log.e(TAG, "Failed to get App Lock intent for $packageName", e)
                         null
