@@ -1,0 +1,59 @@
+name: Import AOSP sources
+
+# Holt Launcher3 und die zugehörigen SystemUI-Bibliotheken aus AOSP
+# und legt sie als Snapshot auf einem eigenen Branch ab.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "AOSP-Tag (leer = neuester android-*-Release-Tag)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tags auflisten
+        run: |
+          git ls-remote --tags https://android.googlesource.com/platform/packages/apps/Launcher3 \
+            | sed 's#.*refs/tags/##; s#\^{}##' | sort -uV > tags.txt
+          grep -E '^android-1[0-9]\.[0-9]+\.[0-9]+_r[0-9]+$' tags.txt | tail -40
+      - name: Quellen holen
+        run: |
+          TAG="${{ github.event.inputs.tag }}"
+          if [ -z "$TAG" ]; then
+            TAG=$(grep -E '^android-1[0-9]\.[0-9]+\.[0-9]+_r[0-9]+$' tags.txt | sort -V | tail -1)
+          fi
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          mkdir out
+          for spec in \
+            "platform/packages/apps/Launcher3:Launcher3" \
+            "platform/frameworks/libs/systemui:frameworks_libs_systemui" \
+            "platform/frameworks/base:frameworks_base_sysui_plugins"; do
+            repo="${spec%%:*}"; dir="${spec##*:}"
+            if [ "$dir" = "frameworks_base_sysui_plugins" ]; then
+              git clone --depth 1 --filter=blob:none --sparse --branch "$TAG" \
+                "https://android.googlesource.com/$repo" tmp_fb
+              git -C tmp_fb sparse-checkout set packages/SystemUI/plugin packages/SystemUI/plugin_core packages/SystemUI/shared
+              mkdir -p "out/$dir" && cp -r tmp_fb/packages/SystemUI/* "out/$dir/"
+              rm -rf tmp_fb
+            else
+              git clone --depth 1 --branch "$TAG" "https://android.googlesource.com/$repo" "out/$dir"
+              rm -rf "out/$dir/.git"
+            fi
+          done
+          cp tags.txt out/AOSP_TAGS.txt
+          echo "$TAG" > out/AOSP_TAG.txt
+      - name: Auf Branch pushen
+        run: |
+          cd out
+          git init -b "aosp/$TAG"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -qm "AOSP-Snapshot $TAG"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" "aosp/$TAG"
