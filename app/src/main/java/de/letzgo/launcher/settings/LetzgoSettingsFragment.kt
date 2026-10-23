@@ -27,7 +27,7 @@ class LetzgoSettingsFragment : LauncherSettingsFragment() {
             Preference(requireContext()).apply {
                 key = KEY_UPDATE
                 title = getString(R.string.update_check)
-                summary = getString(R.string.update_version, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
+                summary = versionSummary()
                 isPersistent = false
                 setOnPreferenceClickListener {
                     checkForUpdate()
@@ -45,11 +45,14 @@ class LetzgoSettingsFragment : LauncherSettingsFragment() {
     private fun checkForUpdate() {
         if (checking) return
         checking = true
+        val preference = findPreference<Preference>(KEY_UPDATE)
+        preference?.summary = getString(R.string.update_checking)
         THREAD_POOL_EXECUTOR.execute {
             val result = runCatching { AppUpdate.newer() }
             MAIN_EXECUTOR.execute {
                 checking = false
                 val activity = activity ?: return@execute
+                preference?.summary = versionSummary()
                 result
                     .onSuccess { release ->
                         if (release == null) {
@@ -66,6 +69,9 @@ class LetzgoSettingsFragment : LauncherSettingsFragment() {
             }
         }
     }
+
+    private fun versionSummary() =
+        getString(R.string.update_version, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
 
     private companion object {
         const val KEY_UPDATE = "letzgo_update"
