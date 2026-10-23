@@ -87,7 +87,7 @@ object WorkspaceLongPressOptions {
             )
         }
 
-        add(
+        if (BuildConfig.ALL_APPS_ENABLED) add(
             PopupData(
                 R.drawable.ic_apps,
                 R.string.all_apps_button_label,
