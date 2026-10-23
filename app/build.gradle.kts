@@ -58,6 +58,10 @@ android {
         buildConfigField("boolean", "NOTIFICATION_DOTS_ENABLED", "true")
         // Eigene Ergänzung: kein App-Drawer (siehe WorkspaceLongPressOptions)
         buildConfigField("boolean", "ALL_APPS_ENABLED", "false")
+        // Eigene Ergänzungen für iOS-Verhalten (siehe docs/ios26-umbau.md, Änderungen an aosp/)
+        buildConfigField("boolean", "SPRING_LOADED_SHRINK", "false")
+        buildConfigField("boolean", "FOLDER_PREVIEW_GRID", "true")
+        buildConfigField("boolean", "NUMERIC_BADGES", "true")
     }
 
     buildFeatures {

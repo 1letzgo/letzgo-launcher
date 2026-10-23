@@ -4,8 +4,9 @@ Ein schlanker Android Launcher auf Basis von AOSP Launcher3, der sich wie der iO
 (Ziel: möglichst nah an der Logik von iOS 26).
 
 Status: im Aufbau. Launcher3 aus AOSP (ohne Quickstep) baut als eigenständige Gradle-App;
-Meilenstein M1 des [Umbau-Plans](docs/ios26-umbau.md) ist umgesetzt (iOS-Raster, alle Apps auf dem
-Homescreen, kein App-Drawer).
+Meilensteine M1 und M2 des [Umbau-Plans](docs/ios26-umbau.md) sind umgesetzt (iOS-Raster, alle Apps
+auf dem Homescreen, kein App-Drawer, Bearbeitungsmodus mit Wackeln, Ordner mit 3 × 3-Raster,
+Zahlen-Badges).
 
 ## Bauen
 
@@ -78,6 +79,12 @@ Launcher3-Ressourcen registriert und haben deshalb Vorrang; so lassen sich Launc
 - App-Lock-APIs (nicht im öffentlichen SDK) über `de.letzgo.launcher.compat.AppLockCompat`
 - `BuildConfig.ALL_APPS_ENABLED` blendet „Apps list“ im Homescreen-Menü aus
   (`popup/WorkspaceLongPressOptions.kt`)
+- `BuildConfig.SPRING_LOADED_SHRINK`: beim Ziehen bleibt der Homescreen in voller Größe
+  (`states/SpringLoadedState.java`)
+- `BuildConfig.FOLDER_PREVIEW_GRID`: Ordner-Vorschau als 3 × 3-Raster, Ordner immer mit vollen
+  Seiten (`folder/ClippedFolderIconLayoutRule.java`, `folder/FolderGridOrganizer.java`)
+- `BuildConfig.NUMERIC_BADGES`: rote Zahlen-Badges statt Punkten (`BubbleTextView.java`,
+  `folder/FolderIcon.java`; Zeichnen in `iconloaderlib/.../DotRenderer.java`)
 
 ### AOSP aktualisieren
 

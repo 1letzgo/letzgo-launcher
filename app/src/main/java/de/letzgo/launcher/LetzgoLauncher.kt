@@ -1,5 +1,6 @@
 package de.letzgo.launcher
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
@@ -8,18 +9,28 @@ import com.android.launcher3.LauncherSettings.Favorites.CONTAINER_DESKTOP
 import com.android.launcher3.LauncherSettings.Favorites.CONTAINER_HOTSEAT
 import com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_APPLICATION
 import com.android.launcher3.Launcher
+import com.android.launcher3.DropTarget
 import com.android.launcher3.LauncherState
 import com.android.launcher3.allapps.AllAppsStore
+import com.android.launcher3.dragndrop.DragController
+import com.android.launcher3.dragndrop.DragOptions
+import com.android.launcher3.model.data.FolderInfo
 import com.android.launcher3.model.data.ItemInfo
+import com.android.launcher3.popup.Popup
+import com.android.launcher3.popup.PopupController
 import com.android.launcher3.popup.SystemShortcut
 import com.android.launcher3.popup.SystemShortcut.APP_INFO
 import com.android.launcher3.popup.SystemShortcut.INSTALL
 import com.android.launcher3.popup.SystemShortcut.WIDGETS
 import com.android.launcher3.util.Executors.MAIN_EXECUTOR
 import com.android.launcher3.util.Executors.THREAD_POOL_EXECUTOR
+import com.android.launcher3.touch.ItemClickHandler
 import com.android.launcher3.util.TouchController
+import de.letzgo.launcher.edit.JiggleMode
+import de.letzgo.launcher.edit.JiggleTouchController
 import de.letzgo.launcher.model.AllAppsOnHomeScreen
 import de.letzgo.launcher.model.HomeScreenRemovals
+import de.letzgo.launcher.popup.EditHomeShortcut
 import de.letzgo.launcher.popup.RemoveAppShortcut
 import de.letzgo.launcher.ui.DockBackground
 import de.letzgo.launcher.update.AppUpdate
@@ -28,9 +39,12 @@ import java.util.stream.Stream
 
 /**
  * Launcher-Activity mit iOS-Verhalten: kein App-Drawer, alle Apps liegen auf den
- * Homescreen-Seiten.
+ * Homescreen-Seiten, Bearbeitungsmodus mit Wackeln ([JiggleMode]).
  */
 class LetzgoLauncher : Launcher() {
+
+    /** Lazy, weil Launcher3 die Touch-Controller schon während `setupViews()` anlegt. */
+    val jiggleMode by lazy { JiggleMode(this) }
 
     private val syncAllApps = Runnable { AllAppsOnHomeScreen.sync(this) }
     private val appsUpdateListener = AllAppsStore.OnUpdateListener(::scheduleSync)
@@ -74,6 +88,53 @@ class LetzgoLauncher : Launcher() {
         DockBackground(hotseat).attach()
         showPageDots()
         keepPageDotsAboveDock()
+        hideDropTargetBar()
+        // Wer ein Element zieht, landet wie auf iOS im Bearbeitungsmodus
+        dragController.addDragListener(
+            object : DragController.DragListener {
+                override fun onDragStart(dragObject: DropTarget.DragObject, options: DragOptions) =
+                    jiggleMode.enter()
+
+                override fun onDragEnd() {}
+            }
+        )
+    }
+
+    /** Statt „Entfernen“/„Deinstallieren“ beim Ziehen gibt es Minus-Badges ([JiggleMode]). */
+    private fun hideDropTargetBar() {
+        dragController.removeDragListener(dropTargetBar)
+        for (target in dropTargetBar.dropTargets) {
+            dragController.removeDragListener(target)
+            dragController.removeDropTarget(target)
+        }
+    }
+
+    /** Langes Drücken auf eine freie Stelle startet den Bearbeitungsmodus statt des Menüs. */
+    override fun showDefaultOptions(x: Float, y: Float) = jiggleMode.enter()
+
+    /** Im Bearbeitungsmodus starten Apps nicht; Ordner lassen sich weiter öffnen. */
+    override fun getItemOnClickListener() =
+        View.OnClickListener { v ->
+            if (jiggleMode.isActive && v.tag !is FolderInfo) return@OnClickListener
+            ItemClickHandler.INSTANCE.onClick(v)
+        }
+
+    /** Im Bearbeitungsmodus kein Kontextmenü beim Anheben. */
+    override fun getPopupControllerForAppIcons(): PopupController<Launcher> =
+        if (jiggleMode.isActive) NoPopup else super.getPopupControllerForAppIcons()
+
+    override fun getPopupControllerForHomeScreenItems(): PopupController<Launcher> =
+        if (jiggleMode.isActive) NoPopup else super.getPopupControllerForHomeScreenItems()
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // Home-Taste beendet den Bearbeitungsmodus
+        if (Intent.ACTION_MAIN == intent.action) jiggleMode.exit()
+    }
+
+    override fun onStop() {
+        jiggleMode.exit()
+        super.onStop()
     }
 
     override fun onStateSetStart(state: LauncherState) {
@@ -110,8 +171,12 @@ class LetzgoLauncher : Launcher() {
         dragLayer.postDelayed(syncAllApps, SYNC_DELAY_MS)
     }
 
-    /** Ohne [com.android.launcher3.touch.AllAppsSwipeController]: Hochwischen öffnet keinen Drawer. */
-    override fun createTouchControllers(): Array<TouchController> = arrayOf(dragController)
+    /**
+     * Ohne [com.android.launcher3.touch.AllAppsSwipeController]: Hochwischen öffnet keinen Drawer.
+     * Der [DragController] steht vorn, weil er sich den Startpunkt jeder Geste merkt.
+     */
+    override fun createTouchControllers(): Array<TouchController> =
+        arrayOf(dragController, JiggleTouchController(this, jiggleMode))
 
     /** Wie Launcher3, aber „Entfernen“ fragt bei Apps nach Löschen oder Vom-Homescreen-Entfernen. */
     override fun getSupportedShortcuts(itemInfo: ItemInfo): Stream<SystemShortcut.Factory<*>> {
@@ -119,7 +184,7 @@ class LetzgoLauncher : Launcher() {
         if (!inHome || itemInfo.itemType != ITEM_TYPE_APPLICATION) {
             return super.getSupportedShortcuts(itemInfo)
         }
-        return Stream.of(APP_INFO, WIDGETS, INSTALL, RemoveAppShortcut.FACTORY)
+        return Stream.of(APP_INFO, WIDGETS, INSTALL, EditHomeShortcut.FACTORY, RemoveAppShortcut.FACTORY)
     }
 
     override fun removeItem(
@@ -130,6 +195,13 @@ class LetzgoLauncher : Launcher() {
     ): Boolean {
         if (deleteFromDb) HomeScreenRemovals.get(this).onRemovedFromHome(itemInfo)
         return super.removeItem(v, itemInfo, deleteFromDb, reason)
+    }
+
+    /** Popup-Controller, der nichts anzeigt (Bearbeitungsmodus). */
+    private object NoPopup : PopupController<Launcher> {
+        override fun show(view: View): Popup? = null
+
+        override fun dismiss() {}
     }
 
     private companion object {
