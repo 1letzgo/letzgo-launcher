@@ -2,13 +2,12 @@ name: Import AOSP sources
 
 # Holt Launcher3 und die zugehörigen SystemUI-Bibliotheken aus AOSP
 # und legt sie als Snapshot auf einem eigenen Branch ab.
+# Läuft, wenn sich aosp-tag.txt ändert (leer = neuester android-*-Release-Tag).
 on:
   workflow_dispatch:
-    inputs:
-      tag:
-        description: "AOSP-Tag (leer = neuester android-*-Release-Tag)"
-        required: false
-        default: ""
+  push:
+    branches: [main]
+    paths: [aosp-tag.txt, .github/workflows/import-aosp.yml]
 
 permissions:
   contents: write
@@ -17,6 +16,7 @@ jobs:
   import:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Tags auflisten
         run: |
           git ls-remote --tags https://android.googlesource.com/platform/packages/apps/Launcher3 \
@@ -24,7 +24,7 @@ jobs:
           grep -E '^android-1[0-9]\.[0-9]+\.[0-9]+_r[0-9]+$' tags.txt | tail -40
       - name: Quellen holen
         run: |
-          TAG="${{ github.event.inputs.tag }}"
+          TAG="$(tr -d '[:space:]' < aosp-tag.txt 2>/dev/null || true)"
           if [ -z "$TAG" ]; then
             TAG=$(grep -E '^android-1[0-9]\.[0-9]+\.[0-9]+_r[0-9]+$' tags.txt | sort -V | tail -1)
           fi
