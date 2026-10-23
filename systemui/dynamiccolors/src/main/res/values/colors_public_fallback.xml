@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ersatz für customColor*-Einträge, die in AOSP auf private Framework-Farben zeigen. -->
+<resources>
+    <color name="customColorSurfaceEffect0">@android:color/system_surface_container_high_light</color>
+    <color name="customColorSurfaceEffect0Fallback">@android:color/system_surface_container_high_light</color>
+</resources>

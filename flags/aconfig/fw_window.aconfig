@@ -1,0 +1,10 @@
+# Stub-Deklaration: nur die Flags, die Launcher3 referenziert (Original liegt außerhalb des Snapshots).
+package: "de.letzgo.launcher.fwflags.window"
+
+flag {
+    name: "show_home_behind_desktop"
+}
+
+flag {
+    name: "enable_non_default_display_split_bugfix"
+}

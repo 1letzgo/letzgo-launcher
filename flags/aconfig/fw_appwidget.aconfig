@@ -1,0 +1,6 @@
+# Stub-Deklaration: nur die Flags, die Launcher3 referenziert (Original liegt außerhalb des Snapshots).
+package: "de.letzgo.launcher.fwflags.appwidget"
+
+flag {
+    name: "generated_previews"
+}

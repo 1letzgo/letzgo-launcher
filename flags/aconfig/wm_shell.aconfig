@@ -1,0 +1,22 @@
+# Stub-Deklaration: nur die Flags, die Launcher3 referenziert (Original liegt außerhalb des Snapshots).
+package: "com.android.wm.shell"
+
+flag {
+    name: "enable_bubble_bar"
+}
+
+flag {
+    name: "enable_bubble_bar_on_phones"
+}
+
+flag {
+    name: "enable_tiny_taskbar"
+}
+
+flag {
+    name: "enable_gsf"
+}
+
+flag {
+    name: "enable_2x1_split"
+}

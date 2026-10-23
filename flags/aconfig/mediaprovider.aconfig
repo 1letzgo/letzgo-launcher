@@ -1,0 +1,6 @@
+# Stub-Deklaration: nur die Flags, die Launcher3 referenziert (Original liegt außerhalb des Snapshots).
+package: "com.android.providers.media.flags"
+
+flag {
+    name: "enable_trash_and_restore_by_file_path_api"
+}
