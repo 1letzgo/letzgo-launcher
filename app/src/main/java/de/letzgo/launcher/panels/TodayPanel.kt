@@ -1,10 +1,10 @@
 package de.letzgo.launcher.panels
 
 import android.app.Activity
-import android.app.AlertDialog
 import android.appwidget.AppWidgetHost
 import android.appwidget.AppWidgetManager
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.format.DateFormat
@@ -18,61 +18,54 @@ import android.widget.ScrollView
 import android.widget.TextView
 import com.android.launcher3.Launcher
 import com.android.launcher3.R
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import de.letzgo.launcher.ui.M3
+import de.letzgo.launcher.ui.SearchBar
 import java.util.Date
+import com.google.android.material.R as MaterialR
 
 /**
- * Heute-Seite links von der ersten Seite, wie auf iOS: Suchfeld, Datum und eine Spalte mit Widgets.
+ * Heute-Seite links von der ersten Seite (Logik wie iOS, Gestaltung Material 3): Suchleiste,
+ * Datum und eine Spalte mit Widgets in Karten.
  * Hat einen eigenen [AppWidgetHost]; Widgets kommen über die Widget-Auswahl des Systems dazu und
  * lassen sich per langem Drücken entfernen.
  */
 class TodayPanel(launcher: Launcher, onSearch: () -> Unit) : SidePanel(launcher, fromLeft = true) {
 
+    private val m3 = M3.context(launcher)
     private val density = resources.displayMetrics.density
     private val prefs = launcher.getSharedPreferences(PREFS, Activity.MODE_PRIVATE)
     private val widgetManager = AppWidgetManager.getInstance(launcher)
     private val host = AppWidgetHost(launcher, HOST_ID)
     private var pendingWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
 
+    // Datum als Überschrift (M3 „headline medium“)
     private val date =
-        TextView(launcher).apply {
-            setTextColor(0xFFFFFFFF.toInt())
+        TextView(m3).apply {
+            setTextColor(M3.color(m3, MaterialR.attr.colorOnSurface))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f)
-            setTypeface(typeface, android.graphics.Typeface.BOLD)
         }
-    private val widgets = LinearLayout(launcher).apply { orientation = LinearLayout.VERTICAL }
-    private val scroll = ScrollView(launcher).apply { clipToPadding = false }
-    private val content = LinearLayout(launcher)
+    private val widgets = LinearLayout(m3).apply { orientation = LinearLayout.VERTICAL }
+    private val scroll = ScrollView(m3).apply { clipToPadding = false }
+    private val content = LinearLayout(m3)
     private var grid = IconGrid.of(launcher)
 
     // Wie auf iOS steht oben ein Suchfeld; es öffnet die Suche
-    private val searchField =
-        TextView(launcher).apply {
-            setText(R.string.search_hint)
-            setTextColor(0xB3FFFFFF.toInt())
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-            val icon = launcher.getDrawable(R.drawable.ic_letzgo_search)!!.mutate()
-            val size = dp(16)
-            icon.setBounds(0, 0, size, size)
-            icon.alpha = 0xB3
-            setCompoundDrawablesRelative(icon, null, null, null)
-            compoundDrawablePadding = dp(8)
-            setPadding(dp(14), dp(10), dp(14), dp(10))
-            background = glass(12 * density)
+    private val searchBar =
+        SearchBar(m3, R.string.search_hint, editable = false).apply {
             setOnClickListener { onSearch() }
+            field.setOnClickListener { onSearch() }
         }
 
     init {
-        setBackgroundColor(0x40000000)
+        setBackgroundColor(M3.color(m3, MaterialR.attr.colorSurface))
         val edit =
-            TextView(launcher).apply {
+            MaterialButton(m3).apply {
                 setText(R.string.today_add_widget)
-                setTextColor(0xFFFFFFFF.toInt())
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-                gravity = Gravity.CENTER
-                val h = dp(18)
-                val v = dp(8)
-                setPadding(h, v, h, v)
-                background = glass(100 * density)
+                backgroundTintList =
+                    ColorStateList.valueOf(M3.color(m3, MaterialR.attr.colorSecondaryContainer))
+                setTextColor(M3.color(m3, MaterialR.attr.colorOnSecondaryContainer))
                 setOnClickListener { pickWidget() }
             }
         addView(
@@ -80,8 +73,8 @@ class TodayPanel(launcher: Launcher, onSearch: () -> Unit) : SidePanel(launcher,
                 addView(
                     content.apply {
                         orientation = LinearLayout.VERTICAL
-                        addView(searchField, LinearLayout.LayoutParams(MATCH, WRAP))
-                        addView(date, LinearLayout.LayoutParams(WRAP, WRAP).apply { topMargin = dp(20) })
+                        addView(searchBar, LinearLayout.LayoutParams(MATCH, WRAP))
+                        addView(date, LinearLayout.LayoutParams(WRAP, WRAP).apply { topMargin = dp(24) })
                         addView(widgets, LinearLayout.LayoutParams(MATCH, WRAP).apply { topMargin = dp(16) })
                         addView(
                             edit,
@@ -162,7 +155,7 @@ class TodayPanel(launcher: Launcher, onSearch: () -> Unit) : SidePanel(launcher,
                 confirmRemove(id, info.loadLabel(context.packageManager))
                 true
             }
-            val card = RoundedFrame(view).apply { background = glass(22 * density) }
+            val card = RoundedFrame(view).apply { background = card() }
             if (wide) {
                 row = null
                 widgets.addView(card, LinearLayout.LayoutParams(width, height).apply { bottomMargin = gap })
@@ -184,7 +177,7 @@ class TodayPanel(launcher: Launcher, onSearch: () -> Unit) : SidePanel(launcher,
     }
 
     private fun confirmRemove(id: Int, label: CharSequence) {
-        AlertDialog.Builder(context, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+        MaterialAlertDialogBuilder(m3)
             .setTitle(context.getString(R.string.today_remove_widget, label))
             .setPositiveButton(R.string.today_remove) { _, _ ->
                 host.deleteAppWidgetId(id)
@@ -209,10 +202,11 @@ class TodayPanel(launcher: Launcher, onSearch: () -> Unit) : SidePanel(launcher,
     private fun saveIds(ids: List<Int>) =
         prefs.edit().putString(KEY_IDS, ids.distinct().joinToString(",")).apply()
 
-    private fun glass(radius: Float) =
+    /** Karte nach Material 3: Tonfläche, extra große Ecken, beschneidet das Widget. */
+    private fun card() =
         GradientDrawable().apply {
-            cornerRadius = radius
-            setColor(0x33FFFFFF)
+            cornerRadius = M3.SHAPE_EXTRA_LARGE_DP * density
+            setColor(M3.color(m3, MaterialR.attr.colorSurfaceContainer))
         }
 
     private fun dp(value: Int) = (value * density).toInt()

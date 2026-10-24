@@ -13,7 +13,6 @@ import com.android.launcher3.DropTarget
 import com.android.launcher3.LauncherState
 import com.android.launcher3.allapps.AllAppsStore
 import com.android.launcher3.dragndrop.DragController
-import com.android.launcher3.folder.Folder
 import com.android.launcher3.dragndrop.DragOptions
 import com.android.launcher3.model.data.FolderInfo
 import com.android.launcher3.model.data.ItemInfo
@@ -37,7 +36,6 @@ import de.letzgo.launcher.panels.TodayPanel
 import de.letzgo.launcher.popup.EditHomeShortcut
 import de.letzgo.launcher.popup.RemoveAppShortcut
 import de.letzgo.launcher.ui.DockBackground
-import de.letzgo.launcher.ui.FolderBackdrop
 import de.letzgo.launcher.system.SystemPanels
 import de.letzgo.launcher.update.AppUpdate
 import de.letzgo.launcher.update.AppUpdateDialog
@@ -61,7 +59,6 @@ class LetzgoLauncher : Launcher() {
         SearchOverlay(this)
     }
     private lateinit var dock: DockBackground
-    private val folderBackdrop by lazy { FolderBackdrop(this) }
 
     private val syncAllApps = Runnable { HomeScreenApps.sync(this) }
     private val appsUpdateListener = AllAppsStore.OnUpdateListener(::scheduleSync)
@@ -118,12 +115,6 @@ class LetzgoLauncher : Launcher() {
                 override fun onDragEnd() {}
             }
         )
-    }
-
-    /** Ordner werden (wie alle schwebenden Ansichten) in die DragLayer gehängt. */
-    override fun onDragLayerHierarchyChanged() {
-        super.onDragLayerHierarchyChanged()
-        folderBackdrop.setVisible(Folder.getOpen(this) != null)
     }
 
     /** Statt „Entfernen“/„Deinstallieren“ beim Ziehen gibt es Minus-Badges ([JiggleMode]). */

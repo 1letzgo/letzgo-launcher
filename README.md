@@ -1,7 +1,7 @@
 # letzgo-launcher
 
-Ein schlanker Android Launcher auf Basis von AOSP Launcher3, der sich wie der iOS-Homescreen anfühlt
-(Ziel: möglichst nah an der Logik von iOS 26).
+Ein schlanker Android Launcher auf Basis von AOSP Launcher3: **Bedienlogik wie iOS 26, Gestaltung
+immer Material 3** (dynamische Farben, Tonflächen, M3-Komponenten).
 
 Status: im Aufbau. Launcher3 aus AOSP (ohne Quickstep) baut als eigenständige Gradle-App;
 Meilensteine M1 bis M3 des [Umbau-Plans](docs/ios26-umbau.md) sind umgesetzt (iOS-Raster, kein

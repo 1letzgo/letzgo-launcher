@@ -1,30 +1,38 @@
 package de.letzgo.launcher.edit
 
+import android.content.res.ColorStateList
 import android.graphics.Rect
-import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.widget.FrameLayout
-import android.widget.TextView
 import com.android.launcher3.Launcher
 import com.android.launcher3.R
+import com.google.android.material.button.MaterialButton
+import de.letzgo.launcher.ui.M3
+import com.google.android.material.R as MaterialR
 
 /**
- * Leiste oben im Bearbeitungsmodus: links „Bearbeiten“ (Menü mit Widgets, Hintergrund,
- * Einstellungen), rechts „Fertig“.
+ * Leiste oben im Bearbeitungsmodus mit Material-3-Buttons: links „Bearbeiten“ (Tonal, Menü mit
+ * Widgets, Hintergrund, Einstellungen), rechts „Fertig“ (gefüllt).
  */
 class EditBar(
     private val launcher: Launcher,
     onEdit: (View) -> Unit,
     onDone: () -> Unit,
 ) {
+    private val m3 = M3.context(launcher)
     private val density = launcher.resources.displayMetrics.density
-    private val edit = pill(R.string.edit_bar_edit).apply { setOnClickListener(onEdit) }
+    private val edit =
+        MaterialButton(m3).apply {
+            setText(R.string.edit_bar_edit)
+            backgroundTintList =
+                ColorStateList.valueOf(M3.color(m3, MaterialR.attr.colorSecondaryContainer))
+            setTextColor(M3.color(m3, MaterialR.attr.colorOnSecondaryContainer))
+            setOnClickListener(onEdit)
+        }
     private val done =
-        pill(R.string.edit_bar_done).apply {
-            setTypeface(typeface, Typeface.BOLD)
+        MaterialButton(m3).apply {
+            setText(R.string.edit_bar_done)
             setOnClickListener { onDone() }
         }
     private val bar =
@@ -41,7 +49,7 @@ class EditBar(
         }
         // Die DragLayer rückt ihre Kinder selbst unter die Statusleiste
         val side = (16 * density).toInt()
-        bar.setPadding(side, (4 * density).toInt(), side, 0)
+        bar.setPadding(side, 0, side, 0)
         bar.bringToFront()
         bar.visibility = View.VISIBLE
         bar.animate().alpha(1f).setDuration(FADE_MS).withEndAction(null).start()
@@ -60,23 +68,6 @@ class EditBar(
             rect.contains(x.toInt(), y.toInt())
         }
     }
-
-    private fun pill(text: Int) =
-        TextView(launcher).apply {
-            setText(text)
-            setTextColor(0xFFFFFFFF.toInt())
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-            val h = (16 * density).toInt()
-            val v = (6 * density).toInt()
-            setPadding(h, v, h, v)
-            background =
-                GradientDrawable().apply {
-                    cornerRadius = 100 * density
-                    // Dunkles Glas: lesbar auf hellen wie dunklen Hintergrundbildern
-                    setColor(0x59000000)
-                    setStroke(density.toInt().coerceAtLeast(1), 0x40FFFFFF)
-                }
-        }
 
     private companion object {
         const val WRAP = FrameLayout.LayoutParams.WRAP_CONTENT

@@ -1,6 +1,5 @@
 package de.letzgo.launcher.panels
 
-import android.app.AlertDialog
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.drawable.GradientDrawable
@@ -12,7 +11,6 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
-import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -26,35 +24,35 @@ import com.android.launcher3.model.data.AppInfo
 import com.android.launcher3.util.Executors.MAIN_EXECUTOR
 import com.android.launcher3.util.Executors.THREAD_POOL_EXECUTOR
 import com.android.launcher3.util.PackageManagerHelper
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.letzgo.launcher.model.HomeScreenApps
+import de.letzgo.launcher.ui.AppListRow
+import de.letzgo.launcher.ui.M3
+import de.letzgo.launcher.ui.SearchBar
+import com.google.android.material.R as MaterialR
 
 /**
- * App-Mediathek rechts neben der letzten Homescreen-Seite, wie auf iOS: Apps nach Kategorien in
- * Kacheln, Suchfeld oben; Suche oder Tippen auf einen Kachel-Stapel zeigt eine alphabetische Liste.
- * Enthält alle Apps; über das Kontextmenü kommen Apps auf den Homescreen, die dort nicht liegen.
+ * App-Mediathek als Seite rechts neben der letzten Homescreen-Seite (Logik wie iOS, Gestaltung
+ * Material 3): Apps nach Kategorien in Karten, Suchleiste oben; Suche oder Tippen auf einen
+ * Kartenstapel zeigt eine alphabetische Liste. Enthält alle Apps; über das Kontextmenü kommen Apps
+ * auf den Homescreen, die dort nicht liegen.
  */
 class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false) {
 
     private data class Group(val category: AppCategory, val apps: List<AppInfo>)
 
+    private val m3 = M3.context(launcher)
     private val density = resources.displayMetrics.density
     private var groups = emptyList<Group>()
     private var allApps = emptyList<AppInfo>()
     private var listFilter: AppCategory? = null
+    private var grid = IconGrid.of(launcher)
+    private var listMode = false
 
-    private val search =
-        EditText(launcher).apply {
-            setHint(R.string.library_title)
-            setHintTextColor(0xB3FFFFFF.toInt())
-            setTextColor(0xFFFFFFFF.toInt())
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-            setSingleLine()
-            gravity = Gravity.CENTER
-            background = glass(12 * density)
-            val pad = dp(10)
-            setPadding(pad, pad, pad, pad)
-            setOnFocusChangeListener { _, focused -> if (focused) showList(null) }
-            addTextChangedListener(
+    private val searchBar =
+        SearchBar(m3, R.string.library_search_hint, editable = true).apply {
+            field.setOnFocusChangeListener { _, focused -> if (focused) showList(null) }
+            field.addTextChangedListener(
                 object : TextWatcher {
                     override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
 
@@ -63,35 +61,26 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
                     override fun afterTextChanged(s: Editable?) = updateList()
                 }
             )
+            leading.setOnClickListener { if (listMode) showTiles() }
         }
-    private val cancel =
-        TextView(launcher).apply {
-            setText(android.R.string.cancel)
-            setTextColor(0xFFFFFFFF.toInt())
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-            setPadding(dp(12), dp(10), 0, dp(10))
+    private val listTitle =
+        TextView(m3).apply {
+            setTextColor(M3.color(m3, MaterialR.attr.colorOnSurface))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
             visibility = View.GONE
-            setOnClickListener { showTiles() }
         }
-    private val recycler = RecyclerView(launcher).apply { clipToPadding = false }
-    private val content = LinearLayout(launcher)
-    private var grid = IconGrid.of(launcher)
+    private val recycler = RecyclerView(m3).apply { clipToPadding = false }
+    private val content = LinearLayout(m3)
     private val tileAdapter = TileAdapter()
     private val listAdapter = ListAdapter()
 
     init {
-        setBackgroundColor(BACKGROUND)
-        val header =
-            LinearLayout(launcher).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                addView(search, LinearLayout.LayoutParams(0, WRAP, 1f))
-                addView(cancel)
-            }
+        setBackgroundColor(M3.color(m3, MaterialR.attr.colorSurface))
         addView(
             content.apply {
                 orientation = LinearLayout.VERTICAL
-                addView(header)
+                addView(searchBar, LinearLayout.LayoutParams(MATCH, WRAP))
+                addView(listTitle, LinearLayout.LayoutParams(MATCH, WRAP).apply { topMargin = dp(20) })
                 addView(recycler, LinearLayout.LayoutParams(MATCH, 0, 1f).apply { topMargin = dp(16) })
             },
             LayoutParams(MATCH, MATCH),
@@ -100,7 +89,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
     }
 
     override fun onOpening() {
-        // Kacheln fluchten mit den Icon-Spalten: jede Kachel ist zwei Spalten breit
+        // Karten fluchten mit den Icon-Spalten: jede Karte ist zwei Spalten breit
         grid = IconGrid.of(launcher)
         content.setPadding(grid.inset, dp(8), grid.inset, 0)
         val apps = launcher.appsView.appsStore.apps.toList()
@@ -118,8 +107,9 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
                         compareBy<Group> { it.category == AppCategory.OTHER }
                             .thenByDescending { it.apps.size }
                     )
-            val result = listOfNotNull(recent.takeIf { it.isNotEmpty() }?.let { Group(AppCategory.RECENT, it) }) +
-                byCategory
+            val result =
+                listOfNotNull(recent.takeIf { it.isNotEmpty() }?.let { Group(AppCategory.RECENT, it) }) +
+                    byCategory
             MAIN_EXECUTOR.execute {
                 allApps = apps.sortedBy(::sortKey)
                 groups = result
@@ -131,28 +121,39 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
 
     override fun onClosed() = showTiles()
 
+    override fun onBack(): Boolean {
+        if (!listMode) return false
+        showTiles()
+        return true
+    }
+
     override fun onBottomInset(bottom: Int) = recycler.setPadding(0, 0, 0, bottom + dp(16))
 
     private fun showTiles() {
+        listMode = false
         listFilter = null
-        search.text.clear()
-        search.clearFocus()
+        searchBar.field.text.clear()
+        searchBar.field.clearFocus()
+        searchBar.showBack(false)
+        listTitle.visibility = View.GONE
         hideKeyboard()
-        cancel.visibility = View.GONE
         recycler.layoutManager = GridLayoutManager(context, 2)
         recycler.adapter = tileAdapter
     }
 
     private fun showList(filter: AppCategory?) {
+        listMode = true
         listFilter = filter
-        cancel.visibility = View.VISIBLE
+        searchBar.showBack(true)
+        listTitle.visibility = if (filter != null) View.VISIBLE else View.GONE
+        filter?.let { listTitle.setText(it.title) }
         recycler.layoutManager = LinearLayoutManager(context)
         recycler.adapter = listAdapter
         updateList()
     }
 
     private fun updateList() {
-        val query = search.text.toString().trim().lowercase()
+        val query = searchBar.field.text.toString().trim().lowercase()
         val source = listFilter?.let { f -> groups.firstOrNull { it.category == f }?.apps } ?: allApps
         listAdapter.items = source.filter { query.isEmpty() || query in it.title.toString().lowercase() }
         listAdapter.notifyDataSetChanged()
@@ -164,14 +165,14 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
     }
 
     /** Kontextmenü: auf den Homescreen (falls sie dort nicht liegt) und App-Info. */
-    private fun showMenu(view: View, app: AppInfo): Boolean {
+    private fun showMenu(app: AppInfo): Boolean {
         HomeScreenApps.isOnHome(launcher, app) { onHome ->
             val actions =
                 listOfNotNull(
                     if (onHome) null else R.string.library_add_to_home,
                     R.string.library_app_info,
                 )
-            AlertDialog.Builder(context, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+            MaterialAlertDialogBuilder(m3)
                 .setTitle(app.title)
                 .setItems(actions.map(context::getString).toTypedArray()) { _, which ->
                     when (actions[which]) {
@@ -195,7 +196,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
             layoutParams = ViewGroup.LayoutParams(size, size)
             contentDescription = app.title
             setOnClickListener { launch(it, app) }
-            setOnLongClickListener { showMenu(it, app) }
+            setOnLongClickListener { showMenu(app) }
         }
 
     private inner class TileAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -208,24 +209,21 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
             val group = groups[position]
             val tileSize = grid.width(2)
             val cell = (tileSize - dp(TILE_PADDING) * 2 - dp(TILE_GAP)) / 2
+            val side = if (position % 2 == 0) Gravity.START else Gravity.END
             val tile = holder.itemView as LinearLayout
             tile.removeAllViews()
             tile.orientation = LinearLayout.VERTICAL
-            // Linke Kachel an den linken Rand der Spalte, rechte an den rechten
-            val left = position % 2 == 0
-            tile.gravity = if (left) Gravity.START else Gravity.END
+            tile.gravity = side
             tile.setPadding(0, 0, 0, grid.gap)
             tile.layoutParams = RecyclerView.LayoutParams(MATCH, WRAP)
-            val box =
-                QuadrantLayout(context, dp(TILE_PADDING), dp(TILE_GAP)).apply {
-                    background = glass(22 * density)
-                }
+            val card =
+                QuadrantLayout(context, dp(TILE_PADDING), dp(TILE_GAP)).apply { background = card() }
             val big = if (group.apps.size <= 4) group.apps else group.apps.take(3)
-            big.forEach { box.addView(appIcon(it, cell)) }
+            big.forEach { card.addView(appIcon(it, cell)) }
             if (group.apps.size > 4) {
                 // Stapel der übrigen Apps: kleine Icons, Tippen öffnet die ganze Kategorie
                 val small = (cell - dp(TILE_GAP)) / 2
-                box.addView(
+                card.addView(
                     QuadrantLayout(context, 0, dp(TILE_GAP)).apply {
                         layoutParams = ViewGroup.LayoutParams(cell, cell)
                         group.apps.drop(3).take(4).forEach { app ->
@@ -240,14 +238,18 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
                     }
                 )
             }
-            tile.addView(box, LinearLayout.LayoutParams(tileSize, tileSize).apply {
-                gravity = if (left) Gravity.START else Gravity.END
-            })
+            tile.addView(card, LinearLayout.LayoutParams(tileSize, tileSize).apply { gravity = side })
             tile.addView(
-                label(context.getString(group.category.title)),
+                TextView(m3).apply {
+                    setText(group.category.title)
+                    gravity = Gravity.CENTER
+                    setTextColor(M3.color(m3, MaterialR.attr.colorOnSurfaceVariant))
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                    setSingleLine()
+                },
                 LinearLayout.LayoutParams(tileSize, WRAP).apply {
-                    topMargin = dp(6)
-                    gravity = if (left) Gravity.START else Gravity.END
+                    topMargin = dp(8)
+                    gravity = side
                 },
             )
         }
@@ -259,47 +261,23 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
         override fun getItemCount() = items.size
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
-            object : RecyclerView.ViewHolder(LinearLayout(parent.context)) {}
+            object : RecyclerView.ViewHolder(AppListRow(m3)) {}
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             val app = items[position]
-            val row = holder.itemView as LinearLayout
-            row.removeAllViews()
-            row.orientation = LinearLayout.HORIZONTAL
-            row.gravity = Gravity.CENTER_VERTICAL
-            row.setPadding(0, dp(6), 0, dp(6))
-            row.layoutParams = RecyclerView.LayoutParams(MATCH, WRAP)
-            row.addView(
-                ImageView(context).apply { setImageDrawable(app.newIcon(context, FLAG_THEMED)) },
-                LinearLayout.LayoutParams(dp(40), dp(40)),
-            )
-            row.addView(
-                TextView(context).apply {
-                    text = app.title
-                    setTextColor(0xFFFFFFFF.toInt())
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
-                    setPadding(dp(14), 0, 0, 0)
-                },
-                LinearLayout.LayoutParams(0, WRAP, 1f),
-            )
-            row.setOnClickListener { launch(it, app) }
-            row.setOnLongClickListener { showMenu(it, app) }
+            (holder.itemView as AppListRow).apply {
+                bind(app.newIcon(context, FLAG_THEMED), app.title)
+                setOnClickListener { launch(it, app) }
+                setOnLongClickListener { showMenu(app) }
+            }
         }
     }
 
-    private fun label(text: String) =
-        TextView(context).apply {
-            this.text = text
-            gravity = Gravity.CENTER
-            setTextColor(0xFFFFFFFF.toInt())
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-            setSingleLine()
-        }
-
-    private fun glass(radius: Float) =
+    /** Karte nach Material 3: Tonfläche, extra große Ecken. */
+    private fun card() =
         GradientDrawable().apply {
-            cornerRadius = radius
-            setColor(0x33FFFFFF)
+            cornerRadius = M3.SHAPE_EXTRA_LARGE_DP * density
+            setColor(M3.color(m3, MaterialR.attr.colorSurfaceContainer))
         }
 
     private fun dp(value: Int) = (value * density).toInt()
@@ -345,9 +323,8 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
     private companion object {
         const val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
         const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
-        const val BACKGROUND = 0x40000000
         const val RECENT_COUNT = 8
-        const val TILE_PADDING = 12
+        const val TILE_PADDING = 14
         const val TILE_GAP = 10
     }
 }

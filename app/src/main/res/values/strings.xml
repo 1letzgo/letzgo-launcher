@@ -15,7 +15,7 @@
     <string name="remove_folder_message">The apps will stay in the App Library.</string>
 
     <!-- App-Mediathek, Suche, Heute-Ansicht (de.letzgo.launcher.panels) -->
-    <string name="library_title">App Library</string>
+    <string name="library_search_hint">Search App Library</string>
     <string name="library_recent">Recently Added</string>
     <string name="library_utilities">Utilities</string>
     <string name="library_productivity">Productivity &amp; Finance</string>

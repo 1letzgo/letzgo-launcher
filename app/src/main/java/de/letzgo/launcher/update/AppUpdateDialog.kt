@@ -1,16 +1,18 @@
 package de.letzgo.launcher.update
 
 import android.app.Activity
-import android.app.AlertDialog
 import android.content.DialogInterface
 import android.graphics.Typeface
 import android.view.View
 import android.widget.LinearLayout
-import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import com.android.launcher3.R
 import com.android.launcher3.util.Executors.MAIN_EXECUTOR
 import com.android.launcher3.util.Executors.THREAD_POOL_EXECUTOR
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.progressindicator.LinearProgressIndicator
+import de.letzgo.launcher.ui.M3
 import java.io.File
 
 /**
@@ -24,10 +26,11 @@ class AppUpdateDialog(
     private val onDismiss: () -> Unit = {},
 ) {
 
+    private val m3 = M3.context(activity)
     private val density = activity.resources.displayMetrics.density
-    private val status = TextView(activity).apply { visibility = View.GONE }
+    private val status = TextView(m3).apply { visibility = View.GONE }
     private val progressBar =
-        ProgressBar(activity, null, android.R.attr.progressBarStyleHorizontal).apply {
+        LinearProgressIndicator(m3).apply {
             max = PROGRESS_MAX
             visibility = View.GONE
         }
@@ -40,15 +43,15 @@ class AppUpdateDialog(
     fun show() {
         val padding = (24 * density).toInt()
         val content =
-            LinearLayout(activity).apply {
+            LinearLayout(m3).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(padding, padding / 2, padding, 0)
-                addView(TextView(activity).apply {
+                addView(TextView(m3).apply {
                     text = release.name
                     setTypeface(typeface, Typeface.BOLD)
                 })
                 if (release.notes.isNotEmpty()) {
-                    addView(TextView(activity).apply {
+                    addView(TextView(m3).apply {
                         text = release.notes
                         setPadding(0, padding / 3, 0, 0)
                     })
@@ -57,7 +60,7 @@ class AppUpdateDialog(
                 addView(progressBar)
             }
         dialog =
-            AlertDialog.Builder(activity, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+            MaterialAlertDialogBuilder(m3)
                 .setTitle(R.string.update_title)
                 .setView(content)
                 .setPositiveButton(R.string.update_action, null)

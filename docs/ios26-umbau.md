@@ -1,7 +1,9 @@
 # Plan: Umbau zu einem iOS-26-artigen Launcher
 
 Basis: AOSP Launcher3 (android-17.0.0_r1, ohne Quickstep), gebaut über Gradle (`app/`).
-Ziel: Bedienlogik und Optik möglichst nah am iOS-26-Homescreen.
+Ziel: **Bedienlogik wie iOS 26, Gestaltung immer Material 3** (Material You: dynamische Farben,
+Tonflächen, M3-Komponenten und -Formen). Keine nachgebauten iOS-Optiken wie Glas, Milchglas,
+iOS-Badges oder erzwungene Squircle-Icons.
 
 ## Leitlinien
 
@@ -124,7 +126,10 @@ Ziel: Bedienlogik und Optik möglichst nah am iOS-26-Homescreen.
 - Widget-Stapel (Smart Stack): eigener View mit mehreren `AppWidgetHostView`, vertikal wischbar.
 - Widget-Galerie: vorhandenen Compose-Widget-Picker (`modules/widgetpicker`) umgestalten.
 
-### 10 – Liquid Glass und Bewegung
+### 10 – Material-3-Feinschliff und Bewegung
+
+> Gilt nicht mehr: „Liquid Glass“ unten war als iOS-Optik geplant und entfällt. Stattdessen
+> Material 3 Expressive (Formen, Bewegung, Typografie).
 
 - Glas-Material als wiederverwendbare Komponente (Blur + Lichtkante per `RuntimeShader`) für
   Dock, Ordner, Menüs, Suchpille, Mediathek-Kacheln.

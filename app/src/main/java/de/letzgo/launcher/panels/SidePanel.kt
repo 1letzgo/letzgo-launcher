@@ -13,6 +13,7 @@ import androidx.core.animation.doOnEnd
 import com.android.app.animation.Interpolators
 import com.android.launcher3.Insettable
 import com.android.launcher3.Launcher
+import de.letzgo.launcher.ui.M3
 import kotlin.math.abs
 
 /**
@@ -24,7 +25,7 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
     FrameLayout(launcher), Insettable {
 
     private val touchSlop = ViewConfiguration.get(launcher).scaledTouchSlop
-    private val backCallback = OnBackInvokedCallback { close(animate = true) }
+    private val backCallback = OnBackInvokedCallback { if (!onBack()) close(animate = true) }
     private var animator: ValueAnimator? = null
     private var velocityTracker: VelocityTracker? = null
     private var downX = 0f
@@ -58,6 +59,9 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
     }
 
     protected open fun onBottomInset(bottom: Int) {}
+
+    /** Zurück-Taste innerhalb der Seite, z. B. aus einer Unteransicht; true = erledigt. */
+    protected open fun onBack(): Boolean = false
 
     /** Wird beim ersten Hereinziehen aufgerufen, z. B. um Inhalte zu aktualisieren. */
     protected open fun onOpening() {}
@@ -127,8 +131,8 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
     }
 
     /**
-     * Wie beim Blättern: Seite und Homescreen bewegen sich gemeinsam, das Dock gleitet nach unten
-     * weg (iOS zeigt es auf Heute- und Mediathek-Seite nicht), das Hintergrundbild wird unscharf.
+     * Wie beim Blättern: Seite und Homescreen bewegen sich gemeinsam; Dock und Seitenpunkte gehören
+     * nur zu den App-Seiten und blenden aus.
      */
     private fun applyProgress() {
         val w = width.toFloat()
@@ -137,8 +141,8 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
         val hotseat = launcher.hotseat
         hotseat.alpha = 1 - progress
         hotseat.translationY = hotseat.height * DOCK_SLIDE * progress
-        // Fensterhintergrund = Hintergrundbild; ohne Systemunterstützung bleibt es beim Abdunkeln
-        launcher.window?.setBackgroundBlurRadius((BLUR_RADIUS * progress).toInt())
+        (launcher.workspace.pageIndicator as View).alpha = 1 - progress
+        M3.setSystemBarsForSurface(launcher, onSurface = progress > 0.5f)
     }
 
     // Schließen per Wischen zurück zur Kante, wie sie hereinkam
@@ -188,7 +192,6 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
         const val MATCH = LayoutParams.MATCH_PARENT
         const val SETTLE_MS = 380f
         const val FLING_VELOCITY_DP = 500f
-        const val BLUR_RADIUS = 80f
         const val DOCK_SLIDE = 0.6f
     }
 }

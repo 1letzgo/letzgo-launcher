@@ -1,18 +1,25 @@
 package de.letzgo.launcher.edit
 
+import android.content.Context
 import android.graphics.Canvas
 import android.graphics.ColorFilter
 import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.drawable.Drawable
+import de.letzgo.launcher.ui.M3
+import com.google.android.material.R as MaterialR
 
-/** Graues Minus-Badge an der oberen linken Ecke im Bearbeitungsmodus, wie auf iOS. */
-class MinusBadge(private val diameter: Float) : Drawable() {
+/** Knopf zum Entfernen an der oberen linken Ecke im Bearbeitungsmodus, in Material-3-Farben. */
+class MinusBadge(context: Context, private val diameter: Float) : Drawable() {
 
-    private val circle = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = CIRCLE_COLOR }
+    private val m3 = M3.context(context)
+    private val circle =
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = M3.color(m3, MaterialR.attr.colorSurfaceContainerHighest)
+        }
     private val minus =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = MINUS_COLOR
+            color = M3.color(m3, MaterialR.attr.colorOnSurface)
             strokeWidth = diameter * 0.12f
             strokeCap = Paint.Cap.ROUND
         }
@@ -32,7 +39,7 @@ class MinusBadge(private val diameter: Float) : Drawable() {
     }
 
     override fun setAlpha(alpha: Int) {
-        circle.alpha = alpha * CIRCLE_ALPHA / 255
+        circle.alpha = alpha
         minus.alpha = alpha
         invalidateSelf()
     }
@@ -44,10 +51,4 @@ class MinusBadge(private val diameter: Float) : Drawable() {
 
     @Deprecated("Deprecated in Java")
     override fun getOpacity() = PixelFormat.TRANSLUCENT
-
-    private companion object {
-        const val CIRCLE_ALPHA = 0xE6
-        const val CIRCLE_COLOR = (CIRCLE_ALPHA shl 24) or 0xE5E5EA
-        const val MINUS_COLOR = 0xFF1C1C1E.toInt()
-    }
 }

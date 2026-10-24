@@ -110,7 +110,7 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
     private fun updateBadge(view: View) {
         val badge =
             badges.getOrPut(view) {
-                MinusBadge(BADGE_DIAMETER_DP * density).also { view.overlay.add(it) }
+                MinusBadge(launcher, BADGE_DIAMETER_DP * density).also { view.overlay.add(it) }
             }
         when (view) {
             is BubbleTextView -> view.getIconBounds(tmpRect)

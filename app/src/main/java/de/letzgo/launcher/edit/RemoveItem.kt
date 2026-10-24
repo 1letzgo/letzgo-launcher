@@ -1,6 +1,5 @@
 package de.letzgo.launcher.edit
 
-import android.app.AlertDialog
 import android.view.View
 import com.android.launcher3.AbstractFloatingView
 import com.android.launcher3.AbstractFloatingView.TYPE_FOLDER
@@ -10,6 +9,8 @@ import com.android.launcher3.SecondaryDropTarget
 import com.android.launcher3.model.data.CollectionInfo
 import com.android.launcher3.model.data.ItemInfo
 import com.android.launcher3.views.ActivityContext
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import de.letzgo.launcher.ui.M3
 
 /** Entfernen von Homescreen-Elementen wie auf iOS, aus Kontextmenü und Minus-Badge. */
 object RemoveItem {
@@ -61,6 +62,5 @@ object RemoveItem {
         handler.onDeleteComplete(item, view)
     }
 
-    private fun dialog(context: android.content.Context) =
-        AlertDialog.Builder(context, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+    private fun dialog(context: android.content.Context) = MaterialAlertDialogBuilder(M3.context(context))
 }

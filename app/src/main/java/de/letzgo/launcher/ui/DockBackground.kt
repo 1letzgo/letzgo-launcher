@@ -11,20 +11,19 @@ import android.graphics.drawable.Drawable
 import android.view.View
 import com.android.launcher3.BubbleTextView
 import com.android.launcher3.Hotseat
+import com.google.android.material.R as MaterialR
 
 /**
- * Glas-Kapsel hinter den Dock-Icons. Liegt als Hintergrund auf dem [Hotseat], reicht fast bis an
- * die Bildschirmränder und umschließt die Icons vertikal mit etwas Abstand. Echter Weichzeichner folgt mit dem Liquid-Glass-Material (M4).
+ * Material-3-Fläche hinter den Dock-Icons (Tonfläche „surface container“, große Ecken). Liegt als
+ * Hintergrund auf dem [Hotseat], reicht fast bis an die Bildschirmränder und umschließt die Icons
+ * vertikal mit etwas Abstand.
  */
 class DockBackground(private val hotseat: Hotseat) : Drawable(), View.OnLayoutChangeListener {
 
     private val density = Resources.getSystem().displayMetrics.density
-    private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = FILL_COLOR }
-    private val stroke =
+    private val fill =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            strokeWidth = density
-            color = STROKE_COLOR
+            color = M3.color(M3.context(hotseat.context), MaterialR.attr.colorSurfaceContainer)
         }
     private val capsule = RectF()
 
@@ -64,20 +63,17 @@ class DockBackground(private val hotseat: Hotseat) : Drawable(), View.OnLayoutCh
 
     override fun draw(canvas: Canvas) {
         if (capsule.isEmpty) return
-        val radius = capsule.height() / 2.6f
+        val radius = M3.SHAPE_EXTRA_LARGE_DP * density
         canvas.drawRoundRect(capsule, radius, radius, fill)
-        canvas.drawRoundRect(capsule, radius, radius, stroke)
     }
 
     override fun setAlpha(alpha: Int) {
-        fill.alpha = alpha * FILL_ALPHA / 255
-        stroke.alpha = alpha * STROKE_ALPHA / 255
+        fill.alpha = alpha
         invalidateSelf()
     }
 
     override fun setColorFilter(colorFilter: ColorFilter?) {
         fill.colorFilter = colorFilter
-        stroke.colorFilter = colorFilter
     }
 
     @Deprecated("Deprecated in Java")
@@ -86,9 +82,5 @@ class DockBackground(private val hotseat: Hotseat) : Drawable(), View.OnLayoutCh
     private companion object {
         const val MARGIN_DP = 12f
         const val PADDING_DP = 10f
-        const val FILL_ALPHA = 0x40
-        const val STROKE_ALPHA = 0x4D
-        const val FILL_COLOR = (FILL_ALPHA shl 24) or 0xFFFFFF
-        const val STROKE_COLOR = (STROKE_ALPHA shl 24) or 0xFFFFFF
     }
 }
