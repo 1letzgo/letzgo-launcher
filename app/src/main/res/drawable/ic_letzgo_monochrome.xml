@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Monochromes App-Icon (Themen-Icons): 2 x 2 App-Kacheln im sicheren Bereich (Mitte 66 x 66) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M39,33h10a6,6 0,0 1,6 6v10a6,6 0,0 1,-6 6h-10a6,6 0,0 1,-6 -6v-10a6,6 0,0 1,6 -6z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M59,33h10a6,6 0,0 1,6 6v10a6,6 0,0 1,-6 6h-10a6,6 0,0 1,-6 -6v-10a6,6 0,0 1,6 -6z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M39,53h10a6,6 0,0 1,6 6v10a6,6 0,0 1,-6 6h-10a6,6 0,0 1,-6 -6v-10a6,6 0,0 1,6 -6z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M59,53h10a6,6 0,0 1,6 6v10a6,6 0,0 1,-6 6h-10a6,6 0,0 1,-6 -6v-10a6,6 0,0 1,6 -6z" />
+</vector>

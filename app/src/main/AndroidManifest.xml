@@ -49,7 +49,7 @@
         android:backupInForeground="true"
         android:fullBackupContent="@xml/backupscheme"
         android:hardwareAccelerated="true"
-        android:icon="@drawable/ic_launcher_home"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/derived_app_name"
         android:theme="@style/AppTheme"
         android:largeHeap="@bool/config_largeHeap"
@@ -201,6 +201,23 @@
             android:writePermission="android.permission.WRITE_SECURE_SETTINGS"
             android:exported="true"
             android:enabled="false" />
+
+        <!--
+        Eintrag in der App-Liste anderer Launcher: öffnet die letzgo-Einstellungen (dort lässt
+        sich letzgo als Standard-Startbildschirm festlegen). Auf dem eigenen Homescreen per
+        filtered_components ausgeblendet.
+        -->
+        <activity-alias
+            android:name="de.letzgo.launcher.LauncherEntry"
+            android:targetActivity="com.android.launcher3.settings.SettingsActivity"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/derived_app_name"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
         <!--
         Launcher activity for secondary display

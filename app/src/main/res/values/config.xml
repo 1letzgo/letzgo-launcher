@@ -2,4 +2,9 @@
 <resources>
     <string name="derived_app_name" translatable="false">letzgo</string>
     <string name="settings_fragment_name" translatable="false">de.letzgo.launcher.settings.LetzgoSettingsFragment</string>
+
+    <!-- Der Eintrag für andere Launcher (LauncherEntry) gehört nicht auf den eigenen Homescreen -->
+    <string-array name="filtered_components" translatable="false">
+        <item>de.letzgo.launcher/de.letzgo.launcher.LauncherEntry</item>
+    </string-array>
 </resources>
