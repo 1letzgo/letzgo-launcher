@@ -140,7 +140,7 @@ Ziel: Bedienlogik und Optik möglichst nah am iOS-26-Homescreen.
 |---|---|---|
 | M1 – benutzbar ✅ | 0, 1, 2 | iOS-Raster, alle Apps auf dem Homescreen, kein Drawer |
 | M2 – iOS-Bedienung ✅ | 3, 4, 7 | Jiggle-Modus, iOS-Ordner, Zahlen-Badges (offen: Ordner-Optik beim Öffnen, Seitenübersicht) |
-| M3 – iOS-Seiten ✅ | 5, 6, 8 | Mediathek, Suche, Heute-Ansicht (als Seitenpanels über dem Homescreen, `de.letzgo.launcher.panels`) |
+| M3 – iOS-Seiten ✅ | 5, 6, 8 | Mediathek und Heute-Seite als eigene Seiten links/rechts der App-Seiten (`de.letzgo.launcher.panels`), Suche über das Suchfeld der Heute-Seite; Wischen nach unten öffnet links Mitteilungen, rechts Schnelleinstellungen |
 | M4 – Feinschliff | 9, 10 | Widget-Stapel, Liquid Glass, Animationen |
 
 ## Offene Entscheidungen

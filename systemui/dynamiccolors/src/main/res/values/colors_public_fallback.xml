@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Ersatz für customColor*-Einträge, die in AOSP auf private Framework-Farben zeigen. -->
+<!--
+    Ersatz für customColor*-Einträge, die in AOSP auf private Framework-Farben zeigen. Launcher3
+    nutzt sie nur als Hintergrund geöffneter Ordner; dort wie auf iOS transparentes Glas.
+-->
 <resources>
-    <color name="customColorSurfaceEffect0">@android:color/system_surface_container_high_light</color>
-    <color name="customColorSurfaceEffect0Fallback">@android:color/system_surface_container_high_light</color>
+    <color name="customColorSurfaceEffect0">#4DFFFFFF</color>
+    <color name="customColorSurfaceEffect0Fallback">#4DFFFFFF</color>
 </resources>

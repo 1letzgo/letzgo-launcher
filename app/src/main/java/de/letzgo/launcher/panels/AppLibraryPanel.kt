@@ -74,6 +74,8 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
             setOnClickListener { showTiles() }
         }
     private val recycler = RecyclerView(launcher).apply { clipToPadding = false }
+    private val content = LinearLayout(launcher)
+    private var grid = IconGrid.of(launcher)
     private val tileAdapter = TileAdapter()
     private val listAdapter = ListAdapter()
 
@@ -87,9 +89,8 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
                 addView(cancel)
             }
         addView(
-            LinearLayout(launcher).apply {
+            content.apply {
                 orientation = LinearLayout.VERTICAL
-                setPadding(dp(20), dp(8), dp(20), 0)
                 addView(header)
                 addView(recycler, LinearLayout.LayoutParams(MATCH, 0, 1f).apply { topMargin = dp(16) })
             },
@@ -99,6 +100,9 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
     }
 
     override fun onOpening() {
+        // Kacheln fluchten mit den Icon-Spalten: jede Kachel ist zwei Spalten breit
+        grid = IconGrid.of(launcher)
+        content.setPadding(grid.inset, dp(8), grid.inset, 0)
         val apps = launcher.appsView.appsStore.apps.toList()
         val pm = context.packageManager
         THREAD_POOL_EXECUTOR.execute {
@@ -202,13 +206,16 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             val group = groups[position]
-            // Breite aus dem Bildschirm, weil der RecyclerView beim ersten Binden noch nicht gemessen ist
-            val tileSize = (resources.displayMetrics.widthPixels - dp(40) - dp(16)) / 2
+            val tileSize = grid.width(2)
             val cell = (tileSize - dp(TILE_PADDING) * 2 - dp(TILE_GAP)) / 2
             val tile = holder.itemView as LinearLayout
             tile.removeAllViews()
             tile.orientation = LinearLayout.VERTICAL
-            tile.setPadding(dp(4), 0, dp(4), dp(16))
+            // Linke Kachel an den linken Rand der Spalte, rechte an den rechten
+            val left = position % 2 == 0
+            tile.gravity = if (left) Gravity.START else Gravity.END
+            tile.setPadding(0, 0, 0, grid.gap)
+            tile.layoutParams = RecyclerView.LayoutParams(MATCH, WRAP)
             val box =
                 QuadrantLayout(context, dp(TILE_PADDING), dp(TILE_GAP)).apply {
                     background = glass(22 * density)
@@ -233,10 +240,15 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
                     }
                 )
             }
-            tile.addView(box, LinearLayout.LayoutParams(tileSize, tileSize))
+            tile.addView(box, LinearLayout.LayoutParams(tileSize, tileSize).apply {
+                gravity = if (left) Gravity.START else Gravity.END
+            })
             tile.addView(
                 label(context.getString(group.category.title)),
-                LinearLayout.LayoutParams(tileSize, WRAP).apply { topMargin = dp(6) },
+                LinearLayout.LayoutParams(tileSize, WRAP).apply {
+                    topMargin = dp(6)
+                    gravity = if (left) Gravity.START else Gravity.END
+                },
             )
         }
     }

@@ -13,14 +13,14 @@ import kotlin.math.abs
  * Wischgesten auf dem Homescreen:
  * - über die erste Seite hinaus nach rechts: [left] (Heute-Ansicht)
  * - über die letzte Seite hinaus nach links: [right] (App-Mediathek)
- * - nach unten: [onSwipeDown] (Suche)
+ * - nach unten: [onSwipeDown] mit der x-Position des Fingers (Mitteilungen bzw. Schnelleinstellungen)
  */
 class PanelSwipeController(
     private val launcher: Launcher,
     private val left: () -> SidePanel?,
     private val right: () -> SidePanel?,
     private val isBlocked: () -> Boolean,
-    private val onSwipeDown: () -> Unit,
+    private val onSwipeDown: (x: Float) -> Unit,
 ) : TouchController {
 
     private val touchSlop = ViewConfiguration.get(launcher).scaledTouchSlop * 0.8f
@@ -60,7 +60,7 @@ class PanelSwipeController(
                 }
                 if (dy > touchSlop * 2 && dy > abs(dx) * 1.5f && !swipeDownHandled) {
                     swipeDownHandled = true
-                    onSwipeDown()
+                    onSwipeDown(downX)
                     return true
                 }
             }

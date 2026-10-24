@@ -77,6 +77,9 @@ Launcher3-Ressourcen registriert und haben deshalb Vorrang; so lassen sich Launc
 
 - Plattform-Flags auf `de.letzgo.launcher.fwflags.*` umgebogen (7 Dateien)
 - App-Lock-APIs (nicht im öffentlichen SDK) über `de.letzgo.launcher.compat.AppLockCompat`
+- Keine Änderung, aber zu wissen: Wischen nach unten nutzt `StatusBarManager.expandNotificationsPanel()`
+  bzw. `expandSettingsPanel()` per Reflection (nicht im öffentlichen SDK, Stand Android 16/17 erlaubt;
+  `de.letzgo.launcher.system.SystemPanels`)
 - `BuildConfig.ALL_APPS_ENABLED` blendet „Apps list“ im Homescreen-Menü aus
   (`popup/WorkspaceLongPressOptions.kt`)
 - `BuildConfig.SPRING_LOADED_SHRINK`: beim Ziehen bleibt der Homescreen in voller Größe

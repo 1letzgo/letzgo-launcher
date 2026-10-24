@@ -30,7 +30,6 @@
     <string name="library_other">Other</string>
     <string name="library_add_to_home">Add to Home Screen</string>
     <string name="library_app_info">App Info</string>
-    <string name="search_pill">Search</string>
     <string name="search_hint">Search</string>
     <string name="search_web">Search the web for “%1$s”</string>
     <string name="today_add_widget">Add Widget</string>

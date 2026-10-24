@@ -2,8 +2,6 @@ package de.letzgo.launcher.panels
 
 import android.animation.ValueAnimator
 import android.graphics.Rect
-import android.graphics.RenderEffect
-import android.graphics.Shader
 import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.View
@@ -18,9 +16,9 @@ import com.android.launcher3.Launcher
 import kotlin.math.abs
 
 /**
- * Vollbild-Seite, die von links oder rechts über den Homescreen gezogen wird (Heute-Ansicht,
- * App-Mediathek). Der Homescreen dahinter wird abhängig vom Fortschritt weichgezeichnet und
- * abgedunkelt. Öffnen per [PanelSwipeController], Schließen per Wischen zurück, Zurück oder Home.
+ * Eigene Homescreen-Seite links bzw. rechts der Seiten mit Apps (Heute-Ansicht, App-Mediathek).
+ * Sie läuft beim Blättern über die erste bzw. letzte Seite hinaus mit dem Finger herein und schiebt
+ * den Homescreen hinaus ([PanelSwipeController]); zurück per Wischen, Zurück oder Home.
  */
 abstract class SidePanel(protected val launcher: Launcher, private val fromLeft: Boolean) :
     FrameLayout(launcher), Insettable {
@@ -44,8 +42,6 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
     val isOpen
         get() = visibility == View.VISIBLE
 
-    /** Sichtbarkeit hat sich geändert (beim Hereinziehen bzw. nach dem Schließen). */
-    var onVisibilityChanged: (Boolean) -> Unit = {}
 
     init {
         visibility = View.GONE
@@ -74,7 +70,6 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
         animator?.cancel()
         if (progress == 0f) onOpening()
         visibility = View.VISIBLE
-        onVisibilityChanged(true)
     }
 
     /** Verschiebung des Fingers seit Beginn in Pixeln (in Öffnungsrichtung positiv). */
@@ -129,19 +124,21 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
         visibility = View.GONE
         launcher.onBackInvokedDispatcher.unregisterOnBackInvokedCallback(backCallback)
         onClosed()
-        onVisibilityChanged(false)
     }
 
+    /**
+     * Wie beim Blättern: Seite und Homescreen bewegen sich gemeinsam, das Dock gleitet nach unten
+     * weg (iOS zeigt es auf Heute- und Mediathek-Seite nicht), das Hintergrundbild wird unscharf.
+     */
     private fun applyProgress() {
         val w = width.toFloat()
         translationX = if (fromLeft) -w * (1 - progress) else w * (1 - progress)
-        val blur = BLUR_RADIUS * progress
-        val effect =
-            if (blur < 1f) null else RenderEffect.createBlurEffect(blur, blur, Shader.TileMode.CLAMP)
-        launcher.workspace.setRenderEffect(effect)
-        launcher.hotseat.setRenderEffect(effect)
-        launcher.workspace.alpha = 1 - 0.3f * progress
-        launcher.hotseat.alpha = 1 - 0.3f * progress
+        launcher.workspace.translationX = if (fromLeft) w * progress else -w * progress
+        val hotseat = launcher.hotseat
+        hotseat.alpha = 1 - progress
+        hotseat.translationY = hotseat.height * DOCK_SLIDE * progress
+        // Fensterhintergrund = Hintergrundbild; ohne Systemunterstützung bleibt es beim Abdunkeln
+        launcher.window?.setBackgroundBlurRadius((BLUR_RADIUS * progress).toInt())
     }
 
     // Schließen per Wischen zurück zur Kante, wie sie hereinkam
@@ -191,6 +188,7 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
         const val MATCH = LayoutParams.MATCH_PARENT
         const val SETTLE_MS = 380f
         const val FLING_VELOCITY_DP = 500f
-        const val BLUR_RADIUS = 60f
+        const val BLUR_RADIUS = 80f
+        const val DOCK_SLIDE = 0.6f
     }
 }

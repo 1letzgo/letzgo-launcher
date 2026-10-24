@@ -23,10 +23,7 @@ import kotlin.math.sin
  * Minus-Badge, oben erscheinen „Bearbeiten“ und „Fertig“. Gesteuert über [JiggleTouchController];
  * die Launcher-Zustände bleiben unverändert (NORMAL, beim Ziehen SPRING_LOADED).
  */
-class JiggleMode(
-    private val launcher: Launcher,
-    private val onActiveChanged: (Boolean) -> Unit = {},
-) : Choreographer.FrameCallback {
+class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
 
     var isActive = false
         private set
@@ -50,7 +47,6 @@ class JiggleMode(
             backCallback,
         )
         Choreographer.getInstance().postFrameCallback(this)
-        onActiveChanged(true)
     }
 
     fun exit() {
@@ -62,7 +58,6 @@ class JiggleMode(
         for ((view, badge) in badges) view.overlay.remove(badge)
         badges.clear()
         forEachItemView { it.rotation = 0f }
-        onActiveChanged(false)
     }
 
     override fun doFrame(frameTimeNanos: Long) {

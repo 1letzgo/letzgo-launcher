@@ -21,11 +21,11 @@ import com.android.launcher3.R
 import java.util.Date
 
 /**
- * Heute-Ansicht links von der ersten Seite, wie auf iOS: Datum und eine Spalte mit Widgets.
+ * Heute-Seite links von der ersten Seite, wie auf iOS: Suchfeld, Datum und eine Spalte mit Widgets.
  * Hat einen eigenen [AppWidgetHost]; Widgets kommen über die Widget-Auswahl des Systems dazu und
  * lassen sich per langem Drücken entfernen.
  */
-class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
+class TodayPanel(launcher: Launcher, onSearch: () -> Unit) : SidePanel(launcher, fromLeft = true) {
 
     private val density = resources.displayMetrics.density
     private val prefs = launcher.getSharedPreferences(PREFS, Activity.MODE_PRIVATE)
@@ -41,6 +41,25 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
         }
     private val widgets = LinearLayout(launcher).apply { orientation = LinearLayout.VERTICAL }
     private val scroll = ScrollView(launcher).apply { clipToPadding = false }
+    private val content = LinearLayout(launcher)
+    private var grid = IconGrid.of(launcher)
+
+    // Wie auf iOS steht oben ein Suchfeld; es öffnet die Suche
+    private val searchField =
+        TextView(launcher).apply {
+            setText(R.string.search_hint)
+            setTextColor(0xB3FFFFFF.toInt())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+            val icon = launcher.getDrawable(R.drawable.ic_letzgo_search)!!.mutate()
+            val size = dp(16)
+            icon.setBounds(0, 0, size, size)
+            icon.alpha = 0xB3
+            setCompoundDrawablesRelative(icon, null, null, null)
+            compoundDrawablePadding = dp(8)
+            setPadding(dp(14), dp(10), dp(14), dp(10))
+            background = glass(12 * density)
+            setOnClickListener { onSearch() }
+        }
 
     init {
         setBackgroundColor(0x40000000)
@@ -59,10 +78,10 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
         addView(
             scroll.apply {
                 addView(
-                    LinearLayout(launcher).apply {
+                    content.apply {
                         orientation = LinearLayout.VERTICAL
-                        setPadding(dp(20), dp(12), dp(20), dp(32))
-                        addView(date)
+                        addView(searchField, LinearLayout.LayoutParams(MATCH, WRAP))
+                        addView(date, LinearLayout.LayoutParams(WRAP, WRAP).apply { topMargin = dp(20) })
                         addView(widgets, LinearLayout.LayoutParams(MATCH, WRAP).apply { topMargin = dp(16) })
                         addView(
                             edit,
@@ -79,6 +98,9 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
     }
 
     override fun onOpening() {
+        // Widgets fluchten mit den Icon-Spalten des Homescreens
+        grid = IconGrid.of(launcher)
+        content.setPadding(grid.inset, dp(8), grid.inset, dp(32))
         date.text = DateFormat.format(DateFormat.getBestDateTimePattern(resources.configuration.locales[0], "EEEEdMMMM"), Date())
         host.startListening()
         rebuild()
@@ -117,14 +139,16 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
     }
 
     /**
-     * Widgets in iOS-Größen: klein (halbe Breite, quadratisch), mittel (volle Breite) und groß
+     * Widgets in iOS-Größen: klein (zwei Spalten, quadratisch), mittel (alle Spalten) und groß
      * (volle Breite, doppelt hoch), abgeleitet aus der Zielgröße des Widgets. Kleine stehen paarweise.
      */
     private fun rebuild() {
         widgets.removeAllViews()
-        val gap = dp(WIDGET_GAP_DP)
-        val full = resources.displayMetrics.widthPixels - dp(40)
-        val square = (full - gap) / 2
+        // Klein = zwei Spalten breit, mittel/groß = alle Spalten, Abstand wie zwischen Icons
+        val columns = launcher.deviceProfile.inv.numColumns
+        val gap = grid.gap
+        val full = grid.width(columns)
+        val square = grid.width(columns / 2)
         var row: LinearLayout? = null
         for (id in loadIds()) {
             val info = widgetManager.getAppWidgetInfo(id) ?: continue
@@ -201,6 +225,5 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
         const val KEY_IDS = "widget_ids"
         const val REQUEST_PICK = 0x4C01
         const val REQUEST_CONFIGURE = 0x4C02
-        const val WIDGET_GAP_DP = 16
     }
 }

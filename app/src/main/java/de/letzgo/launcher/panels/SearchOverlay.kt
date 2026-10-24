@@ -32,7 +32,7 @@ import com.android.launcher3.icons.BitmapInfo.Companion.FLAG_THEMED
 import com.android.launcher3.model.data.AppInfo
 
 /**
- * Suche wie Spotlight: Wischen nach unten oder Tippen auf „Suchen“ öffnet sie über dem
+ * Suche wie Spotlight: das Suchfeld der Heute-Seite öffnet sie über dem
  * weichgezeichneten Homescreen. Findet Apps; die letzte Zeile sucht im Web.
  */
 class SearchOverlay(private val launcher: Launcher) : FrameLayout(launcher), Insettable {
@@ -94,8 +94,6 @@ class SearchOverlay(private val launcher: Launcher) : FrameLayout(launcher), Ins
         list.setPadding(0, 0, 0, insets.bottom + dp(16))
     }
 
-    /** Sichtbarkeit hat sich geändert (beim Öffnen bzw. nach dem Schließen). */
-    var onVisibilityChanged: (Boolean) -> Unit = {}
 
     init {
         visibility = View.GONE
@@ -118,7 +116,6 @@ class SearchOverlay(private val launcher: Launcher) : FrameLayout(launcher), Ins
         field.text.clear()
         update()
         visibility = View.VISIBLE
-        onVisibilityChanged(true)
         alpha = 0f
         animate().alpha(1f).setDuration(FADE_MS).setUpdateListener { setBlur(alpha) }.start()
         field.requestFocus()
@@ -142,8 +139,7 @@ class SearchOverlay(private val launcher: Launcher) : FrameLayout(launcher), Ins
             .setUpdateListener { setBlur(alpha) }
             .withEndAction {
                 visibility = View.GONE
-                onVisibilityChanged(false)
-            }
+                    }
             .start()
     }
 
