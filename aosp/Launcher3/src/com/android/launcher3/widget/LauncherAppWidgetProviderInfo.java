@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.launcher3.DeviceProfile;
+import com.android.launcher3.BuildConfig;
 import com.android.launcher3.InvariantDeviceProfile;
 import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.icons.cache.CachedObject;
@@ -172,6 +173,27 @@ public class LauncherAppWidgetProviderInfo extends AppWidgetProviderInfo impleme
         // Ensures the default span X and span Y will not exceed the current grid size.
         this.spanX = Math.min(spanX, idp.numColumns);
         this.spanY = Math.min(spanY, idp.numRows);
+        if (BuildConfig.WIDGETS_IOS_SIZES) snapToIosSizes(idp);
+    }
+
+    /**
+     * letzgo: Widgets wie auf iOS nur in drei festen Größen – klein (2 x 2), mittel (4 x 2), groß
+     * (4 x 4) –, aufgerundet von der Wunschgröße und ohne freies Skalieren. Passt die feste Größe
+     * nicht zu den Grenzen des Widgets oder des Rasters, bleibt es bei der von Launcher3 berechneten.
+     */
+    private void snapToIosSizes(InvariantDeviceProfile idp) {
+        int small = 2;
+        int large = 4;
+        int width = spanX <= small ? small : large;
+        int height = spanY <= small ? small : large;
+        // Hohe, schmale Widgets gibt es nicht: werden breit
+        if (height == large) width = large;
+        if (width > maxSpanX || height > maxSpanY
+                || width > idp.numColumns || height > idp.numRows) {
+            return;
+        }
+        spanX = minSpanX = maxSpanX = width;
+        spanY = minSpanY = maxSpanY = height;
     }
 
     /**
