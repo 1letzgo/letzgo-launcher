@@ -13,7 +13,6 @@ import androidx.core.animation.doOnEnd
 import com.android.app.animation.Interpolators
 import com.android.launcher3.Insettable
 import com.android.launcher3.Launcher
-import de.letzgo.launcher.ui.M3
 import kotlin.math.abs
 
 /**
@@ -142,7 +141,6 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
         hotseat.alpha = 1 - progress
         hotseat.translationY = hotseat.height * DOCK_SLIDE * progress
         (launcher.workspace.pageIndicator as View).alpha = 1 - progress
-        M3.setSystemBarsForSurface(launcher, onSurface = progress > 0.5f)
     }
 
     // Schließen per Wischen zurück zur Kante, wie sie hereinkam

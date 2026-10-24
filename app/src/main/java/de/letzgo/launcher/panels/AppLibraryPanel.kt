@@ -37,7 +37,7 @@ import com.google.android.material.R as MaterialR
 
 /**
  * App-Mediathek als Seite rechts neben der letzten Homescreen-Seite (Logik wie iOS, Gestaltung
- * Material 3): Apps nach Kategorien in Karten, Suchleiste oben; Suche oder Tippen auf einen
+ * Material 3), direkt auf dem Hintergrundbild wie der Homescreen: Apps nach Kategorien in Karten, Suchleiste oben; Suche oder Tippen auf einen
  * Kartenstapel zeigt eine alphabetische Liste. Enthält alle Apps; per Festhalten und Ziehen oder über
  * das Kontextmenü kommen Apps auf den Homescreen.
  */
@@ -70,7 +70,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
         }
     private val listTitle =
         TextView(m3).apply {
-            setTextColor(M3.color(m3, MaterialR.attr.colorOnSurface))
+            M3.onWallpaper(this)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
             visibility = View.GONE
         }
@@ -80,7 +80,6 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
     private val listAdapter = ListAdapter()
 
     init {
-        setBackgroundColor(M3.color(m3, MaterialR.attr.colorSurface, M3.PAGE_ALPHA))
         addView(
             content.apply {
                 orientation = LinearLayout.VERTICAL
@@ -274,7 +273,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
                 TextView(m3).apply {
                     setText(group.category.title)
                     gravity = Gravity.CENTER
-                    setTextColor(M3.color(m3, MaterialR.attr.colorOnSurfaceVariant))
+                    M3.onWallpaper(this)
                     setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
                     setSingleLine()
                 },
@@ -292,7 +291,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
         override fun getItemCount() = items.size
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
-            object : RecyclerView.ViewHolder(AppListRow(m3)) {}
+            object : RecyclerView.ViewHolder(AppListRow(m3, onWallpaper = true)) {}
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             val app = items[position]

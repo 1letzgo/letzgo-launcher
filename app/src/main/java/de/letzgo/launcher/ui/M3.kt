@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
 import android.view.ContextThemeWrapper
+import android.widget.TextView
 import androidx.annotation.AttrRes
 import androidx.core.graphics.ColorUtils
 import com.android.launcher3.Launcher
@@ -53,9 +54,20 @@ object M3 {
 
     private const val RIPPLE_ALPHA = 0.12f
 
-    /** Deckkraft halbtransparenter Flächen: Seiten (Mediathek, Heute) und Dock. */
-    const val PAGE_ALPHA = 0.8f
+    /** Deckkraft der halbtransparenten Dock-Fläche. */
     const val DOCK_ALPHA = 0.7f
+
+    /**
+     * Text direkt auf dem Hintergrundbild (Heute-Seite, Mediathek): weiß mit Schatten wie die
+     * Icon-Beschriftungen des Homescreens, damit er auf hellen und dunklen Bildern lesbar ist.
+     */
+    fun onWallpaper(text: TextView) {
+        text.setTextColor(Color.WHITE)
+        text.setShadowLayer(WALLPAPER_SHADOW_RADIUS, 0f, 1f, WALLPAPER_SHADOW_COLOR)
+    }
+
+    private const val WALLPAPER_SHADOW_RADIUS = 4f
+    private const val WALLPAPER_SHADOW_COLOR = 0x8A000000.toInt()
 
     /**
      * Helle Systemleisten-Symbole über den dunklen Flächen ([darkContext]). [slot] ist ein Zustand im

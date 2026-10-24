@@ -11,14 +11,17 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.R as MaterialR
 
-/** Listenzeile nach Material 3: 56 dp, 40-dp-Icon, Text in „body large“. */
-class AppListRow(context: Context) : LinearLayout(context) {
+/**
+ * Listenzeile nach Material 3: 56 dp, 40-dp-Icon, Text in „body large“. Mit [onWallpaper] liegt die
+ * Zeile direkt auf dem Hintergrundbild (weiße Schrift mit Schatten).
+ */
+class AppListRow(context: Context, onWallpaper: Boolean = false) : LinearLayout(context) {
 
     private val density = resources.displayMetrics.density
     val icon = DragIconView(context)
     private val title =
         TextView(context).apply {
-            setTextColor(M3.color(context, MaterialR.attr.colorOnSurface))
+            if (onWallpaper) M3.onWallpaper(this) else setTextColor(M3.color(context, MaterialR.attr.colorOnSurface))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
             setSingleLine()
         }

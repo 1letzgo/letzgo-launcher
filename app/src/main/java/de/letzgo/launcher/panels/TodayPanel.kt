@@ -31,7 +31,7 @@ import com.google.android.material.R as MaterialR
 
 /**
  * Heute-Seite links von der ersten Seite (Logik wie iOS, Gestaltung Material 3): Suchleiste,
- * Datum und eine Spalte mit Widgets in Karten.
+ * Datum und eine Spalte mit Widgets in Karten, direkt auf dem Hintergrundbild wie der Homescreen.
  * Hat einen eigenen [AppWidgetHost]; Widgets kommen über die Widget-Auswahl des Systems dazu und
  * lassen sich per langem Drücken entfernen.
  */
@@ -47,7 +47,7 @@ class TodayPanel(launcher: Launcher, onSearch: () -> Unit) : SidePanel(launcher,
     // Datum als Überschrift (M3 „headline medium“)
     private val date =
         TextView(m3).apply {
-            setTextColor(M3.color(m3, MaterialR.attr.colorOnSurface))
+            M3.onWallpaper(this)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f)
         }
     private val widgets = LinearLayout(m3).apply { orientation = LinearLayout.VERTICAL }
@@ -63,7 +63,6 @@ class TodayPanel(launcher: Launcher, onSearch: () -> Unit) : SidePanel(launcher,
         }
 
     init {
-        setBackgroundColor(M3.color(m3, MaterialR.attr.colorSurface, M3.PAGE_ALPHA))
         val edit =
             MaterialButton(m3).apply {
                 setText(R.string.today_add_widget)
