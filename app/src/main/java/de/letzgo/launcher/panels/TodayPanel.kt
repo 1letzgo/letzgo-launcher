@@ -40,7 +40,7 @@ import com.google.android.material.R as MaterialR
  */
 class TodayPanel(launcher: Launcher, onSearch: () -> Unit) : SidePanel(launcher, fromLeft = true) {
 
-    private val m3 = M3.darkContext(launcher)
+    private val m3 = M3.context(launcher)
     private val density = resources.displayMetrics.density
     private val prefs = launcher.getSharedPreferences(PREFS, Activity.MODE_PRIVATE)
     private val widgetManager = AppWidgetManager.getInstance(launcher)

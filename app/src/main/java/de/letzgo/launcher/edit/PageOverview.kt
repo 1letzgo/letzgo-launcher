@@ -41,7 +41,7 @@ class PageOverview(private val launcher: Launcher, private val onClosed: () -> U
 
     private data class Page(val screenId: Int, val preview: Picture)
 
-    private val m3 = M3.darkContext(launcher)
+    private val m3 = M3.context(launcher)
     private val density = resources.displayMetrics.density
     private val backCallback = OnBackInvokedCallback { close(apply = false) }
     private val pages = mutableListOf<Page>()

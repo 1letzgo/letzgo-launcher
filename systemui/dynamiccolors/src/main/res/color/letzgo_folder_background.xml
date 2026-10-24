@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Hintergrund geöffneter Ordner (über customColorSurfaceEffect0 in values/colors_public_fallback.xml).
-    Immer dunkle Material-3-Fläche, halbtransparent.
+    Material-3-Fläche, halbtransparent; hell in color/, dunkel in color-night/.
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:color="@android:color/system_surface_container_high_dark"
+        android:color="@android:color/system_surface_container_high_light"
         android:alpha="0.85" />
 </selector>

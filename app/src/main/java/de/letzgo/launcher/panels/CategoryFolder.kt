@@ -12,6 +12,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.core.view.doOnPreDraw
 import com.android.app.animation.Interpolators
 import com.android.launcher3.icons.BitmapInfo.Companion.FLAG_THEMED
 import com.android.launcher3.model.data.AppInfo
@@ -33,6 +34,7 @@ class CategoryFolder(
     private val density = resources.displayMetrics.density
     private var apps = emptyList<AppInfo>()
     private var grid: IconGrid? = null
+    // Lage der Kachel in Koordinaten dieser View; beim Öffnen ermittelt (ohne eigene Transformation)
     private var origin: Rect? = null
     private val title =
         TextView(context).apply {
@@ -75,9 +77,8 @@ class CategoryFolder(
         )
     }
 
-    /** [origin]: Kachel, aus der sich die Kategorie öffnet (in Koordinaten dieser View). */
-    fun show(category: AppCategory, apps: List<AppInfo>, grid: IconGrid, origin: Rect?) {
-        this.origin = origin
+    /** [tile]: Kachel, aus der sich die Kategorie öffnet und in die sie sich wieder schließt. */
+    fun show(category: AppCategory, apps: List<AppInfo>, grid: IconGrid, tile: View) {
         this.apps = apps
         this.grid = grid
         title.setText(category.title)
@@ -95,10 +96,22 @@ class CategoryFolder(
         list.layoutParams = LayoutParams(MATCH, minOf(rows * rowHeight + 2 * padding, maxHeight))
         adapter.notifyDataSetChanged()
         list.scrollToPosition(0)
-        visibility = VISIBLE
-        // Wächst aus der Kachel (M3: betonte, abbremsende Kurve)
+        // Wächst aus der Kachel (M3: betonte, abbremsende Kurve). Erst nach dem Layout, damit die
+        // Lage der Fläche feststeht.
+        animate().cancel()
+        scaleX = 1f
+        scaleY = 1f
+        translationX = 0f
+        translationY = 0f
         alpha = 0f
-        post {
+        visibility = VISIBLE
+        doOnPreDraw {
+            // Beide Lagen im Fenster; diese View ist hier noch nicht transformiert
+            val own = IntArray(2).also(::getLocationInWindow)
+            val pos = IntArray(2).also(tile::getLocationInWindow)
+            val left = pos[0] - own[0]
+            val top = pos[1] - own[1]
+            origin = Rect(left, top, left + tile.width, top + tile.height)
             applyOriginTransform()
             animate()
                 .alpha(1f).scaleX(1f).scaleY(1f).translationX(0f).translationY(0f)
@@ -131,7 +144,7 @@ class CategoryFolder(
 
     /**
      * Skalierung und Verschiebung, mit der die Ordnerfläche genau über der Kachel liegt
-     * (Skalierung um die Mitte dieser View).
+     * (Skalierung um die Mitte dieser View). Alles in Koordinaten dieser View ohne Transformation.
      */
     private fun originTransform(): FloatArray {
         val from = origin ?: return floatArrayOf(0.92f, 0f, 0f)
@@ -172,7 +185,8 @@ class CategoryFolder(
             cell.addView(
                 TextView(context).apply {
                     text = app.title
-                    M3.onWallpaper(this)
+                    // Auf der Ordnerfläche: Schriftfarbe der Launcher3-Ordner
+                    setTextColor(M3.onFolderColor(context))
                     setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
                     setSingleLine()
                     gravity = Gravity.CENTER

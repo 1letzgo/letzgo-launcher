@@ -2,6 +2,7 @@ package de.letzgo.launcher.ui
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
@@ -24,13 +25,6 @@ object M3 {
 
     fun context(base: Context): Context =
         ContextThemeWrapper(base, MaterialR.style.Theme_Material3_DynamicColors_DayNight)
-
-    /**
-     * Immer das dunkle M3-Schema (Material You), unabhängig vom Systemmodus: für Flächen über dem
-     * Hintergrundbild wie App-Mediathek, Heute-Seite und Suche.
-     */
-    fun darkContext(base: Context): Context =
-        ContextThemeWrapper(base, MaterialR.style.Theme_Material3_DynamicColors_Dark)
 
     fun color(context: Context, @AttrRes attr: Int): Int =
         MaterialColors.getColor(context, attr, "M3")
@@ -56,13 +50,28 @@ object M3 {
     private const val RIPPLE_ALPHA = 0.12f
 
     /**
-     * Farbe einer Ordner-Kachel auf dem Homescreen (Launcher3-Ordnerfarbe, bei letzgo immer dunkel und
-     * halbtransparent). Dock, Mediathek-Kacheln und Suchleisten nutzen sie, damit alles gleich wirkt.
+     * Farbe einer Ordner-Kachel auf dem Homescreen (Launcher3-Ordnerfarbe, halbtransparent, hell oder
+     * dunkel nach Systemmodus). Dock, Mediathek-Kacheln und Suchleisten nutzen sie, damit alles gleich
+     * wirkt.
      */
-    fun folderTileColor(context: Context): Int = context.getColor(R.color.folder_preview_light)
+    fun folderTileColor(context: Context): Int =
+        context.getColor(if (isNight(context)) R.color.folder_preview_dark else R.color.folder_preview_light)
 
-    /** Farbe eines geöffneten Ordners (dunkel, halbtransparent), auch für geöffnete Kategorien. */
-    fun folderSheetColor(context: Context): Int = context.getColor(R.color.folder_background_light)
+    /** Farbe eines geöffneten Ordners (halbtransparent), auch für geöffnete Kategorien. */
+    fun folderSheetColor(context: Context): Int =
+        context.getColor(
+            if (isNight(context)) R.color.folder_background_dark else R.color.folder_background_light
+        )
+
+    /** Text und Symbole auf den Ordnerfarben. */
+    fun onFolderColor(context: Context): Int =
+        context.getColor(
+            if (isNight(context)) R.color.folder_text_color_dark else R.color.folder_text_color_light
+        )
+
+    fun isNight(context: Context): Boolean =
+        context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK ==
+            Configuration.UI_MODE_NIGHT_YES
 
     /**
      * Text direkt auf dem Hintergrundbild (Heute-Seite, Mediathek): weiß mit Schatten wie die
@@ -77,7 +86,7 @@ object M3 {
     private const val WALLPAPER_SHADOW_COLOR = 0x8A000000.toInt()
 
     /**
-     * Helle Systemleisten-Symbole über den dunklen Flächen ([darkContext]). [slot] ist ein Zustand im
+     * Systemleisten-Symbole passend zu einer deckenden M3-Fläche (hell oder dunkel nach Systemmodus). [slot] ist ein Zustand im
      * [SystemUiController]; der höchste gesetzte gewinnt. Seiten nutzen den Platz des App-Drawers,
      * den letzgo nicht hat, die Suche darüber den des Widget-Blatts.
      */
@@ -87,7 +96,11 @@ object M3 {
         slot: Int = SystemUiController.UI_STATE_ALL_APPS,
     ) {
         val flags =
-            if (onSurface) SystemUiController.FLAG_DARK_NAV or SystemUiController.FLAG_DARK_STATUS else 0
+            when {
+                !onSurface -> 0
+                isNight(launcher) -> SystemUiController.FLAG_DARK_NAV or SystemUiController.FLAG_DARK_STATUS
+                else -> SystemUiController.FLAG_LIGHT_NAV or SystemUiController.FLAG_LIGHT_STATUS
+            }
         launcher.systemUiController?.updateUiState(slot, flags)
     }
 
