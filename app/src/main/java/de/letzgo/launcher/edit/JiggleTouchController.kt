@@ -16,6 +16,7 @@ import kotlin.math.hypot
  * Touch-Verhalten im Bearbeitungsmodus:
  * - Ziehen an einem Element hebt es sofort an (ohne langes Drücken).
  * - Tippen auf ein Minus-Badge entfernt das Element ([RemoveItem]).
+ * - Tippen auf den Eckgriff eines Widgets öffnet den Rahmen zum Ändern der Größe.
  * - Tippen auf die Seitenpunkte öffnet die Seitenübersicht ([PageOverview]).
  * - Tippen auf eine freie Stelle beendet den Modus.
  */
@@ -27,6 +28,7 @@ class JiggleTouchController(private val launcher: Launcher, private val jiggle: 
     private var downY = 0f
     private var downView: View? = null
     private var badgeView: View? = null
+    private var handleView: View? = null
     private var moved = false
     private var dragging = false
     private var ignore = false
@@ -46,8 +48,9 @@ class JiggleTouchController(private val launcher: Launcher, private val jiggle: 
                 if (ignore) return false
                 onDots = jiggle.isOnPageDots(ev.x, ev.y)
                 badgeView = jiggle.badgeViewAt(ev.x, ev.y)
-                downView = badgeView ?: jiggle.itemViewAt(ev.x, ev.y)
-                return badgeView != null
+                handleView = if (badgeView == null) jiggle.handleViewAt(ev.x, ev.y) else null
+                downView = badgeView ?: handleView ?: jiggle.itemViewAt(ev.x, ev.y)
+                return badgeView != null || handleView != null
             }
             MotionEvent.ACTION_MOVE -> {
                 if (ignore || moved) return false
@@ -73,11 +76,11 @@ class JiggleTouchController(private val launcher: Launcher, private val jiggle: 
 
     override fun onControllerTouchEvent(ev: MotionEvent): Boolean {
         if (dragging) return launcher.dragController.onControllerTouchEvent(ev)
-        val badge = badgeView ?: return false
+        val target = badgeView ?: handleView ?: return false
         if (ev.actionMasked == MotionEvent.ACTION_UP &&
             hypot(ev.x - downX, ev.y - downY) < touchSlop
         ) {
-            jiggle.onBadgeTapped(badge)
+            if (target === badgeView) jiggle.onBadgeTapped(target) else jiggle.onHandleTapped(target)
         }
         return true
     }

@@ -414,6 +414,14 @@ public class InvariantDeviceProfile {
         inlineNavButtonsEndSpacing = closestProfile.inlineNavButtonsEndSpacing;
 
         iconSize = displayOption.iconSizes;
+        if (BuildConfig.ICON_SIZE_SETTING) {
+            // letzgo: Icon-Größe aus den Einstellungen (Faktor auf die Größen des Rasters)
+            float scale = de.letzgo.launcher.settings.HomeLayoutSettings.iconScale(context);
+            iconSize = iconSize.clone();
+            for (int i = 0; i < iconSize.length; i++) {
+                iconSize[i] *= scale;
+            }
+        }
         float maxIconSize = iconSize[0];
         for (int i = 1; i < iconSize.length; i++) {
             maxIconSize = Math.max(maxIconSize, iconSize[i]);
@@ -533,6 +541,11 @@ public class InvariantDeviceProfile {
             onConfigChanged();
             Trace.endSection();
         });
+    }
+
+    /** letzgo: Raster neu berechnen, z. B. nach Änderung der Icon-Größe. */
+    public void reloadForLetzgo() {
+        mMainExecutor.execute(this::onConfigChanged);
     }
 
     private Object[] toModelState() {

@@ -7,6 +7,7 @@ import com.android.launcher3.model.data.AppInfo
 
 /** Kategorien der App-Mediathek, angelehnt an iOS. */
 enum class AppCategory(@StringRes val title: Int) {
+    SUGGESTIONS(R.string.library_suggestions),
     RECENT(R.string.library_recent),
     UTILITIES(R.string.library_utilities),
     PRODUCTIVITY(R.string.library_productivity),

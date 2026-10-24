@@ -65,4 +65,10 @@
     <string name="today_size_large">Groß</string>
     <string name="today_choose_widget">Widget hinzufügen</string>
     <string name="today_no_preview">Keine Vorschau</string>
+    <string name="library_suggestions">Vorschläge</string>
+    <string name="widget_size_unsupported">Dieses Widget gibt es nicht in dieser Größe</string>
+    <string name="widget_size_no_space">Nicht genug Platz auf dieser Seite</string>
+    <string name="today_edit">Heute-Ansicht bearbeiten</string>
+    <string name="settings_grid">Raster</string>
+    <string name="settings_icon_size">Icon-Größe (%)</string>
 </resources>

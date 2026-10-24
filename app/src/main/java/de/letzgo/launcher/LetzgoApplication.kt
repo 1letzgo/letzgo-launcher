@@ -1,5 +1,6 @@
 package de.letzgo.launcher
 
+import android.content.Context
 import android.content.SharedPreferences
 import com.android.launcher3.LauncherApplication
 import com.android.launcher3.LauncherPrefs
@@ -10,6 +11,7 @@ import com.android.launcher3.util.OnboardingPrefs
 class LetzgoApplication : LauncherApplication() {
 
     override fun onCreate() {
+        appContext = this
         migrate()
         // Launcher3 lässt das Dock hüpfen, bis man einmal in den App-Drawer gewischt hat. letzgo hat
         // keinen Drawer, der Hinweis gilt daher als gesehen (sonst springt das Dock bei jeder Rückkehr).
@@ -49,9 +51,13 @@ class LetzgoApplication : LauncherApplication() {
         prefs.edit().putBoolean(KEY_HOME_PAGES_RESET, true).apply()
     }
 
-    private companion object {
-        const val PREFS = "letzgo_migrations"
-        const val KEY_SHAPE_RESET = "icon_shape_reset"
-        const val KEY_HOME_PAGES_RESET = "home_pages_reset_0_7"
+    companion object {
+        /** Für Stellen ohne eigenen Kontext (z. B. Launcher3-Menüdaten). */
+        lateinit var appContext: Context
+            private set
+
+        private const val PREFS = "letzgo_migrations"
+        private const val KEY_SHAPE_RESET = "icon_shape_reset"
+        private const val KEY_HOME_PAGES_RESET = "home_pages_reset_0_7"
     }
 }

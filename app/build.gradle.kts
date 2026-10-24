@@ -68,6 +68,8 @@ android {
         buildConfigField("boolean", "LETZGO_POPUPS", "true")
         buildConfigField("boolean", "FOLDER_ROUNDED_SQUARE", "true")
         buildConfigField("boolean", "FOLDER_TITLE_ABOVE", "true")
+        buildConfigField("boolean", "STABLE_STATUS_BAR_INSET", "true")
+        buildConfigField("boolean", "ICON_SIZE_SETTING", "true")
     }
 
     buildFeatures {

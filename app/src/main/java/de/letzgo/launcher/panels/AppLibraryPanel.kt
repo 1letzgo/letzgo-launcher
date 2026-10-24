@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -27,11 +28,13 @@ import com.android.launcher3.model.data.AppInfo
 import com.android.launcher3.util.Executors.MAIN_EXECUTOR
 import com.android.launcher3.util.Executors.THREAD_POOL_EXECUTOR
 import com.android.launcher3.util.PackageManagerHelper
+import de.letzgo.launcher.model.AppUsage
 import de.letzgo.launcher.model.HomeScreenApps
 import de.letzgo.launcher.ui.AppListRow
 import de.letzgo.launcher.ui.Backdrop
 import de.letzgo.launcher.ui.M3Menu
 import de.letzgo.launcher.ui.DragIconView
+import de.letzgo.launcher.ui.LetterIndex
 import de.letzgo.launcher.ui.M3
 import de.letzgo.launcher.ui.SearchBar
 import com.google.android.material.R as MaterialR
@@ -70,6 +73,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
             leading.setOnClickListener { if (listMode) showTiles() }
         }
     private val recycler = RecyclerView(m3).apply { clipToPadding = false }
+    private val letterIndex = LetterIndex(m3, ::scrollToLetter).apply { visibility = GONE }
     private val content = LinearLayout(m3)
     private val categoryFolder =
         CategoryFolder(
@@ -86,7 +90,13 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
             content.apply {
                 orientation = LinearLayout.VERTICAL
                 addView(searchBar, LinearLayout.LayoutParams(MATCH, WRAP))
-                addView(recycler, LinearLayout.LayoutParams(MATCH, 0, 1f).apply { topMargin = dp(16) })
+                addView(
+                    FrameLayout(m3).apply {
+                        addView(recycler, LayoutParams(MATCH, MATCH))
+                        addView(letterIndex, LayoutParams(dp(24), MATCH, Gravity.END))
+                    },
+                    LinearLayout.LayoutParams(MATCH, 0, 1f).apply { topMargin = dp(16) },
+                )
             },
             LayoutParams(MATCH, MATCH),
         )
@@ -118,9 +128,13 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
                         compareBy<Group> { it.category == AppCategory.OTHER }
                             .thenByDescending { it.apps.size }
                     )
+            // Wie auf iOS: zuerst Vorschläge (meistgenutzt), dann zuletzt hinzugefügt
+            val suggested = AppUsage.suggestions(context, apps, SUGGESTION_COUNT)
             val result =
-                listOfNotNull(recent.takeIf { it.isNotEmpty() }?.let { Group(AppCategory.RECENT, it) }) +
-                    byCategory
+                listOfNotNull(
+                    suggested.takeIf { it.isNotEmpty() }?.let { Group(AppCategory.SUGGESTIONS, it) },
+                    recent.takeIf { it.isNotEmpty() }?.let { Group(AppCategory.RECENT, it) },
+                ) + byCategory
             MAIN_EXECUTOR.execute {
                 allApps = apps.sortedBy(::sortKey)
                 groups = result
@@ -174,6 +188,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
         hideKeyboard()
         recycler.layoutManager = GridLayoutManager(context, 2)
         recycler.adapter = tileAdapter
+        letterIndex.visibility = GONE
     }
 
     /** Suche: alphabetische Liste aller Apps, gefiltert nach dem Suchtext. */
@@ -189,6 +204,17 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
         val query = searchBar.field.text.toString().trim().lowercase()
         listAdapter.items = allApps.filter { query.isEmpty() || query in it.title.toString().lowercase() }
         listAdapter.notifyDataSetChanged()
+        // Buchstabenleiste nur für die ganze Liste, nicht für Suchergebnisse
+        letterIndex.setLetters(listAdapter.items.map(::letterOf).distinct())
+        letterIndex.visibility = if (listMode && query.isEmpty()) VISIBLE else GONE
+    }
+
+    private fun letterOf(app: AppInfo): Char =
+        app.title.toString().trim().firstOrNull()?.uppercaseChar()?.takeIf { it.isLetter() } ?: '#'
+
+    private fun scrollToLetter(letter: Char) {
+        val index = listAdapter.items.indexOfFirst { letterOf(it) == letter }
+        if (index >= 0) (recycler.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(index, 0)
     }
 
     private fun launch(view: View, app: AppInfo) {
@@ -382,6 +408,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
         const val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
         const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
         const val RECENT_COUNT = 8
+        const val SUGGESTION_COUNT = 4
         const val TILE_PADDING = 14
         const val TILE_GAP = 10
         const val FADE_MS = 180L

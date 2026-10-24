@@ -153,7 +153,14 @@ public class WindowManagerProxy {
     WindowInsets normalizeWindowInsets(Context context, boolean taskbarShownOnHome,
             WindowInsets oldInsets, Rect outInsets) {
         if (!mTaskbarDrawnInProcess) {
-            outInsets.set(oldInsets.getSystemWindowInsetLeft(), oldInsets.getSystemWindowInsetTop(),
+            int top = oldInsets.getSystemWindowInsetTop();
+            if (com.android.launcher3.BuildConfig.STABLE_STATUS_BAR_INSET) {
+                // letzgo: Platz der Statusleiste bleibt, auch wenn sie im Bearbeitungsmodus
+                // ausgeblendet ist (sonst springt der ganze Homescreen nach oben)
+                top = Math.max(top, oldInsets.getInsetsIgnoringVisibility(
+                        WindowInsets.Type.statusBars()).top);
+            }
+            outInsets.set(oldInsets.getSystemWindowInsetLeft(), top,
                     oldInsets.getSystemWindowInsetRight(), oldInsets.getSystemWindowInsetBottom());
             return oldInsets;
         }

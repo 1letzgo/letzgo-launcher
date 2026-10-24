@@ -1,17 +1,21 @@
 package de.letzgo.launcher.edit
 
+import android.appwidget.AppWidgetHostView
 import android.graphics.Rect
 import android.view.Choreographer
 import android.view.HapticFeedbackConstants
 import android.view.View
+import android.view.WindowInsets
 import android.window.OnBackInvokedCallback
 import android.window.OnBackInvokedDispatcher
 import com.android.launcher3.BubbleTextView
 import com.android.launcher3.CellLayout
 import com.android.launcher3.AbstractFloatingView
+import com.android.launcher3.AppWidgetResizeFrame
 import com.android.launcher3.Launcher
 import com.android.launcher3.R
 import com.android.launcher3.folder.FolderIcon
+import com.android.launcher3.widget.LauncherAppWidgetHostView
 import com.android.launcher3.model.data.ItemInfo
 import com.android.launcher3.popup.WorkspaceLongPressOptions
 import com.android.launcher3.popup.PopupCategory
@@ -34,6 +38,9 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
 
     private val density = launcher.resources.displayMetrics.density
     private val badges = WeakHashMap<View, MinusBadge>()
+    // View, in deren Overlay das Badge liegt (bei Widgets der Container, siehe [badgeHost])
+    private val badgeHosts = WeakHashMap<View, View>()
+    private val handles = WeakHashMap<View, ResizeHandle>()
     private val tmpRect = Rect()
     private val tmpPoint = FloatArray(2)
     private var startNanos = 0L
@@ -47,6 +54,9 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         startNanos = System.nanoTime()
         launcher.workspace.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         editBar.show()
+        // Wie auf iOS ersetzen „Bearbeiten“ und „Fertig“ die Statusleiste (ihr Platz bleibt reserviert,
+        // BuildConfig.STABLE_STATUS_BAR_INSET)
+        launcher.window?.insetsController?.hide(WindowInsets.Type.statusBars())
         // Wie auf iOS: im Bearbeitungsmodus gibt es eine leere Seite am Ende, damit Seitenpunkte und
         // Seitenübersicht auch bei nur einer Seite erreichbar sind
         launcher.workspace.addExtraEmptyScreens()
@@ -64,9 +74,13 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         Choreographer.getInstance().removeFrameCallback(this)
         launcher.onBackInvokedDispatcher.unregisterOnBackInvokedCallback(backCallback)
         editBar.hide()
+        launcher.window?.insetsController?.show(WindowInsets.Type.statusBars())
         if (!launcher.dragController.isDragging) launcher.workspace.removeExtraEmptyScreen(true)
-        for ((view, badge) in badges) view.overlay.remove(badge)
+        for ((view, badge) in badges) (badgeHosts[view] ?: view).overlay.remove(badge)
+        for ((view, handle) in handles) (badgeHosts[view] ?: view).overlay.remove(handle)
         badges.clear()
+        handles.clear()
+        badgeHosts.clear()
         forEachItemView { it.rotation = 0f }
         launcher.updateDisallowBack()
     }
@@ -96,7 +110,7 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         val badge = badges[view] ?: return@firstOrNull false
         tmpPoint[0] = badge.bounds.exactCenterX()
         tmpPoint[1] = badge.bounds.exactCenterY()
-        val scale = launcher.dragLayer.getDescendantCoordRelativeToSelf(view, tmpPoint)
+        val scale = launcher.dragLayer.getDescendantCoordRelativeToSelf(badgeHosts[view] ?: view, tmpPoint)
         hypot(x - tmpPoint[0], y - tmpPoint[1]) <= BADGE_TOUCH_DP * density * scale
     }
 
@@ -145,18 +159,51 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
     }
 
     private fun updateBadge(view: View) {
+        val host = badgeHost(view)
         val badge =
             badges.getOrPut(view) {
-                MinusBadge(launcher, BADGE_DIAMETER_DP * density).also { view.overlay.add(it) }
+                badgeHosts[view] = host
+                MinusBadge(launcher, BADGE_DIAMETER_DP * density).also { host.overlay.add(it) }
             }
         when (view) {
             is BubbleTextView -> view.getIconBounds(tmpRect)
             is FolderIcon -> view.getPreviewBounds(tmpRect)
             else -> tmpRect.set(0, 0, view.width, view.height)
         }
+        if (host !== view) tmpRect.offset((view.left + view.translationX).toInt(), (view.top + view.translationY).toInt())
         val inset = BADGE_DIAMETER_DP * density * 0.15f
         badge.setCenter(tmpRect.left + inset, tmpRect.top + inset)
+        if (view is AppWidgetHostView) {
+            val handle =
+                handles.getOrPut(view) {
+                    ResizeHandle(launcher, HANDLE_DP * density).also { host.overlay.add(it) }
+                }
+            handle.setCorner(tmpRect.right.toFloat(), tmpRect.bottom.toFloat())
+        }
     }
+
+    /** Widget, dessen Eckgriff unter dem Punkt (DragLayer-Koordinaten) liegt. */
+    fun handleViewAt(x: Float, y: Float): View? = visibleItemViews().firstOrNull { view ->
+        val handle = handles[view] ?: return@firstOrNull false
+        tmpPoint[0] = handle.bounds.exactCenterX()
+        tmpPoint[1] = handle.bounds.exactCenterY()
+        val scale = launcher.dragLayer.getDescendantCoordRelativeToSelf(badgeHosts[view] ?: view, tmpPoint)
+        hypot(x - tmpPoint[0], y - tmpPoint[1]) <= HANDLE_DP * density * scale
+    }
+
+    /** Eckgriff angetippt: Launcher3-Rahmen zum Ziehen der Größe. */
+    fun onHandleTapped(view: View) {
+        val widget = view as? LauncherAppWidgetHostView ?: return
+        val cellLayout = widget.parent?.parent as? CellLayout ?: return
+        AppWidgetResizeFrame.showForWidget(widget, cellLayout)
+    }
+
+    /**
+     * Widgets beschneiden sich auf ihre abgerundete Form; ein Badge in ihrer Ecke wäre unsichtbar.
+     * Es liegt deshalb im Overlay des Containers darüber.
+     */
+    private fun badgeHost(view: View): View =
+        if (view is AppWidgetHostView) view.parent as? View ?: view else view
 
     private fun visibleItemViews(): List<View> {
         val pages = listOfNotNull(launcher.workspace.getChildAt(launcher.workspace.currentPage))
@@ -183,5 +230,7 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         const val PERIOD_S = 0.28
         const val BADGE_DIAMETER_DP = 22f
         const val BADGE_TOUCH_DP = 22f
+        // Etwa der Eckenradius der Widgets
+        const val HANDLE_DP = 20f
     }
 }

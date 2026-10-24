@@ -177,9 +177,10 @@ public class LauncherAppWidgetProviderInfo extends AppWidgetProviderInfo impleme
     }
 
     /**
-     * letzgo: Widgets wie auf iOS nur in drei festen Größen – klein (2 x 2), mittel (4 x 2), groß
-     * (4 x 4) –, aufgerundet von der Wunschgröße und ohne freies Skalieren. Passt die feste Größe
-     * nicht zu den Grenzen des Widgets oder des Rasters, bleibt es bei der von Launcher3 berechneten.
+     * letzgo: Widgets starten wie auf iOS in einer der drei Größen – klein (2 x 2), mittel (4 x 2),
+     * groß (4 x 4) –, aufgerundet von der Wunschgröße. Die Grenzen des Widgets bleiben, damit sich
+     * die Größe über das Kontextmenü und den Rahmen weiter ändern lässt. Passt die Größe nicht zu
+     * den Grenzen des Widgets oder des Rasters, bleibt es bei der von Launcher3 berechneten.
      */
     private void snapToIosSizes(InvariantDeviceProfile idp) {
         int small = 2;
@@ -192,8 +193,8 @@ public class LauncherAppWidgetProviderInfo extends AppWidgetProviderInfo impleme
                 || width > idp.numColumns || height > idp.numRows) {
             return;
         }
-        spanX = minSpanX = maxSpanX = width;
-        spanY = minSpanY = maxSpanY = height;
+        spanX = width;
+        spanY = height;
     }
 
     /**

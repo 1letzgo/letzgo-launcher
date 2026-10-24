@@ -15,10 +15,11 @@ import com.android.launcher3.Launcher
 import com.android.launcher3.R
 import com.android.launcher3.folder.Folder
 import com.android.launcher3.views.BaseDragLayer
+import de.letzgo.launcher.LetzgoLauncher
 
 /**
- * Name eines geöffneten Ordners wie auf iOS groß über dem Ordner, auf dem Hintergrundbild. Antippen
- * benennt um. Gleiche Gestaltung wie der Titel einer geöffneten Mediathek-Kategorie ([style]).
+ * Name eines geöffneten Ordners wie auf iOS groß über dem Ordner, auf dem Hintergrundbild. Im
+ * Bearbeitungsmodus benennt Antippen um. Gleiche Gestaltung wie der Titel einer geöffneten Mediathek-Kategorie ([style]).
  */
 class FolderTitle(private val launcher: Launcher, private val onClosing: () -> Unit) {
 
@@ -33,7 +34,6 @@ class FolderTitle(private val launcher: Launcher, private val onClosing: () -> U
             imeOptions = EditorInfo.IME_ACTION_DONE or EditorInfo.IME_FLAG_NO_EXTRACT_UI
             setHint(R.string.folder_hint_text)
             setHintTextColor(0xB3FFFFFF.toInt())
-            isFocusableInTouchMode = true
             setOnEditorActionListener { _, action, _ ->
                 if (action == EditorInfo.IME_ACTION_DONE) commit()
                 action == EditorInfo.IME_ACTION_DONE
@@ -61,6 +61,11 @@ class FolderTitle(private val launcher: Launcher, private val onClosing: () -> U
         }
         view.bringToFront()
         view.setText(open.info.title)
+        // Wie auf iOS: umbenennen nur im Bearbeitungsmodus
+        val editable = (launcher as? LetzgoLauncher)?.jiggleMode?.isActive == true
+        view.isFocusable = editable
+        view.isFocusableInTouchMode = editable
+        view.isLongClickable = editable
         view.visibility = View.VISIBLE
         place(open)
         view.animate().alpha(1f).setDuration(FADE_MS).setStartDelay(FADE_MS / 2).start()

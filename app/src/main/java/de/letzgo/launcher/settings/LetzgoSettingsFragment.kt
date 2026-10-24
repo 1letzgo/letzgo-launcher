@@ -13,7 +13,10 @@ import com.android.launcher3.util.Executors.THREAD_POOL_EXECUTOR
 import de.letzgo.launcher.update.AppUpdate
 import de.letzgo.launcher.update.AppUpdateDialog
 
-/** Launcher3-Einstellungen plus „Als Standard festlegen“ und „Nach Updates suchen“. */
+/**
+ * Launcher3-Einstellungen plus Raster und Icon-Größe ([HomeLayoutSettings]), „Als Standard
+ * festlegen“ und „Nach Updates suchen“.
+ */
 class LetzgoSettingsFragment : LauncherSettingsFragment() {
 
     private var updateDialog: AppUpdateDialog? = null
@@ -26,6 +29,7 @@ class LetzgoSettingsFragment : LauncherSettingsFragment() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         super.onCreatePreferences(savedInstanceState, rootKey)
         val screen = preferenceScreen
+        HomeLayoutSettings.addTo(screen)
         screen.addPreference(
             Preference(requireContext()).apply {
                 key = KEY_DEFAULT_HOME

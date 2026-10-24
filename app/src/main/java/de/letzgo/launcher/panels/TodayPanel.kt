@@ -51,33 +51,72 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
     private val content = LinearLayout(m3)
     private var grid = IconGrid.of(launcher)
 
+    // Wie auf iOS: Hinzufügen nur im Bearbeiten-Zustand (langes Drücken auf eine freie Stelle oder
+    // „Bearbeiten“ im Widget-Menü); bei leerer Seite immer
+    private var editing = false
+    private val addButton =
+        MaterialButton(m3).apply {
+            setText(R.string.today_add_widget)
+            setIconResource(R.drawable.ic_plus)
+            backgroundTintList =
+                ColorStateList.valueOf(M3.color(m3, MaterialR.attr.colorSecondaryContainer))
+            setTextColor(M3.color(m3, MaterialR.attr.colorOnSecondaryContainer))
+            iconTint = ColorStateList.valueOf(M3.color(m3, MaterialR.attr.colorOnSecondaryContainer))
+            setOnClickListener { pickWidget() }
+        }
+    private val doneButton =
+        MaterialButton(m3).apply {
+            setText(R.string.edit_bar_done)
+            setOnClickListener { setEditing(false) }
+        }
+    private val editRow =
+        LinearLayout(m3).apply {
+            gravity = Gravity.CENTER_HORIZONTAL
+            addView(addButton, LinearLayout.LayoutParams(WRAP, WRAP))
+            addView(doneButton, LinearLayout.LayoutParams(WRAP, WRAP).apply { marginStart = dp(8) })
+        }
+
     init {
-        val edit =
-            MaterialButton(m3).apply {
-                setText(R.string.today_add_widget)
-                backgroundTintList =
-                    ColorStateList.valueOf(M3.color(m3, MaterialR.attr.colorSecondaryContainer))
-                setTextColor(M3.color(m3, MaterialR.attr.colorOnSecondaryContainer))
-                setOnClickListener { pickWidget() }
-            }
         addView(
             scroll.apply {
+                isFillViewport = true
                 addView(
                     content.apply {
                         orientation = LinearLayout.VERTICAL
                         addView(widgets, LinearLayout.LayoutParams(MATCH, WRAP))
                         addView(
-                            edit,
-                            LinearLayout.LayoutParams(WRAP, WRAP).apply {
-                                gravity = Gravity.CENTER_HORIZONTAL
-                                topMargin = dp(8)
-                            },
+                            editRow,
+                            LinearLayout.LayoutParams(MATCH, WRAP).apply { topMargin = dp(8) },
                         )
+                        // Langes Drücken auf eine freie Stelle: bearbeiten
+                        setOnLongClickListener {
+                            performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                            setEditing(true)
+                            true
+                        }
                     }
                 )
             },
             LayoutParams(MATCH, MATCH),
         )
+        updateEditRow()
+    }
+
+    private fun setEditing(value: Boolean) {
+        editing = value
+        updateEditRow()
+    }
+
+    private fun updateEditRow() {
+        val empty = loadStacks().isEmpty()
+        editRow.visibility = if (editing || empty) VISIBLE else GONE
+        doneButton.visibility = if (editing) VISIBLE else GONE
+    }
+
+    override fun onBack(): Boolean {
+        if (!editing) return false
+        setEditing(false)
+        return true
     }
 
     override val backdropKey = Backdrop.TODAY
@@ -93,7 +132,10 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
         rebuild()
     }
 
-    override fun onClosed() = host.stopListening()
+    override fun onClosed() {
+        host.stopListening()
+        setEditing(false)
+    }
 
     override fun onBottomInset(bottom: Int) = scroll.setPadding(0, 0, 0, bottom)
 
@@ -153,6 +195,7 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
      */
     private fun rebuild() {
         widgets.removeAllViews()
+        updateEditRow()
         // Klein = zwei Spalten breit, mittel/groß = alle Spalten, Abstand wie zwischen Icons
         val columns = launcher.deviceProfile.inv.numColumns
         val gap = grid.gap
@@ -239,6 +282,9 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
                         }
                     } else {
                         null
+                    },
+                    M3Menu.Item(R.drawable.enter_home_gardening_icon, context.getString(R.string.today_edit)) {
+                        setEditing(true)
                     },
                     M3Menu.Item(R.drawable.ic_remove_no_shadow, context.getString(R.string.today_remove), destructive = true) {
                         confirmRemove(id, label)

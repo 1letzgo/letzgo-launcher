@@ -3,6 +3,8 @@ package de.letzgo.launcher
 import android.animation.ValueAnimator
 import android.content.Intent
 import android.graphics.Rect
+import android.graphics.RenderEffect
+import android.graphics.Shader
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
@@ -12,6 +14,7 @@ import com.android.launcher3.LauncherSettings.Favorites.CONTAINER_HOTSEAT
 import com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_APPLICATION
 import com.android.launcher3.AbstractFloatingView
 import com.android.launcher3.AbstractFloatingView.TYPE_ACTION_POPUP
+import com.android.launcher3.CellLayout
 import com.android.launcher3.Launcher
 import com.android.launcher3.DropTarget
 import com.android.launcher3.LauncherState
@@ -30,9 +33,11 @@ import com.android.launcher3.popup.SystemShortcut.WIDGETS
 import com.android.launcher3.util.Executors.MAIN_EXECUTOR
 import com.android.launcher3.util.Executors.THREAD_POOL_EXECUTOR
 import com.android.launcher3.touch.ItemClickHandler
+import com.android.launcher3.util.RunnableList
 import com.android.launcher3.util.TouchController
 import de.letzgo.launcher.edit.JiggleMode
 import de.letzgo.launcher.edit.JiggleTouchController
+import de.letzgo.launcher.model.AppUsage
 import de.letzgo.launcher.model.HomeScreenApps
 import de.letzgo.launcher.panels.AppLibraryPanel
 import de.letzgo.launcher.panels.PanelSwipeController
@@ -66,6 +71,7 @@ class LetzgoLauncher : Launcher() {
     val backdrop by lazy { Backdrop(this) }
     private val folderTitle by lazy { FolderTitle(this) { dimHomeForFolder(false) } }
     private var popupOpen = false
+    private var popupAnchor: View? = null
 
     private val syncAllApps = Runnable { HomeScreenApps.sync(this) }
     private val appsUpdateListener = AllAppsStore.OnUpdateListener(::scheduleSync)
@@ -141,6 +147,7 @@ class LetzgoLauncher : Launcher() {
         if (popup != popupOpen) {
             popupOpen = popup
             animateBackdrop(Backdrop.POPUP, popup)
+            blurAroundPopup(popup)
         }
         dimHomeForFolder(folder?.isOpen == true)
     }
@@ -182,6 +189,12 @@ class LetzgoLauncher : Launcher() {
         super.shouldDisableBackGesture() &&
             !appLibrary.isOpen && !today.isOpen && !jiggleMode.isActive && !jiggleMode.isPageOverviewOpen
 
+    /** Starts merken für die Vorschläge der Mediathek ([AppUsage]). */
+    override fun startActivitySafely(v: View?, intent: Intent, item: ItemInfo?): RunnableList? {
+        (item?.targetComponent ?: intent.component)?.let { AppUsage.record(this, it) }
+        return super.startActivitySafely(v, intent, item)
+    }
+
     /** Statt „Entfernen“/„Deinstallieren“ beim Ziehen gibt es Minus-Badges ([JiggleMode]). */
     private fun hideDropTargetBar() {
         dragController.removeDragListener(dropTargetBar)
@@ -203,10 +216,38 @@ class LetzgoLauncher : Launcher() {
 
     /** Im Bearbeitungsmodus kein Kontextmenü beim Anheben. */
     override fun getPopupControllerForAppIcons(): PopupController<Launcher> =
-        if (jiggleMode.isActive) NoPopup else super.getPopupControllerForAppIcons()
+        if (jiggleMode.isActive) NoPopup else Tracking(super.getPopupControllerForAppIcons())
 
     override fun getPopupControllerForHomeScreenItems(): PopupController<Launcher> =
-        if (jiggleMode.isActive) NoPopup else super.getPopupControllerForHomeScreenItems()
+        if (jiggleMode.isActive) NoPopup else Tracking(super.getPopupControllerForHomeScreenItems())
+
+    /** Merkt sich das Element, zu dem ein Kontextmenü gehört (bleibt scharf, [blurAroundPopup]). */
+    private inner class Tracking(private val inner: PopupController<Launcher>) : PopupController<Launcher> {
+        override fun show(view: View): Popup? {
+            popupAnchor = view
+            return inner.show(view)
+        }
+
+        override fun dismiss() = inner.dismiss()
+    }
+
+    /**
+     * Wie auf iOS: Bei offenem Kontextmenü werden die übrigen Elemente der Seite und des Docks
+     * unscharf, das gedrückte bleibt scharf.
+     */
+    private fun blurAroundPopup(on: Boolean) {
+        val radius = POPUP_BLUR_DP * resources.displayMetrics.density
+        val effect = if (on) RenderEffect.createBlurEffect(radius, radius, Shader.TileMode.CLAMP) else null
+        val page = workspace.getChildAt(workspace.currentPage) as? CellLayout
+        listOfNotNull(page, hotseat).forEach { layout ->
+            val container = layout.shortcutsAndWidgets
+            for (i in 0 until container.childCount) {
+                val child = container.getChildAt(i)
+                child.setRenderEffect(if (child === popupAnchor) null else effect)
+            }
+        }
+        if (!on) popupAnchor = null
+    }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -319,5 +360,6 @@ class LetzgoLauncher : Launcher() {
         const val SYNC_DELAY_MS = 300L
         const val DOCK_ACCESSORY_GAP_DP = 20f
         const val FOLDER_FADE_MS = 150L
+        const val POPUP_BLUR_DP = 6f
     }
 }

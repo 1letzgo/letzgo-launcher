@@ -138,11 +138,16 @@ object AppWidgetSystemShortcuts : PopupDataMapper {
     override fun getPopupDataByItemInfo(itemInfo: ItemInfo): List<PopupData>? {
         return if (itemInfo.itemType != ITEM_TYPE_APPWIDGET) null
         else if (itemInfo is LauncherAppWidgetInfo && itemInfo.isReconfigurable) {
-            PopupDataSource.withEditHome(listOf(PopupDataSource.removePopupData, widgetSettingsPopupData))
+            withSizes(itemInfo, PopupDataSource.withEditHome(listOf(PopupDataSource.removePopupData, widgetSettingsPopupData)))
         } else {
-            PopupDataSource.withEditHome(listOf(PopupDataSource.removePopupData))
+            withSizes(itemInfo, PopupDataSource.withEditHome(listOf(PopupDataSource.removePopupData)))
         }
     }
+
+    /** letzgo: Größen klein/mittel/groß wie auf iOS. */
+    private fun withSizes(itemInfo: ItemInfo, items: List<PopupData>): List<PopupData> =
+        if (BuildConfig.LETZGO_POPUPS) de.letzgo.launcher.popup.WidgetSizeShortcut.withSizes(itemInfo, items)
+        else items
 }
 
 class FileSystemShortcuts

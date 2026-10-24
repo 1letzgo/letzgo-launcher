@@ -5,9 +5,9 @@ import android.graphics.Rect
 import android.view.Gravity
 import android.view.View
 import android.widget.FrameLayout
-import com.android.launcher3.InsettableFrameLayout
 import com.android.launcher3.Launcher
 import com.android.launcher3.R
+import com.android.launcher3.views.BaseDragLayer
 import com.google.android.material.button.MaterialButton
 import de.letzgo.launcher.ui.M3
 import com.google.android.material.R as MaterialR
@@ -48,7 +48,7 @@ class EditBar(
         if (bar.parent == null) {
             // Wie auf iOS im Bereich der Statusleiste, damit die erste Icon-Reihe frei bleibt
             val lp =
-                InsettableFrameLayout.LayoutParams(MATCH, launcher.deviceProfile.insets.top).apply {
+                BaseDragLayer.LayoutParams(MATCH, launcher.deviceProfile.insets.top).apply {
                     gravity = Gravity.TOP
                     ignoreInsets = true
                 }
