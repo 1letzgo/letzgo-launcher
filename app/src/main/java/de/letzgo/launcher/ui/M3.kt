@@ -1,7 +1,11 @@
 package de.letzgo.launcher.ui
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.content.res.Configuration
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.RippleDrawable
 import android.view.ContextThemeWrapper
 import androidx.annotation.AttrRes
 import androidx.core.graphics.ColorUtils
@@ -26,6 +30,22 @@ object M3 {
     /** M3-Farbe mit Deckkraft [alpha] (0..1), damit das Hintergrundbild durchscheint. */
     fun color(context: Context, @AttrRes attr: Int, alpha: Float): Int =
         ColorUtils.setAlphaComponent(color(context, attr), (alpha * 255).toInt())
+
+    /**
+     * Markierung beim Antippen (Ripple) in M3-Farbe, auf eine Form begrenzt: [cornerRadius] in px,
+     * oder null für einen Kreis (Icons).
+     */
+    fun ripple(context: Context, cornerRadius: Float?): RippleDrawable {
+        val mask =
+            GradientDrawable().apply {
+                setColor(Color.WHITE)
+                if (cornerRadius == null) shape = GradientDrawable.OVAL else this.cornerRadius = cornerRadius
+            }
+        val color = color(context, MaterialR.attr.colorOnSurface, RIPPLE_ALPHA)
+        return RippleDrawable(ColorStateList.valueOf(color), null, mask)
+    }
+
+    private const val RIPPLE_ALPHA = 0.12f
 
     /** Deckkraft halbtransparenter Flächen: Seiten (Mediathek, Heute) und Dock. */
     const val PAGE_ALPHA = 0.8f

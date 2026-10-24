@@ -9,6 +9,7 @@ import android.text.TextWatcher
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
@@ -17,8 +18,10 @@ import android.widget.TextView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.android.launcher3.DropTarget
 import com.android.launcher3.Launcher
 import com.android.launcher3.R
+import com.android.launcher3.dragndrop.DragOptions
 import com.android.launcher3.icons.BitmapInfo.Companion.FLAG_THEMED
 import com.android.launcher3.model.data.AppInfo
 import com.android.launcher3.util.Executors.MAIN_EXECUTOR
@@ -27,6 +30,7 @@ import com.android.launcher3.util.PackageManagerHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.letzgo.launcher.model.HomeScreenApps
 import de.letzgo.launcher.ui.AppListRow
+import de.letzgo.launcher.ui.DragIconView
 import de.letzgo.launcher.ui.M3
 import de.letzgo.launcher.ui.SearchBar
 import com.google.android.material.R as MaterialR
@@ -34,8 +38,8 @@ import com.google.android.material.R as MaterialR
 /**
  * App-Mediathek als Seite rechts neben der letzten Homescreen-Seite (Logik wie iOS, Gestaltung
  * Material 3): Apps nach Kategorien in Karten, Suchleiste oben; Suche oder Tippen auf einen
- * Kartenstapel zeigt eine alphabetische Liste. Enthält alle Apps; über das Kontextmenü kommen Apps
- * auf den Homescreen, die dort nicht liegen.
+ * Kartenstapel zeigt eine alphabetische Liste. Enthält alle Apps; per Festhalten und Ziehen oder über
+ * das Kontextmenü kommen Apps auf den Homescreen.
  */
 class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false) {
 
@@ -48,6 +52,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
     private var listFilter: AppCategory? = null
     private var grid = IconGrid.of(launcher)
     private var listMode = false
+    private val touchSlop = ViewConfiguration.get(launcher).scaledTouchSlop
 
     private val searchBar =
         SearchBar(m3, R.string.library_search_hint, editable = true).apply {
@@ -191,13 +196,38 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
             .hideSoftInputFromWindow(windowToken, 0)
 
     private fun appIcon(app: AppInfo, size: Int) =
-        ImageView(context).apply {
+        DragIconView(context).apply {
             setImageDrawable(app.newIcon(context, FLAG_THEMED))
             layoutParams = ViewGroup.LayoutParams(size, size)
             contentDescription = app.title
+            tag = app
+            foreground = M3.ripple(m3, cornerRadius = null)
             setOnClickListener { launch(it, app) }
-            setOnLongClickListener { showMenu(app) }
+            setOnLongClickListener { startDrag(it, app) }
         }
+
+    /**
+     * Langes Drücken hebt die App an: Wird sie gezogen, gleitet die Mediathek weg und die App lässt
+     * sich auf dem Homescreen ablegen; wird sie nur gehalten, öffnet sich das Kontextmenü.
+     */
+    private fun startDrag(view: View, app: AppInfo): Boolean {
+        view.tag = app
+        val options =
+            DragOptions().apply {
+                preDragCondition =
+                    object : DragOptions.PreDragCondition {
+                        override fun shouldStartDrag(distanceDragged: Double) = distanceDragged > touchSlop
+
+                        override fun onPreDragStart(dragObject: DropTarget.DragObject) {}
+
+                        override fun onPreDragEnd(dragObject: DropTarget.DragObject, dragStarted: Boolean) {
+                            if (dragStarted) close(animate = true) else showMenu(app)
+                        }
+                    }
+            }
+        launcher.workspace.beginDragShared(view, launcher.appsView, options)
+        return true
+    }
 
     private inner class TileAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         override fun getItemCount() = groups.size
@@ -234,6 +264,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
                                 }
                             )
                         }
+                        foreground = M3.ripple(m3, cornerRadius = M3.SHAPE_LARGE_DP * density)
                         setOnClickListener { showList(group.category) }
                     }
                 )
@@ -267,8 +298,9 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
             val app = items[position]
             (holder.itemView as AppListRow).apply {
                 bind(app.newIcon(context, FLAG_THEMED), app.title)
+                icon.tag = app
                 setOnClickListener { launch(it, app) }
-                setOnLongClickListener { showMenu(app) }
+                setOnLongClickListener { startDrag(icon, app) }
             }
         }
     }

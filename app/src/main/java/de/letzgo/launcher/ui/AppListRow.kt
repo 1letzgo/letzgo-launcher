@@ -15,7 +15,7 @@ import com.google.android.material.R as MaterialR
 class AppListRow(context: Context) : LinearLayout(context) {
 
     private val density = resources.displayMetrics.density
-    private val icon = ImageView(context)
+    val icon = DragIconView(context)
     private val title =
         TextView(context).apply {
             setTextColor(M3.color(context, MaterialR.attr.colorOnSurface))
@@ -28,9 +28,9 @@ class AppListRow(context: Context) : LinearLayout(context) {
         gravity = Gravity.CENTER_VERTICAL
         minimumHeight = dp(56)
         layoutParams = RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        val ripple = TypedValue()
-        context.theme.resolveAttribute(android.R.attr.selectableItemBackground, ripple, true)
-        setBackgroundResource(ripple.resourceId)
+        // Abgerundete Markierung statt des rechteckigen Standard-Ripples
+        background = M3.ripple(context, cornerRadius = dp(28).toFloat())
+        setPadding(dp(12), 0, dp(12), 0)
         addView(icon, LayoutParams(dp(40), dp(40)))
         addView(title, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(16) })
     }

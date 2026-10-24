@@ -62,6 +62,7 @@ android {
         buildConfigField("boolean", "SPRING_LOADED_SHRINK", "false")
         buildConfigField("boolean", "FOLDER_PREVIEW_GRID", "true")
         buildConfigField("boolean", "NUMERIC_BADGES", "true")
+        buildConfigField("boolean", "WIDGETS_ALIGN_TO_ICONS", "true")
     }
 
     buildFeatures {

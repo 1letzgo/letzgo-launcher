@@ -86,6 +86,8 @@ Launcher3-Ressourcen registriert und haben deshalb Vorrang; so lassen sich Launc
   (`states/SpringLoadedState.java`)
 - `BuildConfig.FOLDER_PREVIEW_GRID`: Ordner-Vorschau als 3 × 3-Raster, Ordner immer mit vollen
   Seiten (`folder/ClippedFolderIconLayoutRule.java`, `folder/FolderGridOrganizer.java`)
+- `BuildConfig.WIDGETS_ALIGN_TO_ICONS`: Widgets auf dem Homescreen enden bündig mit den Icons
+  (`deviceprofile/WorkspaceProfileNonResponsiveFactory.kt`)
 - `BuildConfig.NUMERIC_BADGES`: rote Zahlen-Badges statt Punkten (`BubbleTextView.java`,
   `folder/FolderIcon.java`; Zeichnen in `iconloaderlib/.../DotRenderer.java`)
 

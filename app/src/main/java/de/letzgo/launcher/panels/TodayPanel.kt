@@ -12,6 +12,9 @@ import android.util.SizeF
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
+import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -23,6 +26,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.letzgo.launcher.ui.M3
 import de.letzgo.launcher.ui.SearchBar
 import java.util.Date
+import kotlin.math.abs
 import com.google.android.material.R as MaterialR
 
 /**
@@ -151,11 +155,9 @@ class TodayPanel(launcher: Launcher, onSearch: () -> Unit) : SidePanel(launcher,
             val height = if (tall) square * 2 + gap else square
             val view = host.createView(context, id, info)
             view.updateAppWidgetSize(Bundle(), listOf(SizeF(width / density, height / density)))
-            view.setOnLongClickListener {
-                confirmRemove(id, info.loadLabel(context.packageManager))
-                true
-            }
-            val card = RoundedFrame(view).apply { background = card() }
+            val card =
+                RoundedFrame(view) { confirmRemove(id, info.loadLabel(context.packageManager)) }
+                    .apply { background = card() }
             if (wide) {
                 row = null
                 widgets.addView(card, LinearLayout.LayoutParams(width, height).apply { bottomMargin = gap })
@@ -188,12 +190,49 @@ class TodayPanel(launcher: Launcher, onSearch: () -> Unit) : SidePanel(launcher,
             .show()
     }
 
-    /** Rahmen mit abgerundetem Hintergrund, der den Widget-Inhalt beschneidet. */
-    private class RoundedFrame(child: View) : android.widget.FrameLayout(child.context) {
+    /**
+     * Rahmen mit abgerundetem Hintergrund, der den Widget-Inhalt beschneidet. Erkennt langes Drücken
+     * selbst, weil Widgets Berührungen ihrer Kind-Views nicht weiterreichen.
+     */
+    private class RoundedFrame(child: View, private val onLongPress: () -> Unit) :
+        android.widget.FrameLayout(child.context) {
+
+        private val longPressTimeout = ViewConfiguration.getLongPressTimeout().toLong()
+        private val touchSlop = ViewConfiguration.get(child.context).scaledTouchSlop
+        private var downX = 0f
+        private var downY = 0f
+        private var longPressed = false
+        private val longPress = Runnable {
+            longPressed = true
+            performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            onLongPress()
+        }
+
         init {
             clipToOutline = true
             addView(child, LayoutParams(MATCH, MATCH))
         }
+
+        override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+            when (ev.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    downX = ev.x
+                    downY = ev.y
+                    longPressed = false
+                    postDelayed(longPress, longPressTimeout)
+                }
+                MotionEvent.ACTION_MOVE ->
+                    if (abs(ev.x - downX) > touchSlop || abs(ev.y - downY) > touchSlop) {
+                        removeCallbacks(longPress)
+                    }
+                MotionEvent.ACTION_UP,
+                MotionEvent.ACTION_CANCEL -> removeCallbacks(longPress)
+            }
+            // Nach dem langen Drücken bekommt das Widget den Rest der Geste nicht mehr
+            return longPressed
+        }
+
+        override fun onTouchEvent(event: MotionEvent) = longPressed
     }
 
     private fun loadIds(): List<Int> =
