@@ -34,6 +34,7 @@ import com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_CUSTOM_APPWIDG
 import com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_FILE_SYSTEM_FILE
 import com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_FILE_SYSTEM_FOLDER
 import com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_FOLDER
+import com.android.launcher3.BuildConfig
 import com.android.launcher3.R
 import com.android.launcher3.SecondaryDropTarget
 import com.android.launcher3.Utilities
@@ -67,17 +68,34 @@ object PopupDataSource {
             labelResId = R.string.remove_system_shortcut_label,
             category = PopupCategory.SYSTEM_SHORTCUT_FIXED,
         ) { activityContext: ActivityContext, itemInfo: ItemInfo, view: View ->
+            if (BuildConfig.LETZGO_POPUPS) {
+                // letzgo: gleiche Rückfrage wie Minus-Knopf und App-Menü
+                de.letzgo.launcher.edit.RemoveItem.confirm(activityContext, itemInfo, view)
+                return@PopupData
+            }
             AbstractFloatingView.closeAllOpenViews(activityContext)
             val dropTargetHandler: DropTargetHandler = activityContext.dropTargetHandler
             dropTargetHandler.prepareToUndoDelete(itemInfo)
             dropTargetHandler.onDeleteComplete(itemInfo, view)
+        }
+
+    /** letzgo: vor die Einträge für Ordner und Widgets „Home-Bildschirm bearbeiten“ setzen. */
+    fun withEditHome(items: List<PopupData>): List<PopupData> =
+        if (BuildConfig.LETZGO_POPUPS) {
+            listOf(de.letzgo.launcher.popup.EditHomeShortcut.POPUP_DATA) + items
+        } else {
+            items
         }
 }
 
 object FolderSystemShortcuts : PopupDataMapper {
 
     override fun getPopupDataByItemInfo(itemInfo: ItemInfo): List<PopupData>? =
-        if (itemInfo.itemType == ITEM_TYPE_FOLDER) listOf(PopupDataSource.removePopupData) else null
+        if (itemInfo.itemType == ITEM_TYPE_FOLDER) {
+            PopupDataSource.withEditHome(listOf(PopupDataSource.removePopupData))
+        } else {
+            null
+        }
 }
 
 object AppPairSystemShortcuts : PopupDataMapper {
@@ -120,9 +138,9 @@ object AppWidgetSystemShortcuts : PopupDataMapper {
     override fun getPopupDataByItemInfo(itemInfo: ItemInfo): List<PopupData>? {
         return if (itemInfo.itemType != ITEM_TYPE_APPWIDGET) null
         else if (itemInfo is LauncherAppWidgetInfo && itemInfo.isReconfigurable) {
-            listOf(PopupDataSource.removePopupData, widgetSettingsPopupData)
+            PopupDataSource.withEditHome(listOf(PopupDataSource.removePopupData, widgetSettingsPopupData))
         } else {
-            listOf(PopupDataSource.removePopupData)
+            PopupDataSource.withEditHome(listOf(PopupDataSource.removePopupData))
         }
     }
 }
