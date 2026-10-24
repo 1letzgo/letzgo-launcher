@@ -88,6 +88,10 @@ Launcher3-Ressourcen registriert und haben deshalb Vorrang; so lassen sich Launc
   Seiten (`folder/ClippedFolderIconLayoutRule.java`, `folder/FolderGridOrganizer.java`)
 - `BuildConfig.WIDGETS_ALIGN_TO_ICONS`: Widgets auf dem Homescreen enden bündig mit den Icons
   (`deviceprofile/WorkspaceProfileNonResponsiveFactory.kt`)
+- `BuildConfig.WIDGETS_IOS_SIZES`: Widgets auf dem Homescreen nur klein/mittel/groß, ohne freies
+  Skalieren (`widget/LauncherAppWidgetProviderInfo.java`)
+- `BuildConfig.FOLDER_CATEGORY_NAMES`: neue Ordner nach Mediathek-Kategorie benennen
+  (`folder/FolderNameProvider.java`)
 - `BuildConfig.NUMERIC_BADGES`: rote Zahlen-Badges statt Punkten (`BubbleTextView.java`,
   `folder/FolderIcon.java`; Zeichnen in `iconloaderlib/.../DotRenderer.java`)
 

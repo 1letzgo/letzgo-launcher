@@ -64,6 +64,7 @@ android {
         buildConfigField("boolean", "NUMERIC_BADGES", "true")
         buildConfigField("boolean", "WIDGETS_ALIGN_TO_ICONS", "true")
         buildConfigField("boolean", "FOLDER_CATEGORY_NAMES", "true")
+        buildConfigField("boolean", "WIDGETS_IOS_SIZES", "true")
     }
 
     buildFeatures {

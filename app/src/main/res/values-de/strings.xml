@@ -34,6 +34,8 @@
     <string name="search_web">„%1$s“ im Web suchen</string>
     <string name="today_add_widget">Widget hinzufügen</string>
     <string name="today_remove_widget">„%1$s“ entfernen?</string>
+    <string name="today_stack_with_above">Mit Widget darüber stapeln</string>
+    <string name="today_unstack">Aus Stapel lösen</string>
     <string name="today_remove">Entfernen</string>
 
     <!-- Einstellungen (de.letzgo.launcher.settings) -->
