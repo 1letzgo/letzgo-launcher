@@ -99,7 +99,7 @@ class LetzgoLauncher : Launcher() {
 
     override fun setupViews() {
         super.setupViews()
-        dock = DockBackground(hotseat).apply { onCapsuleChanged = ::layoutDockAccessories }
+        dock = DockBackground(this).apply { onCapsuleChanged = ::layoutDockAccessories }
         dock.attach()
         showPageDots()
         (workspace.pageIndicator as View).addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->

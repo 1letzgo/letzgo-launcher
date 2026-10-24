@@ -45,7 +45,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
 
     private data class Group(val category: AppCategory, val apps: List<AppInfo>)
 
-    private val m3 = M3.context(launcher)
+    private val m3 = M3.darkContext(launcher)
     private val density = resources.displayMetrics.density
     private var groups = emptyList<Group>()
     private var allApps = emptyList<AppInfo>()

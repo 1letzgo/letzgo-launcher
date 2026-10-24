@@ -2,7 +2,6 @@ package de.letzgo.launcher.ui
 
 import android.content.Context
 import android.content.res.ColorStateList
-import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
@@ -23,6 +22,13 @@ object M3 {
 
     fun context(base: Context): Context =
         ContextThemeWrapper(base, MaterialR.style.Theme_Material3_DynamicColors_DayNight)
+
+    /**
+     * Immer das dunkle M3-Schema (Material You), unabhängig vom Systemmodus: für Flächen über dem
+     * Hintergrundbild wie App-Mediathek, Heute-Seite und Suche.
+     */
+    fun darkContext(base: Context): Context =
+        ContextThemeWrapper(base, MaterialR.style.Theme_Material3_DynamicColors_Dark)
 
     fun color(context: Context, @AttrRes attr: Int): Int =
         MaterialColors.getColor(context, attr, "M3")
@@ -51,13 +57,8 @@ object M3 {
     const val PAGE_ALPHA = 0.8f
     const val DOCK_ALPHA = 0.7f
 
-    /** Helles Schema (Tag)? Dann brauchen Status- und Navigationsleiste dunkle Symbole. */
-    fun isLight(context: Context): Boolean =
-        context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK !=
-            Configuration.UI_MODE_NIGHT_YES
-
     /**
-     * Systemleisten passend zu einer deckenden M3-Fläche. [slot] ist ein Zustand im
+     * Helle Systemleisten-Symbole über den dunklen Flächen ([darkContext]). [slot] ist ein Zustand im
      * [SystemUiController]; der höchste gesetzte gewinnt. Seiten nutzen den Platz des App-Drawers,
      * den letzgo nicht hat, die Suche darüber den des Widget-Blatts.
      */
@@ -67,11 +68,7 @@ object M3 {
         slot: Int = SystemUiController.UI_STATE_ALL_APPS,
     ) {
         val flags =
-            when {
-                !onSurface -> 0
-                isLight(launcher) -> SystemUiController.FLAG_LIGHT_NAV or SystemUiController.FLAG_LIGHT_STATUS
-                else -> SystemUiController.FLAG_DARK_NAV or SystemUiController.FLAG_DARK_STATUS
-            }
+            if (onSurface) SystemUiController.FLAG_DARK_NAV or SystemUiController.FLAG_DARK_STATUS else 0
         launcher.systemUiController?.updateUiState(slot, flags)
     }
 

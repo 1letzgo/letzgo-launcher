@@ -33,7 +33,7 @@ import com.google.android.material.R as MaterialR
  */
 class SearchOverlay(private val launcher: Launcher) : FrameLayout(launcher), Insettable {
 
-    private val m3 = M3.context(launcher)
+    private val m3 = M3.darkContext(launcher)
     private val density = resources.displayMetrics.density
     private val backCallback = OnBackInvokedCallback { close() }
     private var apps = emptyList<AppInfo>()

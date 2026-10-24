@@ -1,44 +1,60 @@
 package de.letzgo.launcher.ui
 
-import android.content.res.Resources
 import android.graphics.Canvas
-import android.graphics.ColorFilter
 import android.graphics.Paint
-import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.graphics.RectF
-import android.graphics.drawable.Drawable
 import android.view.View
+import android.view.ViewTreeObserver
 import com.android.launcher3.BubbleTextView
 import com.android.launcher3.Hotseat
+import com.android.launcher3.InsettableFrameLayout
+import com.android.launcher3.Launcher
 import com.google.android.material.R as MaterialR
 
 /**
  * Halbtransparente Material-3-Fläche hinter den Dock-Icons (Tonfläche „surface container“, große
- * Ecken). Liegt als
- * Hintergrund auf dem [Hotseat], reicht fast bis an die Bildschirmränder und umschließt die Icons
- * vertikal mit etwas Abstand.
+ * Ecken). Reicht fast bis an die Bildschirmränder und umschließt die Icons vertikal mit etwas Abstand.
+ *
+ * Eigene View in der DragLayer direkt unter dem [Hotseat], nicht dessen Hintergrund: Die Fläche ragt
+ * über den Hotseat hinaus, und sobald er halbtransparent oder in einer eigenen Ebene gezeichnet wird
+ * (beim Wechsel auf Heute-Seite oder Mediathek), schneidet Android an seinen Rändern ab. Position,
+ * Verschiebung, Skalierung und Deckkraft übernimmt die View vor jedem Frame vom Hotseat.
  */
-class DockBackground(private val hotseat: Hotseat) : Drawable(), View.OnLayoutChangeListener {
+class DockBackground(private val launcher: Launcher) :
+    View(launcher), View.OnLayoutChangeListener, ViewTreeObserver.OnPreDrawListener {
 
-    private val density = Resources.getSystem().displayMetrics.density
+    private val hotseat: Hotseat = launcher.hotseat
+    private val density = resources.displayMetrics.density
     private val fill =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = M3.color(M3.context(hotseat.context), MaterialR.attr.colorSurfaceContainer, M3.DOCK_ALPHA)
+            color = M3.color(M3.context(launcher), MaterialR.attr.colorSurfaceContainer, M3.DOCK_ALPHA)
         }
+    // Kapsel in Hotseat-Koordinaten
     private val capsule = RectF()
+    private val iconBounds = Rect()
+    private val location = IntArray(2)
+    private val hotseatLocation = IntArray(2)
+    private var lastState = 0
 
     /** Oberkante der Kapsel in Hotseat-Koordinaten; null, solange noch nichts gelayoutet ist. */
     val capsuleTop: Float?
         get() = capsule.top.takeUnless { capsule.isEmpty }
 
-    /** Wird aufgerufen, wenn sich die Lage der Kapsel ändert (Seitenpunkte und Suchen-Pille folgen). */
+    /** Wird aufgerufen, wenn sich die Lage der Kapsel ändert (Seitenpunkte folgen). */
     var onCapsuleChanged: () -> Unit = {}
-    private val iconBounds = Rect()
 
     fun attach() {
-        hotseat.background = this
+        val dragLayer = launcher.dragLayer
+        val lp =
+            InsettableFrameLayout.LayoutParams(
+                    InsettableFrameLayout.LayoutParams.MATCH_PARENT,
+                    InsettableFrameLayout.LayoutParams.MATCH_PARENT,
+                )
+                .apply { ignoreInsets = true }
+        dragLayer.addView(this, dragLayer.indexOfChild(hotseat), lp)
         hotseat.shortcutsAndWidgets.addOnLayoutChangeListener(this)
+        dragLayer.viewTreeObserver.addOnPreDrawListener(this)
     }
 
     override fun onLayoutChange(
@@ -58,27 +74,43 @@ class DockBackground(private val hotseat: Hotseat) : Drawable(), View.OnLayoutCh
             hotseat.width - margin,
             iconTop + iconBounds.height() + padding,
         )
-        invalidateSelf()
+        invalidate()
         onCapsuleChanged()
     }
 
-    override fun draw(canvas: Canvas) {
+    /**
+     * Übernimmt Sichtbarkeit und Deckkraft des Hotseats; zeichnet nur neu, wenn er sich bewegt oder
+     * skaliert hat (sonst entstünde eine Endlosschleife von Frames).
+     */
+    override fun onPreDraw(): Boolean {
+        val visible = hotseat.isShown && hotseat.alpha > 0f
+        val newVisibility = if (visible) VISIBLE else INVISIBLE
+        if (visibility != newVisibility) visibility = newVisibility
+        if (alpha != hotseat.alpha) alpha = hotseat.alpha
+        hotseat.getLocationInWindow(hotseatLocation)
+        val state = (hotseatLocation[0] * 31 + hotseatLocation[1]) * 31 + hotseat.scaleX.hashCode()
+        if (state != lastState) {
+            lastState = state
+            invalidate()
+        }
+        return true
+    }
+
+    override fun onDraw(canvas: Canvas) {
         if (capsule.isEmpty) return
+        // Hotseat-Koordinaten in eigene umrechnen, inklusive Verschiebung und Skalierung
+        getLocationInWindow(location)
+        hotseat.getLocationInWindow(hotseatLocation)
+        canvas.save()
+        canvas.translate(
+            (hotseatLocation[0] - location[0]).toFloat(),
+            (hotseatLocation[1] - location[1]).toFloat(),
+        )
+        canvas.scale(hotseat.scaleX, hotseat.scaleY)
         val radius = M3.SHAPE_EXTRA_LARGE_DP * density
         canvas.drawRoundRect(capsule, radius, radius, fill)
+        canvas.restore()
     }
-
-    override fun setAlpha(alpha: Int) {
-        fill.alpha = alpha
-        invalidateSelf()
-    }
-
-    override fun setColorFilter(colorFilter: ColorFilter?) {
-        fill.colorFilter = colorFilter
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun getOpacity() = PixelFormat.TRANSLUCENT
 
     private companion object {
         const val MARGIN_DP = 12f
