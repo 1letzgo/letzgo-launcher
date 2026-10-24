@@ -13,6 +13,7 @@ import com.android.launcher3.DropTarget
 import com.android.launcher3.LauncherState
 import com.android.launcher3.allapps.AllAppsStore
 import com.android.launcher3.dragndrop.DragController
+import com.android.launcher3.folder.Folder
 import com.android.launcher3.dragndrop.DragOptions
 import com.android.launcher3.model.data.FolderInfo
 import com.android.launcher3.model.data.ItemInfo
@@ -59,6 +60,7 @@ class LetzgoLauncher : Launcher() {
         SearchOverlay(this)
     }
     private lateinit var dock: DockBackground
+    private var homeDimmedForFolder = false
 
     private val syncAllApps = Runnable { HomeScreenApps.sync(this) }
     private val appsUpdateListener = AllAppsStore.OnUpdateListener(::scheduleSync)
@@ -115,6 +117,21 @@ class LetzgoLauncher : Launcher() {
                 override fun onDragEnd() {}
             }
         )
+    }
+
+    /**
+     * Hinter einem offenen Ordner tritt der Homescreen zurück, damit durch den halbtransparenten
+     * Ordner nur das Hintergrundbild scheint und keine Icons oder Beschriftungen.
+     */
+    override fun onDragLayerHierarchyChanged() {
+        super.onDragLayerHierarchyChanged()
+        val folderOpen = Folder.getOpen(this) != null
+        if (folderOpen == homeDimmedForFolder) return
+        homeDimmedForFolder = folderOpen
+        val alpha = if (folderOpen) 0f else 1f
+        listOf(workspace, hotseat, workspace.pageIndicator as View).forEach {
+            it.animate().alpha(alpha).setDuration(FOLDER_FADE_MS).start()
+        }
     }
 
     /** Statt „Entfernen“/„Deinstallieren“ beim Ziehen gibt es Minus-Badges ([JiggleMode]). */
@@ -256,5 +273,6 @@ class LetzgoLauncher : Launcher() {
     private companion object {
         const val SYNC_DELAY_MS = 300L
         const val DOCK_ACCESSORY_GAP_DP = 20f
+        const val FOLDER_FADE_MS = 150L
     }
 }
