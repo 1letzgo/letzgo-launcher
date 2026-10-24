@@ -199,8 +199,8 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
         // Klein = zwei Spalten breit, mittel/groß = alle Spalten, Abstand wie zwischen Icons
         val columns = launcher.deviceProfile.inv.numColumns
         val gap = grid.gap
-        val full = grid.width(columns)
-        val square = grid.width(columns / 2)
+        val full = grid.fullWidth
+        val square = grid.halfWidth
         var row: LinearLayout? = null
         val stacks = loadStacks()
         stacks.forEachIndexed { index, stack ->
@@ -253,7 +253,7 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
     private fun showMenu(anchor: View, stackIndex: Int, id: Int, label: CharSequence) {
         val stacks = loadStacks()
         val stack = stacks[stackIndex]
-        val current = widgetManager.getAppWidgetInfo(stack.first())?.let { sizeOf(stack.first(), it, grid.width(2)) }
+        val current = widgetManager.getAppWidgetInfo(stack.first())?.let { sizeOf(stack.first(), it, grid.halfWidth) }
         val items =
             Size.entries.map { size ->
                 M3Menu.Item(null, context.getString(size.label), checked = size == current) {

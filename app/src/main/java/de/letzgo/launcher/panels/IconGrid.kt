@@ -11,12 +11,24 @@ import com.android.launcher3.Launcher
  * @property inset Abstand vom Bildschirmrand bis zur Außenkante der ersten bzw. letzten Spalte
  * @property pitch Abstand von einer Icon-Kante zur gleichen Kante in der nächsten Spalte
  * @property iconSize Kantenlänge eines Icons
+ * @property columns Spalten des Rasters
  * @property top Oberkante der ersten Rasterreihe (dort beginnen auch Widgets), in Fensterkoordinaten
  */
-data class IconGrid(val inset: Int, val pitch: Int, val iconSize: Int, val top: Int) {
+data class IconGrid(val inset: Int, val pitch: Int, val iconSize: Int, val top: Int, val columns: Int) {
 
     /** Breite über alle Spalten, von der linken Kante der ersten bis zur rechten der letzten. */
     fun width(columns: Int) = (columns - 1) * pitch + iconSize
+
+    /** Breite über alle Spalten des Rasters. */
+    val fullWidth
+        get() = width(columns)
+
+    /**
+     * Breite einer halben Zeile (zwei Kacheln bzw. kleine Widgets nebeneinander), auch bei ungerader
+     * Spaltenzahl bündig mit beiden Rändern.
+     */
+    val halfWidth
+        get() = (fullWidth - gap) / 2
 
     /** Lücke zwischen zwei benachbarten Icons. */
     val gap
@@ -33,7 +45,7 @@ data class IconGrid(val inset: Int, val pitch: Int, val iconSize: Int, val top: 
                 val inset = (screenWidth * 0.06f).toInt()
                 val top = launcher.deviceProfile.insets.top +
                     launcher.resources.getDimensionPixelSize(com.android.launcher3.R.dimen.dynamic_grid_edge_margin)
-                return IconGrid(inset, (screenWidth - 2 * inset - iconSize) / (columns - 1).coerceAtLeast(1), iconSize, top)
+                return IconGrid(inset, (screenWidth - 2 * inset - iconSize) / (columns - 1).coerceAtLeast(1), iconSize, top, columns)
             }
             val first = Rect().also { page.cellToRect(0, 0, 1, 1, it) }
             val last = Rect().also { page.cellToRect(columns - 1, 0, 1, 1, it) }
@@ -45,7 +57,7 @@ data class IconGrid(val inset: Int, val pitch: Int, val iconSize: Int, val top: 
             val container = page.shortcutsAndWidgets
             val containerPos = IntArray(2).also(container::getLocationInWindow)
             val top = containerPos[1] + first.top - container.top
-            return IconGrid(left, pitch, iconSize, top)
+            return IconGrid(left, pitch, iconSize, top, columns)
         }
     }
 }

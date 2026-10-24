@@ -79,7 +79,8 @@ class CategoryFolder(
         this.apps = apps
         this.grid = grid
         title.setText(category.title)
-        val columns = COLUMNS
+        // Wie Ordner auf dem Homescreen: so viele Spalten wie das Raster
+        val columns = grid.columns
         val padding = dp(SHEET_PADDING_DP)
         list.layoutManager = GridLayoutManager(context, columns)
         list.setPadding(padding, padding, padding, padding)
@@ -198,7 +199,6 @@ class CategoryFolder(
     private companion object {
         const val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
         const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
-        const val COLUMNS = 4
         const val SHEET_PADDING_DP = 16
         const val LABEL_HEIGHT_DP = 18
         const val OPEN_MS = 400L

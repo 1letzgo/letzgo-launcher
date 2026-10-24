@@ -107,7 +107,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
     override val backdropKey = Backdrop.LIBRARY
 
     override fun onOpening() {
-        // Karten fluchten mit den Icon-Spalten: jede Karte ist zwei Spalten breit
+        // Karten fluchten mit den Icon-Spalten: zwei Karten füllen die Breite aller Spalten
         grid = IconGrid.of(launcher)
         // Suchleiste beginnt auf Höhe der ersten Icon-Reihe des Homescreens
         val own = IntArray(2).also(::getLocationInWindow)
@@ -289,7 +289,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             val group = groups[position]
-            val tileSize = grid.width(2)
+            val tileSize = grid.halfWidth
             val cell = (tileSize - dp(TILE_PADDING) * 2 - dp(TILE_GAP)) / 2
             val side = if (position % 2 == 0) Gravity.START else Gravity.END
             val tile = holder.itemView as LinearLayout
