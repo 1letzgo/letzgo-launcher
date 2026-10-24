@@ -1,5 +1,8 @@
 package de.letzgo.launcher.panels
 
+import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.Picture
 import android.graphics.Rect
 import com.android.launcher3.BubbleTextView
 import com.android.launcher3.CellLayout
@@ -12,7 +15,7 @@ import com.android.launcher3.Launcher
  * @property inset Abstand vom Bildschirmrand bis zur Außenkante der ersten bzw. letzten Spalte
  * @property pitch Abstand von einer Icon-Kante zur gleichen Kante in der nächsten Spalte
  * @property iconSize Kantenlänge eines Icons
- * @property top Oberkante der Icons in der ersten Reihe, in Fensterkoordinaten
+ * @property top sichtbare Oberkante der Icons in der ersten Reihe, in Fensterkoordinaten
  */
 data class IconGrid(val inset: Int, val pitch: Int, val iconSize: Int, val top: Int) {
 
@@ -48,7 +51,11 @@ data class IconGrid(val inset: Int, val pitch: Int, val iconSize: Int, val top: 
             return IconGrid(left, pitch, iconSize, top)
         }
 
-        /** Abstand von der Zellen- zur Icon-Oberkante, gemessen an einem vorhandenen App-Icon. */
+        /**
+         * Abstand von der Zellen- zur sichtbaren Icon-Oberkante, gemessen an einem vorhandenen
+         * App-Icon: Icon-Grenzen plus durchsichtiger Rand im Icon-Bild. So beginnen Suchleiste und
+         * Widgets dort, wo man die Icons sieht.
+         */
         private fun iconOffsetInCell(launcher: Launcher): Int {
             val workspace = launcher.workspace
             val bounds = Rect()
@@ -57,10 +64,36 @@ data class IconGrid(val inset: Int, val pitch: Int, val iconSize: Int, val top: 
                 for (j in 0 until container.childCount) {
                     val icon = container.getChildAt(j) as? BubbleTextView ?: continue
                     icon.getIconBounds(bounds)
-                    return bounds.top
+                    return bounds.top + transparentTop(icon, bounds)
                 }
             }
             return 0
+        }
+
+        private var cachedInset: Pair<Int, Int>? = null
+
+        /** Durchsichtige Zeilen oben im Icon-Bild (Icons sind Hardware-Bitmaps: über ein Picture kopiert). */
+        private fun transparentTop(icon: BubbleTextView, bounds: Rect): Int {
+            val size = bounds.height()
+            cachedInset?.takeIf { it.first == size }?.let { return it.second }
+            val drawable = icon.icon ?: return 0
+            val inset =
+                try {
+                    val picture = Picture()
+                    val canvas = picture.beginRecording(size, size)
+                    val old = Rect(drawable.bounds)
+                    drawable.setBounds(0, 0, size, size)
+                    drawable.draw(canvas)
+                    drawable.bounds = old
+                    picture.endRecording()
+                    val bitmap = Bitmap.createBitmap(picture).copy(Bitmap.Config.ARGB_8888, false)
+                    val x = size / 2
+                    (0 until size).firstOrNull { y -> Color.alpha(bitmap.getPixel(x, y)) > 128 } ?: 0
+                } catch (e: RuntimeException) {
+                    0
+                }
+            cachedInset = size to inset
+            return inset
         }
     }
 }

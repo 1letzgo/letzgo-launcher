@@ -170,6 +170,8 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
             val views =
                 infos.map { (id, info) ->
                     host.createView(context, id, info).apply {
+                        // Ohne Standard-Innenabstand: das Widget füllt seine Form bis zur Kante
+                        setPadding(0, 0, 0, 0)
                         updateAppWidgetSize(Bundle(), listOf(SizeF(width / density, height / density)))
                     }
                 }

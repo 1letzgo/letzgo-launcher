@@ -64,7 +64,7 @@ class LetzgoLauncher : Launcher() {
     private lateinit var dock: DockBackground
     private var homeDimmedForFolder = false
     val backdrop by lazy { Backdrop(this) }
-    private val folderTitle by lazy { FolderTitle(this) }
+    private val folderTitle by lazy { FolderTitle(this) { dimHomeForFolder(false) } }
     private var popupOpen = false
 
     private val syncAllApps = Runnable { HomeScreenApps.sync(this) }
@@ -142,14 +142,18 @@ class LetzgoLauncher : Launcher() {
             popupOpen = popup
             animateBackdrop(Backdrop.POPUP, popup)
         }
-        val folderOpen = folder != null
-        if (folderOpen == homeDimmedForFolder) return
-        homeDimmedForFolder = folderOpen
-        val alpha = if (folderOpen) 0f else 1f
+        dimHomeForFolder(folder?.isOpen == true)
+    }
+
+    /** Beim Schließen schon zu Beginn der Animation zurück ([FolderTitle] meldet das). */
+    private fun dimHomeForFolder(dim: Boolean) {
+        if (dim == homeDimmedForFolder) return
+        homeDimmedForFolder = dim
+        val alpha = if (dim) 0f else 1f
         listOf(workspace, hotseat, workspace.pageIndicator as View).forEach {
             it.animate().alpha(alpha).setDuration(FOLDER_FADE_MS).start()
         }
-        animateBackdrop(Backdrop.FOLDER, folderOpen)
+        animateBackdrop(Backdrop.FOLDER, dim)
     }
 
     private fun animateBackdrop(key: String, on: Boolean) {

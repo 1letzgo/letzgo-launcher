@@ -20,9 +20,10 @@ import com.android.launcher3.views.BaseDragLayer
  * Name eines geöffneten Ordners wie auf iOS groß über dem Ordner, auf dem Hintergrundbild. Antippen
  * benennt um. Gleiche Gestaltung wie der Titel einer geöffneten Mediathek-Kategorie ([style]).
  */
-class FolderTitle(private val launcher: Launcher) {
+class FolderTitle(private val launcher: Launcher, private val onClosing: () -> Unit) {
 
     private var folder: Folder? = null
+    private var lastState = Folder.STATE_CLOSED
     private val stateListener = Folder.OnFolderStateChangedListener { state -> onFolderState(state) }
     private val view =
         EditText(launcher).apply {
@@ -51,6 +52,7 @@ class FolderTitle(private val launcher: Launcher) {
             hide()
             return
         }
+        lastState = Folder.STATE_CLOSED
         open.addOnFolderStateChangedListener(stateListener)
         open.letzgoTitleView = view
         if (view.parent == null) {
@@ -75,9 +77,14 @@ class FolderTitle(private val launcher: Launcher) {
     }
 
     private fun onFolderState(state: Int) {
-        val f = folder ?: return
-        // Beim Schließen sofort ausblenden, nicht erst nach der Animation
-        if (state == Folder.STATE_ANIMATING && !f.isOpen) hide()
+        // Schließen beginnt mit OFFEN -> ANIMIEREND (isOpen ist dann noch true); ohne Animation
+        // direkt GESCHLOSSEN. Der Titel blendet sofort aus, nicht erst nach der Animation.
+        val closing = state == Folder.STATE_CLOSED || (state == Folder.STATE_ANIMATING && lastState == Folder.STATE_OPEN)
+        lastState = state
+        if (closing) {
+            hide()
+            onClosing()
+        }
     }
 
     private fun hide() {
@@ -85,7 +92,7 @@ class FolderTitle(private val launcher: Launcher) {
             commit()
             view.clearFocus()
         }
-        view.animate().alpha(0f).setStartDelay(0).setDuration(FADE_MS).withEndAction {
+        view.animate().alpha(0f).setStartDelay(0).setDuration(CLOSE_FADE_MS).withEndAction {
             view.visibility = View.GONE
         }.start()
     }
@@ -102,6 +109,7 @@ class FolderTitle(private val launcher: Launcher) {
         private const val MATCH = FrameLayout.LayoutParams.MATCH_PARENT
         private const val WRAP = FrameLayout.LayoutParams.WRAP_CONTENT
         private const val FADE_MS = 150L
+        private const val CLOSE_FADE_MS = 100L
         private const val TITLE_SP = 28f
         private const val GAP_DP = 20
 
