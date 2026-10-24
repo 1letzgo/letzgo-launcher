@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Ordner-Kachel: Material-You-Farbe von Launcher3, halbtransparent -->
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
+<!-- Die Basisfarbe kommt aus den generierten Launcher3-Ressourcen, die Lint hier nicht sieht -->
+<selector
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingDefaultResource">
     <item
         android:color="@android:color/system_accent2_200"
         android:alpha="0.7" />
