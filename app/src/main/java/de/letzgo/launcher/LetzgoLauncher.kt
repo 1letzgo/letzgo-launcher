@@ -32,7 +32,6 @@ import de.letzgo.launcher.edit.JiggleTouchController
 import de.letzgo.launcher.model.HomeScreenApps
 import de.letzgo.launcher.panels.AppLibraryPanel
 import de.letzgo.launcher.panels.PanelSwipeController
-import de.letzgo.launcher.panels.SearchOverlay
 import de.letzgo.launcher.panels.TodayPanel
 import de.letzgo.launcher.popup.EditHomeShortcut
 import de.letzgo.launcher.popup.RemoveAppShortcut
@@ -55,10 +54,7 @@ class LetzgoLauncher : Launcher() {
     private val appLibrary by lazy {
         AppLibraryPanel(this)
     }
-    private val today by lazy { TodayPanel(this, ::openSearch) }
-    private val search by lazy {
-        SearchOverlay(this)
-    }
+    private val today by lazy { TodayPanel(this) }
     private lateinit var dock: DockBackground
     private var homeDimmedForFolder = false
 
@@ -162,7 +158,7 @@ class LetzgoLauncher : Launcher() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        // Home-Taste beendet den Bearbeitungsmodus und schließt Mediathek, Heute-Ansicht und Suche
+        // Home-Taste beendet den Bearbeitungsmodus und schließt Mediathek und Heute-Seite
         if (Intent.ACTION_MAIN == intent.action) {
             jiggleMode.exit()
             closeOverlays(animate = true)
@@ -197,16 +193,10 @@ class LetzgoLauncher : Launcher() {
         }
     }
 
-    private fun openSearch() {
-        if (jiggleMode.isActive) return
-        search.open()
-    }
-
-    /** Offene Mediathek, Heute-Ansicht oder Suche schließen, z. B. bei der Home-Taste. */
+    /** Offene Mediathek oder Heute-Seite schließen, z. B. bei der Home-Taste. */
     private fun closeOverlays(animate: Boolean) {
         appLibrary.close(animate)
         today.close(animate)
-        search.close()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -251,7 +241,7 @@ class LetzgoLauncher : Launcher() {
                 right = { appLibrary },
                 isBlocked = {
                     jiggleMode.isActive || jiggleMode.isPageOverviewOpen ||
-                        appLibrary.isOpen || today.isOpen || search.isOpen
+                        appLibrary.isOpen || today.isOpen
                 },
                 onSwipeDown = ::onSwipeDown,
             ),

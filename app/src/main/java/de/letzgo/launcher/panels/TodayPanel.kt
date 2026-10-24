@@ -10,9 +10,7 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.text.format.DateFormat
 import android.util.SizeF
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.HapticFeedbackConstants
@@ -21,24 +19,21 @@ import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import android.widget.TextView
 import com.android.launcher3.Launcher
 import com.android.launcher3.R
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.letzgo.launcher.ui.M3
-import de.letzgo.launcher.ui.SearchBar
-import java.util.Date
 import kotlin.math.abs
 import com.google.android.material.R as MaterialR
 
 /**
- * Heute-Seite links von der ersten Seite (Logik wie iOS, Gestaltung Material 3): Suchleiste,
- * Datum und eine Spalte mit Widgets in Karten, direkt auf dem Hintergrundbild wie der Homescreen.
+ * Heute-Seite links von der ersten Seite (Logik wie iOS, Gestaltung Material 3): eine Spalte mit
+ * Widgets in Karten, direkt auf dem Hintergrundbild wie der Homescreen.
  * Hat einen eigenen [AppWidgetHost]; Widgets kommen über die Widget-Auswahl des Systems dazu. Langes
  * Drücken entfernt sie oder legt sie zu Stapeln zusammen, die sich vertikal durchblättern lassen.
  */
-class TodayPanel(launcher: Launcher, onSearch: () -> Unit) : SidePanel(launcher, fromLeft = true) {
+class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
 
     private val m3 = M3.context(launcher)
     private val density = resources.displayMetrics.density
@@ -47,23 +42,10 @@ class TodayPanel(launcher: Launcher, onSearch: () -> Unit) : SidePanel(launcher,
     private val host = AppWidgetHost(launcher, HOST_ID)
     private var pendingWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
 
-    // Datum als Überschrift (M3 „headline medium“)
-    private val date =
-        TextView(m3).apply {
-            M3.onWallpaper(this)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f)
-        }
     private val widgets = LinearLayout(m3).apply { orientation = LinearLayout.VERTICAL }
     private val scroll = ScrollView(m3).apply { clipToPadding = false }
     private val content = LinearLayout(m3)
     private var grid = IconGrid.of(launcher)
-
-    // Wie auf iOS steht oben ein Suchfeld; es öffnet die Suche
-    private val searchBar =
-        SearchBar(m3, R.string.search_hint, editable = false).apply {
-            setOnClickListener { onSearch() }
-            field.setOnClickListener { onSearch() }
-        }
 
     init {
         val edit =
@@ -79,9 +61,7 @@ class TodayPanel(launcher: Launcher, onSearch: () -> Unit) : SidePanel(launcher,
                 addView(
                     content.apply {
                         orientation = LinearLayout.VERTICAL
-                        addView(searchBar, LinearLayout.LayoutParams(MATCH, WRAP))
-                        addView(date, LinearLayout.LayoutParams(WRAP, WRAP).apply { topMargin = dp(24) })
-                        addView(widgets, LinearLayout.LayoutParams(MATCH, WRAP).apply { topMargin = dp(16) })
+                        addView(widgets, LinearLayout.LayoutParams(MATCH, WRAP))
                         addView(
                             edit,
                             LinearLayout.LayoutParams(WRAP, WRAP).apply {
@@ -100,7 +80,6 @@ class TodayPanel(launcher: Launcher, onSearch: () -> Unit) : SidePanel(launcher,
         // Widgets fluchten mit den Icon-Spalten des Homescreens
         grid = IconGrid.of(launcher)
         content.setPadding(grid.inset, dp(8), grid.inset, dp(32))
-        date.text = DateFormat.format(DateFormat.getBestDateTimePattern(resources.configuration.locales[0], "EEEEdMMMM"), Date())
         host.startListening()
         rebuild()
     }

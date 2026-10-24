@@ -10,9 +10,7 @@ import android.view.ContextThemeWrapper
 import android.widget.TextView
 import androidx.annotation.AttrRes
 import androidx.core.graphics.ColorUtils
-import com.android.launcher3.Launcher
 import com.android.launcher3.R
-import com.android.launcher3.util.SystemUiController
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.R as MaterialR
 
@@ -84,25 +82,6 @@ object M3 {
 
     private const val WALLPAPER_SHADOW_RADIUS = 4f
     private const val WALLPAPER_SHADOW_COLOR = 0x8A000000.toInt()
-
-    /**
-     * Systemleisten-Symbole passend zu einer deckenden M3-Fläche (hell oder dunkel nach Systemmodus). [slot] ist ein Zustand im
-     * [SystemUiController]; der höchste gesetzte gewinnt. Seiten nutzen den Platz des App-Drawers,
-     * den letzgo nicht hat, die Suche darüber den des Widget-Blatts.
-     */
-    fun setSystemBarsForSurface(
-        launcher: Launcher,
-        onSurface: Boolean,
-        slot: Int = SystemUiController.UI_STATE_ALL_APPS,
-    ) {
-        val flags =
-            when {
-                !onSurface -> 0
-                isNight(launcher) -> SystemUiController.FLAG_DARK_NAV or SystemUiController.FLAG_DARK_STATUS
-                else -> SystemUiController.FLAG_LIGHT_NAV or SystemUiController.FLAG_LIGHT_STATUS
-            }
-        launcher.systemUiController?.updateUiState(slot, flags)
-    }
 
     /** Eckenradien der M3-Formskala in dp. */
     const val SHAPE_LARGE_DP = 16f
