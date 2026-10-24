@@ -304,6 +304,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     public static final int CANCEL_TWO_STAGE_WIDGET_DROP_ANIMATION = 4;
 
     // Related to dragging, folder creation and reordering
+    // letzgo: Breite der Randzone, die beim Ziehen zur Nachbarseite blättert
+    private static final float DRAG_EDGE_ZONE_DP = 24f;
+
     private static final int DRAG_MODE_NONE = 0;
     private static final int DRAG_MODE_CREATE_FOLDER = 1;
     private static final int DRAG_MODE_ADD_TO_FOLDER = 2;
@@ -2939,6 +2942,19 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         int nextPage = getNextPage();
         IntSet pageIndexesToVerify = IntSet.wrap(nextPage - 1,
                 nextPage + (isTwoPanelEnabled() ? 2 : 1));
+
+        // letzgo: ohne Verkleinern beim Ziehen (BuildConfig.SPRING_LOADED_SHRINK) ist keine
+        // Nachbarseite sichtbar; wie auf iOS blättert dann der Bildschirmrand.
+        if (!BuildConfig.SPRING_LOADED_SHRINK) {
+            float edge = getResources().getDisplayMetrics().density * DRAG_EDGE_ZONE_DP;
+            int target = -1;
+            if (d.x < getScrollX() + edge) target = nextPage - 1;
+            if (d.x > getScrollX() + getWidth() - edge) target = nextPage + 1;
+            if (target >= 0 && target < getPageCount()) {
+                return (CellLayout) getChildAt(target);
+            }
+            return null;
+        }
 
         for (int pageIndex : pageIndexesToVerify) {
             // When deciding whether to perform a page switch, we need to consider the most
