@@ -146,7 +146,7 @@ iOS-Badges oder erzwungene Squircle-Icons.
 | M1 – benutzbar ✅ | 0, 1, 2 | iOS-Raster, alle Apps auf dem Homescreen, kein Drawer |
 | M2 – iOS-Bedienung ✅ | 3, 4, 7 | Jiggle-Modus, iOS-Ordner, Zahlen-Badges (offen: Ordner-Optik beim Öffnen, Seitenübersicht) |
 | M3 – iOS-Seiten ✅ | 5, 6, 8 | Mediathek und Heute-Seite als eigene Seiten links/rechts der App-Seiten (`de.letzgo.launcher.panels`), Suche über das Suchfeld der Heute-Seite; Wischen nach unten öffnet links Mitteilungen, rechts Schnelleinstellungen |
-| M4 – Feinschliff (in Arbeit) | 9, 10 | ✅ Widget-Größen klein/mittel/groß, ✅ Widget-Stapel (Heute-Seite), ✅ Ordnernamen nach Kategorie; ✅ Seitenübersicht (umsortieren, löschen); offen: Material-3-Bewegung, Kontextmenü |
+| M4 – Feinschliff ✅ | 9, 10 | ✅ Widget-Größen klein/mittel/groß, ✅ Widget-Stapel (Heute-Seite), ✅ Ordnernamen nach Kategorie; ✅ Seitenübersicht (umsortieren, löschen), ✅ Material-3-Bewegung (Federn, betonte Kurven), ✅ Kontextmenü für Ordner/Widgets |
 
 ## Offene Entscheidungen
 

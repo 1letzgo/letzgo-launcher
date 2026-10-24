@@ -1,6 +1,7 @@
 package de.letzgo.launcher.panels
 
 import android.content.Context
+import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
 import android.view.Gravity
@@ -11,6 +12,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.android.app.animation.Interpolators
 import com.android.launcher3.icons.BitmapInfo.Companion.FLAG_THEMED
 import com.android.launcher3.model.data.AppInfo
 import de.letzgo.launcher.ui.DragIconView
@@ -31,6 +33,7 @@ class CategoryFolder(
     private val density = resources.displayMetrics.density
     private var apps = emptyList<AppInfo>()
     private var grid: IconGrid? = null
+    private var origin: Rect? = null
     private val title =
         TextView(context).apply {
             M3.onWallpaper(this)
@@ -72,7 +75,9 @@ class CategoryFolder(
         )
     }
 
-    fun show(category: AppCategory, apps: List<AppInfo>, grid: IconGrid) {
+    /** [origin]: Kachel, aus der sich die Kategorie öffnet (in Koordinaten dieser View). */
+    fun show(category: AppCategory, apps: List<AppInfo>, grid: IconGrid, origin: Rect?) {
+        this.origin = origin
         this.apps = apps
         this.grid = grid
         title.setText(category.title)
@@ -91,17 +96,53 @@ class CategoryFolder(
         adapter.notifyDataSetChanged()
         list.scrollToPosition(0)
         visibility = VISIBLE
+        // Wächst aus der Kachel (M3: betonte, abbremsende Kurve)
         alpha = 0f
-        scaleX = 0.92f
-        scaleY = 0.92f
-        animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(FADE_MS).start()
+        post {
+            applyOriginTransform()
+            animate()
+                .alpha(1f).scaleX(1f).scaleY(1f).translationX(0f).translationY(0f)
+                .setInterpolator(Interpolators.EMPHASIZED_DECELERATE)
+                .setDuration(OPEN_MS)
+                .start()
+        }
     }
 
     fun hide() {
         if (!isOpen) return
-        animate().alpha(0f).scaleX(0.92f).scaleY(0.92f).setDuration(FADE_MS)
+        // Schrumpft zurück in die Kachel (M3: betonte, beschleunigende Kurve)
+        val target = originTransform()
+        animate()
+            .alpha(0f)
+            .scaleX(target[0]).scaleY(target[0]).translationX(target[1]).translationY(target[2])
+            .setInterpolator(Interpolators.EMPHASIZED_ACCELERATE)
+            .setDuration(CLOSE_MS)
             .withEndAction { visibility = GONE }
             .start()
+    }
+
+    private fun applyOriginTransform() {
+        val t = originTransform()
+        scaleX = t[0]
+        scaleY = t[0]
+        translationX = t[1]
+        translationY = t[2]
+    }
+
+    /**
+     * Skalierung und Verschiebung, mit der die Ordnerfläche genau über der Kachel liegt
+     * (Skalierung um die Mitte dieser View).
+     */
+    private fun originTransform(): FloatArray {
+        val from = origin ?: return floatArrayOf(0.92f, 0f, 0f)
+        val sheetWidth = sheet.width.takeIf { it > 0 } ?: return floatArrayOf(0.92f, 0f, 0f)
+        val scale = from.width().toFloat() / sheetWidth
+        val sheetCenterX = sheet.left + (sheet.parent as View).left + sheetWidth / 2f
+        val sheetCenterY = sheet.top + (sheet.parent as View).top + sheet.height / 2f
+        // Mittelpunkt der Fläche nach Skalierung um die View-Mitte
+        val scaledX = width / 2f + (sheetCenterX - width / 2f) * scale
+        val scaledY = height / 2f + (sheetCenterY - height / 2f) * scale
+        return floatArrayOf(scale, from.exactCenterX() - scaledX, from.exactCenterY() - scaledY)
     }
 
     private inner class AppAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -149,6 +190,7 @@ class CategoryFolder(
         const val COLUMNS = 4
         const val SHEET_PADDING_DP = 16
         const val LABEL_HEIGHT_DP = 18
-        const val FADE_MS = 180L
+        const val OPEN_MS = 400L
+        const val CLOSE_MS = 200L
     }
 }

@@ -1,6 +1,5 @@
 package de.letzgo.launcher.panels
 
-import android.animation.ValueAnimator
 import android.graphics.Rect
 import android.view.MotionEvent
 import android.view.VelocityTracker
@@ -9,8 +8,9 @@ import android.view.ViewConfiguration
 import android.widget.FrameLayout
 import android.window.OnBackInvokedCallback
 import android.window.OnBackInvokedDispatcher
-import androidx.core.animation.doOnEnd
-import com.android.app.animation.Interpolators
+import androidx.dynamicanimation.animation.FloatValueHolder
+import androidx.dynamicanimation.animation.SpringAnimation
+import androidx.dynamicanimation.animation.SpringForce
 import com.android.launcher3.Insettable
 import com.android.launcher3.Launcher
 import kotlin.math.abs
@@ -25,7 +25,16 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
 
     private val touchSlop = ViewConfiguration.get(launcher).scaledTouchSlop
     private val backCallback = OnBackInvokedCallback { if (!onBack()) close(animate = true) }
-    private var animator: ValueAnimator? = null
+    // Feder wie beim Blättern (M3: räumliche Bewegung ohne Überschwingen)
+    private val spring =
+        SpringAnimation(FloatValueHolder()).apply {
+            spring = SpringForce().setDampingRatio(SpringForce.DAMPING_RATIO_NO_BOUNCY).setStiffness(STIFFNESS)
+            setMinimumVisibleChange(0.001f)
+            addUpdateListener { _, value, _ -> progress = value }
+            addEndListener { _, canceled, value, _ ->
+                if (!canceled) if (value <= 0f) finishClose() else onFullyOpen()
+            }
+        }
     private var velocityTracker: VelocityTracker? = null
     private var downX = 0f
     private var downY = 0f
@@ -70,7 +79,7 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
     /** Beginn des Hereinziehens durch [PanelSwipeController]. */
     fun startTracking() {
         attach()
-        animator?.cancel()
+        spring.cancel()
         if (progress == 0f) onOpening()
         visibility = View.VISIBLE
     }
@@ -84,7 +93,8 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
     fun release(velocityTowardsOpen: Float) {
         val fling = FLING_VELOCITY_DP * resources.displayMetrics.density
         val open = velocityTowardsOpen > fling || (velocityTowardsOpen > -fling && progress > 0.4f)
-        animateTo(if (open) 1f else 0f)
+        // Die Feder übernimmt die Geschwindigkeit des Fingers (in Seitenbreiten pro Sekunde)
+        animateTo(if (open) 1f else 0f, velocityTowardsOpen / width.coerceAtLeast(1))
     }
 
     fun open() {
@@ -94,7 +104,13 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
 
     fun close(animate: Boolean) {
         if (!isOpen) return
-        if (animate) animateTo(0f) else progress = 0f
+        if (animate) {
+            animateTo(0f)
+        } else {
+            spring.cancel()
+            progress = 0f
+            finishClose()
+        }
     }
 
     private fun attach() {
@@ -104,16 +120,11 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
         bringToFront()
     }
 
-    private fun animateTo(target: Float) {
-        animator?.cancel()
-        animator =
-            ValueAnimator.ofFloat(progress, target).apply {
-                duration = (SETTLE_MS * abs(target - progress)).toLong().coerceAtLeast(120)
-                interpolator = Interpolators.EMPHASIZED_DECELERATE
-                addUpdateListener { progress = it.animatedValue as Float }
-                doOnEnd { if (target == 0f) finishClose() else onFullyOpen() }
-                start()
-            }
+    private fun animateTo(target: Float, velocity: Float = 0f) {
+        spring.cancel()
+        spring.setStartValue(progress)
+        spring.setStartVelocity(velocity)
+        spring.animateToFinalPosition(target)
     }
 
     private fun onFullyOpen() {
@@ -156,7 +167,7 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
                 val towardsEdge = if (fromLeft) -dx else dx
                 if (towardsEdge > touchSlop && abs(dx) > abs(ev.y - downY) * 1.5f) {
                     closing = true
-                    animator?.cancel()
+                    spring.cancel()
                     velocityTracker = VelocityTracker.obtain()
                     downX = ev.x
                     return true
@@ -188,7 +199,7 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
 
     private companion object {
         const val MATCH = LayoutParams.MATCH_PARENT
-        const val SETTLE_MS = 380f
+        const val STIFFNESS = 500f
         const val FLING_VELOCITY_DP = 500f
         const val DOCK_SLIDE = 0.6f
     }

@@ -2,6 +2,7 @@ package de.letzgo.launcher.panels
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.os.Process
 import android.text.Editable
@@ -139,8 +140,12 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
     }
 
     /** Kategorie wie einen Ordner öffnen; die Mediathek tritt dahinter zurück (wie der Homescreen). */
-    private fun openCategory(group: Group) {
-        categoryFolder.show(group.category, group.apps, grid)
+    private fun openCategory(group: Group, tile: View) {
+        val origin = Rect()
+        tile.getGlobalVisibleRect(origin)
+        val offset = IntArray(2).also(categoryFolder::getLocationOnScreen)
+        origin.offset(-offset[0], -offset[1])
+        categoryFolder.show(group.category, group.apps, grid, origin)
         content.animate().alpha(0f).setDuration(FADE_MS).start()
     }
 
@@ -277,7 +282,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
                             )
                         }
                         foreground = M3.ripple(m3, cornerRadius = M3.SHAPE_LARGE_DP * density)
-                        setOnClickListener { openCategory(group) }
+                        setOnClickListener { openCategory(group, card) }
                     }
                 )
             }

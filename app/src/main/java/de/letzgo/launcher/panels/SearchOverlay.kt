@@ -16,6 +16,7 @@ import android.window.OnBackInvokedCallback
 import android.window.OnBackInvokedDispatcher
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.android.app.animation.Interpolators
 import com.android.launcher3.Insettable
 import com.android.launcher3.Launcher
 import com.android.launcher3.R
@@ -103,8 +104,13 @@ class SearchOverlay(private val launcher: Launcher) : FrameLayout(launcher), Ins
         update()
         visibility = View.VISIBLE
         M3.setSystemBarsForSurface(launcher, onSurface = true, slot = BARS_SLOT)
+        // Gleitet leicht von oben herein (M3: betonte, abbremsende Kurve)
         alpha = 0f
-        animate().alpha(1f).setDuration(FADE_MS).start()
+        translationY = -dp(SLIDE_DP).toFloat()
+        animate().alpha(1f).translationY(0f)
+            .setInterpolator(Interpolators.EMPHASIZED_DECELERATE)
+            .setDuration(OPEN_MS)
+            .start()
         searchBar.field.requestFocus()
         context.getSystemService(InputMethodManager::class.java)
             .showSoftInput(searchBar.field, InputMethodManager.SHOW_IMPLICIT)
@@ -121,7 +127,11 @@ class SearchOverlay(private val launcher: Launcher) : FrameLayout(launcher), Ins
             .hideSoftInputFromWindow(windowToken, 0)
         searchBar.field.clearFocus()
         M3.setSystemBarsForSurface(launcher, onSurface = false, slot = BARS_SLOT)
-        animate().alpha(0f).setDuration(FADE_MS).withEndAction { visibility = View.GONE }.start()
+        animate().alpha(0f).translationY(-dp(SLIDE_DP).toFloat())
+            .setInterpolator(Interpolators.EMPHASIZED_ACCELERATE)
+            .setDuration(CLOSE_MS)
+            .withEndAction { visibility = View.GONE }
+            .start()
     }
 
     /** Erst Treffer am Wortanfang, dann im Titel enthaltene. */
@@ -189,7 +199,9 @@ class SearchOverlay(private val launcher: Launcher) : FrameLayout(launcher), Ins
     private companion object {
         const val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
         const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
-        const val FADE_MS = 180L
+        const val OPEN_MS = 300L
+        const val CLOSE_MS = 150L
+        const val SLIDE_DP = 24
         // Eigener Platz, damit die darunterliegende Heute-Seite ihre Leisten behält
         const val BARS_SLOT = SystemUiController.UI_STATE_WIDGET_BOTTOM_SHEET
     }
