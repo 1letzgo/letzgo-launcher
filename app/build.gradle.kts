@@ -66,6 +66,7 @@ android {
         buildConfigField("boolean", "FOLDER_CATEGORY_NAMES", "true")
         buildConfigField("boolean", "WIDGETS_IOS_SIZES", "true")
         buildConfigField("boolean", "LETZGO_POPUPS", "true")
+        buildConfigField("boolean", "FOLDER_ROUNDED_SQUARE", "true")
     }
 
     buildFeatures {

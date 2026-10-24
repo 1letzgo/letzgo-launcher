@@ -91,6 +91,8 @@ Launcher3-Ressourcen registriert und haben deshalb Vorrang; so lassen sich Launc
   (`deviceprofile/WorkspaceProfileNonResponsiveFactory.kt`)
 - `BuildConfig.WIDGETS_IOS_SIZES`: Widgets auf dem Homescreen nur klein/mittel/groß, ohne freies
   Skalieren (`widget/LauncherAppWidgetProviderInfo.java`)
+- `BuildConfig.FOLDER_ROUNDED_SQUARE`: Ordner als abgerundetes Quadrat statt Kreis
+  (`graphics/ThemeManager.kt`)
 - `BuildConfig.FOLDER_CATEGORY_NAMES`: neue Ordner nach Mediathek-Kategorie benennen
   (`folder/FolderNameProvider.java`)
 - `BuildConfig.NUMERIC_BADGES`: rote Zahlen-Badges statt Punkten (`BubbleTextView.java`,
