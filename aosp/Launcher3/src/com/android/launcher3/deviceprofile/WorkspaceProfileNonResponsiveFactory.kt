@@ -22,6 +22,7 @@ import android.content.res.TypedArray
 import android.graphics.Point
 import android.graphics.Rect
 import android.util.DisplayMetrics
+import com.android.launcher3.BuildConfig
 import com.android.launcher3.InvariantDeviceProfile
 import com.android.launcher3.R
 import com.android.launcher3.Utilities
@@ -255,6 +256,16 @@ object WorkspaceProfileNonResponsiveFactory {
                         workspacePadding.bottom + workspacePadding.top,
                     ),
             )
+        // Widgets enden bündig mit den Icons statt die ganze Zelle zu füllen
+        // (BuildConfig.WIDGETS_ALIGN_TO_ICONS)
+        val widgetPadding =
+            if (BuildConfig.WIDGETS_ALIGN_TO_ICONS) {
+                val horizontal = ((cellSize.x - iconSizePx) / 2).coerceAtLeast(0)
+                val vertical = ((cellSize.y - cellHeightPx) / 2).coerceAtLeast(0)
+                Rect(horizontal, vertical, horizontal, vertical)
+            } else {
+                Rect()
+            }
         return WorkspaceProfile(
             // Workspace icons
             iconScale = iconScale,
@@ -305,6 +316,7 @@ object WorkspaceProfileNonResponsiveFactory {
             scale = scale,
             flingToDeleteThresholdVelocity =
                 res.getDimensionPixelSize(R.dimen.drag_flingToDeleteMinVelocity),
+            widgetPadding = widgetPadding,
         )
     }
 
