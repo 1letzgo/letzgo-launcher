@@ -22,6 +22,7 @@ import androidx.annotation.AnyThread
 import com.android.launcher3.LauncherPrefChangeListener
 import com.android.launcher3.LauncherPrefs
 import com.android.launcher3.LauncherPrefs.Companion.backedUpItem
+import com.android.launcher3.BuildConfig
 import com.android.launcher3.R
 import com.android.launcher3.concurrent.annotations.Ui
 import com.android.launcher3.dagger.ApplicationContext
@@ -163,7 +164,11 @@ constructor(
                 pickBestShape(iconMask)
             }
 
-        val folderRadius = shapeModel?.folderRadiusRatio ?: 1f
+        // letzgo: Ordner als abgerundetes Quadrat in den Proportionen der Mediathek-Kacheln statt
+        // als Kreis (BuildConfig.FOLDER_ROUNDED_SQUARE)
+        val folderRadius =
+            if (BuildConfig.FOLDER_ROUNDED_SQUARE) FOLDER_CORNER_RATIO
+            else shapeModel?.folderRadiusRatio ?: 1f
         val folderShape =
             if (oldState != null && oldState.folderRadius == folderRadius) {
                 oldState.folderShape
@@ -234,6 +239,9 @@ constructor(
 
         @JvmField val INSTANCE = DaggerSingletonObject(LauncherAppComponent::getThemeManager)
         @JvmField val PREF_ICON_SHAPE = backedUpItem("icon_shape_model", "")
+
+        /** Eckenradius der Ordner relativ zur halben Kantenlänge (wie die Mediathek-Kacheln). */
+        private const val FOLDER_CORNER_RATIO = 0.4f
 
         @JvmField val DEFAULT_SHAPE_DELEGATE = pickBestShape(shapeStr = "")
 
