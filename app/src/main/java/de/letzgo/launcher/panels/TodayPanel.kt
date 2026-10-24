@@ -3,9 +3,11 @@ package de.letzgo.launcher.panels
 import android.app.Activity
 import android.appwidget.AppWidgetHost
 import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProviderInfo
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.drawable.GradientDrawable
@@ -23,15 +25,17 @@ import com.android.launcher3.Launcher
 import com.android.launcher3.R
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import de.letzgo.launcher.ui.Backdrop
 import de.letzgo.launcher.ui.M3
+import de.letzgo.launcher.ui.M3Menu
 import kotlin.math.abs
 import com.google.android.material.R as MaterialR
 
 /**
  * Heute-Seite links von der ersten Seite (Logik wie iOS, Gestaltung Material 3): eine Spalte mit
  * Widgets in Karten, direkt auf dem Hintergrundbild wie der Homescreen.
- * Hat einen eigenen [AppWidgetHost]; Widgets kommen über die Widget-Auswahl des Systems dazu. Langes
- * Drücken entfernt sie oder legt sie zu Stapeln zusammen, die sich vertikal durchblättern lassen.
+ * Hat einen eigenen [AppWidgetHost]; Widgets kommen über eine eigene Auswahl mit Vorschau dazu ([WidgetPicker]). Langes
+ * Drücken öffnet ein Kontextmenü: Größe, Stapeln (vertikal durchblättern), Entfernen.
  */
 class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
 
@@ -76,6 +80,8 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
         )
     }
 
+    override val backdropKey = Backdrop.TODAY
+
     override fun onOpening() {
         // Widgets fluchten mit den Icon-Spalten und der ersten Icon-Reihe des Homescreens
         grid = IconGrid.of(launcher)
@@ -91,32 +97,53 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
 
     override fun onBottomInset(bottom: Int) = scroll.setPadding(0, 0, 0, bottom)
 
-    /** Ergebnis der Widget-Auswahl bzw. -Konfiguration aus [Launcher.onActivityResult]. */
+    /** Ergebnis von Bind-Erlaubnis bzw. Widget-Konfiguration aus [Launcher.onActivityResult]. */
     fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
-        if (requestCode != REQUEST_PICK && requestCode != REQUEST_CONFIGURE) return false
+        if (requestCode != REQUEST_BIND && requestCode != REQUEST_CONFIGURE) return false
         val id = data?.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, pendingWidgetId) ?: pendingWidgetId
         if (resultCode != Activity.RESULT_OK || id == AppWidgetManager.INVALID_APPWIDGET_ID) {
             if (id != AppWidgetManager.INVALID_APPWIDGET_ID) host.deleteAppWidgetId(id)
             return true
         }
-        val info = widgetManager.getAppWidgetInfo(id)
-        if (requestCode == REQUEST_PICK && info?.configure != null) {
-            pendingWidgetId = id
-            host.startAppWidgetConfigureActivityForResult(launcher, id, 0, REQUEST_CONFIGURE, null)
-            return true
-        }
-        saveStacks(loadStacks() + listOf(listOf(id)))
-        rebuild()
+        if (requestCode == REQUEST_BIND) configureOrAdd(id) else addWidget(id)
         return true
     }
 
+    /** Eigene Widget-Auswahl mit Vorschau ([WidgetPicker]); gewählt wird sofort gebunden. */
     private fun pickWidget() {
-        pendingWidgetId = host.allocateAppWidgetId()
-        launcher.startActivityForResult(
-            Intent(AppWidgetManager.ACTION_APPWIDGET_PICK)
-                .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, pendingWidgetId),
-            REQUEST_PICK,
-        )
+        WidgetPicker.show(m3, widgetManager) { provider -> bind(provider) }
+    }
+
+    private fun bind(provider: AppWidgetProviderInfo) {
+        val id = host.allocateAppWidgetId()
+        pendingWidgetId = id
+        if (widgetManager.bindAppWidgetIdIfAllowed(id, provider.profile, provider.provider, null)) {
+            configureOrAdd(id)
+        } else {
+            // Einmalige Erlaubnis des Systems, Widgets zu binden
+            launcher.startActivityForResult(
+                Intent(AppWidgetManager.ACTION_APPWIDGET_BIND)
+                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, provider.provider)
+                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER_PROFILE, provider.profile),
+                REQUEST_BIND,
+            )
+        }
+    }
+
+    private fun configureOrAdd(id: Int) {
+        val info = widgetManager.getAppWidgetInfo(id)
+        if (info?.configure != null) {
+            pendingWidgetId = id
+            host.startAppWidgetConfigureActivityForResult(launcher, id, 0, REQUEST_CONFIGURE, null)
+        } else {
+            addWidget(id)
+        }
+    }
+
+    private fun addWidget(id: Int) {
+        saveStacks(loadStacks() + listOf(listOf(id)))
+        rebuild()
     }
 
     /**
@@ -136,11 +163,10 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
         stacks.forEachIndexed { index, stack ->
             val infos = stack.mapNotNull { id -> widgetManager.getAppWidgetInfo(id)?.let { id to it } }
             if (infos.isEmpty()) return@forEachIndexed
-            val first = infos.first().second
-            val wide = first.targetCellWidth > 2 || (first.targetCellWidth == 0 && first.minWidth > square)
-            val tall = first.targetCellHeight > 2 || (first.targetCellHeight == 0 && first.minHeight > square)
+            val size = sizeOf(infos.first().first, infos.first().second, square)
+            val wide = size != Size.SMALL
             val width = if (wide) full else square
-            val height = if (tall) square * 2 + gap else square
+            val height = if (size == Size.LARGE) square * 2 + gap else square
             val views =
                 infos.map { (id, info) ->
                     host.createView(context, id, info).apply {
@@ -152,8 +178,8 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
                     views,
                     M3.color(m3, MaterialR.attr.colorOnSurface),
                     M3.color(m3, MaterialR.attr.colorSurfaceContainerHighest, 0.85f),
-                ) { current ->
-                    showMenu(index, infos[current].first, infos[current].second.loadLabel(context.packageManager))
+                ) { card, current ->
+                    showMenu(card, index, infos[current].first, infos[current].second.loadLabel(context.packageManager))
                 }.apply { background = card() }
             if (wide) {
                 row = null
@@ -176,40 +202,71 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
     }
 
     /**
-     * Menü beim langen Drücken: Widget entfernen, mit dem Stapel darüber zusammenlegen (Smart Stack)
-     * oder aus seinem Stapel lösen.
+     * Kontextmenü beim langen Drücken, am Widget verankert: Größe (klein/mittel/groß wie auf iOS),
+     * mit dem Stapel darüber zusammenlegen (Smart Stack), aus dem Stapel lösen, entfernen.
      */
-    private fun showMenu(stackIndex: Int, id: Int, label: CharSequence) {
+    private fun showMenu(anchor: View, stackIndex: Int, id: Int, label: CharSequence) {
         val stacks = loadStacks()
-        val inStack = stacks[stackIndex].size > 1
-        val actions =
-            listOfNotNull(
-                if (stackIndex > 0) R.string.today_stack_with_above else null,
-                if (inStack) R.string.today_unstack else null,
-                R.string.today_remove,
-            )
-        MaterialAlertDialogBuilder(m3)
-            .setTitle(label)
-            .setItems(actions.map(context::getString).toTypedArray()) { _, which ->
-                when (actions[which]) {
-                    R.string.today_stack_with_above -> {
-                        val merged = stacks.toMutableList()
-                        val moved = merged.removeAt(stackIndex)
-                        merged[stackIndex - 1] = merged[stackIndex - 1] + moved
-                        saveStacks(merged)
-                        rebuild()
-                    }
-                    R.string.today_unstack -> {
-                        val split = stacks.toMutableList()
-                        split[stackIndex] = split[stackIndex] - id
-                        split.add(stackIndex + 1, listOf(id))
-                        saveStacks(split)
-                        rebuild()
-                    }
-                    R.string.today_remove -> confirmRemove(id, label)
+        val stack = stacks[stackIndex]
+        val current = widgetManager.getAppWidgetInfo(stack.first())?.let { sizeOf(stack.first(), it, grid.width(2)) }
+        val items =
+            Size.entries.map { size ->
+                M3Menu.Item(null, context.getString(size.label), checked = size == current) {
+                    setSize(stack.first(), size)
                 }
-            }
-            .show()
+            } +
+                listOfNotNull(
+                    if (stackIndex > 0) {
+                        M3Menu.Item(R.drawable.ic_view_carousel, context.getString(R.string.today_stack_with_above)) {
+                            val merged = stacks.toMutableList()
+                            val moved = merged.removeAt(stackIndex)
+                            merged[stackIndex - 1] = merged[stackIndex - 1] + moved
+                            saveStacks(merged)
+                            rebuild()
+                        }
+                    } else {
+                        null
+                    },
+                    if (stack.size > 1) {
+                        M3Menu.Item(R.drawable.ic_split_vertical, context.getString(R.string.today_unstack)) {
+                            val split = stacks.toMutableList()
+                            split[stackIndex] = split[stackIndex] - id
+                            split.add(stackIndex + 1, listOf(id))
+                            saveStacks(split)
+                            rebuild()
+                        }
+                    } else {
+                        null
+                    },
+                    M3Menu.Item(R.drawable.ic_remove_no_shadow, context.getString(R.string.today_remove), destructive = true) {
+                        confirmRemove(id, label)
+                    },
+                )
+        M3Menu.show(anchor, items)
+    }
+
+    /** Widget-Größen wie auf iOS. */
+    private enum class Size(val key: String, val label: Int) {
+        SMALL("s", R.string.today_size_small),
+        MEDIUM("m", R.string.today_size_medium),
+        LARGE("l", R.string.today_size_large),
+    }
+
+    /** Gewählte Größe, sonst aus den Angaben des Widgets ([square] = Breite eines kleinen). */
+    private fun sizeOf(id: Int, info: AppWidgetProviderInfo, square: Int): Size {
+        Size.entries.firstOrNull { it.key == prefs.getString(KEY_SIZE + id, null) }?.let { return it }
+        val wide = info.targetCellWidth > 2 || (info.targetCellWidth == 0 && info.minWidth > square)
+        val tall = info.targetCellHeight > 2 || (info.targetCellHeight == 0 && info.minHeight > square)
+        return when {
+            wide && tall -> Size.LARGE
+            wide -> Size.MEDIUM
+            else -> Size.SMALL
+        }
+    }
+
+    private fun setSize(id: Int, size: Size) {
+        prefs.edit().putString(KEY_SIZE + id, size.key).apply()
+        rebuild()
     }
 
     private fun confirmRemove(id: Int, label: CharSequence) {
@@ -233,7 +290,7 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
         private val pages: List<View>,
         dotColor: Int,
         pillColor: Int,
-        private val onLongPress: (current: Int) -> Unit,
+        private val onLongPress: (card: View, current: Int) -> Unit,
     ) : android.widget.FrameLayout(pages.first().context) {
 
         private val density = resources.displayMetrics.density
@@ -249,7 +306,7 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
         private val longPress = Runnable {
             handled = true
             performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-            onLongPress(current)
+            onLongPress(this, current)
         }
 
         init {
@@ -343,11 +400,14 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
             .remove(KEY_IDS)
             .apply()
 
-    /** Karte nach Material 3: Tonfläche, extra große Ecken, beschneidet das Widget. */
+    /**
+     * Form der Widgets: extra große M3-Ecken, beschneidet das Widget. Ohne eigene Fläche, denn Widgets
+     * bringen ihren Hintergrund selbst mit (wie auf dem Homescreen).
+     */
     private fun card() =
         GradientDrawable().apply {
             cornerRadius = M3.SHAPE_EXTRA_LARGE_DP * density
-            setColor(M3.color(m3, MaterialR.attr.colorSurfaceContainer))
+            setColor(Color.TRANSPARENT)
         }
 
     private fun dp(value: Int) = (value * density).toInt()
@@ -359,7 +419,8 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
         const val PREFS = "letzgo_today"
         const val KEY_IDS = "widget_ids"
         const val KEY_STACKS = "widget_stacks"
-        const val REQUEST_PICK = 0x4C01
+        const val REQUEST_BIND = 0x4C01
+        const val KEY_SIZE = "size_"
         const val REQUEST_CONFIGURE = 0x4C02
     }
 }

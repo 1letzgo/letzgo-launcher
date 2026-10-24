@@ -338,6 +338,11 @@ public class Folder extends AbstractFloatingView implements ClipPathView, DragSo
         mPageIndicator = findViewById(R.id.folder_page_indicator);
         mFooter = findViewById(R.id.folder_footer);
         mFooterHeight = dp.getFolderProfile().getFooterHeightPx();
+        if (com.android.launcher3.BuildConfig.FOLDER_TITLE_ABOVE) {
+            // letzgo: Name steht wie auf iOS über dem Ordner (de.letzgo.launcher.ui.FolderTitle)
+            mFooterHeight = 0;
+            mFooter.setVisibility(View.GONE);
+        }
         mFolderName = findViewById(R.id.folder_name);
         mFolderName.setTypeface(Typeface.create("google-sans-flex", Typeface.NORMAL));
         mFolderName.setTextSize(TypedValue.COMPLEX_UNIT_PX,
@@ -515,6 +520,15 @@ public class Folder extends AbstractFloatingView implements ClipPathView, DragSo
         Selection.setSelection(mFolderName.getText(), 0, 0);
         mIsEditingName = false;
         return true;
+    }
+
+    /** letzgo: Titel über dem Ordner (de.letzgo.launcher.ui.FolderTitle); Tippen darauf schließt nicht. */
+    public View letzgoTitleView;
+
+    /** letzgo: Umbenennen über den Titel über dem Ordner, wie nach Eingabe im Namensfeld. */
+    public void applyTitle(String title) {
+        mFolderName.setText(title);
+        onBackKey();
     }
 
     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
@@ -1878,6 +1892,10 @@ public class Folder extends AbstractFloatingView implements ClipPathView, DragSo
                     mFolderName.dispatchBackKey();
                     return true;
                 }
+                return false;
+            } else if (letzgoTitleView != null && letzgoTitleView.getVisibility() == VISIBLE
+                    && dl.isEventOverView(letzgoTitleView, ev)) {
+                // letzgo: Titel über dem Ordner gehört zum Ordner (Umbenennen)
                 return false;
             } else if (!dl.isEventOverView(this, ev)
                     && mLauncherDelegate.interceptOutsideTouch(ev, dl, this)) {

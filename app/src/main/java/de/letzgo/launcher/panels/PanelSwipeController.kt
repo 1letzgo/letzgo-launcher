@@ -44,11 +44,14 @@ class PanelSwipeController(
                 val dx = ev.x - downX
                 val dy = ev.y - downY
                 val workspace = launcher.workspace
-                if (abs(dx) > touchSlop && abs(dx) > abs(dy) * 1.5f && !workspace.isPageInTransition) {
+                if (abs(dx) > touchSlop && abs(dx) > abs(dy) * 1.5f) {
+                    // Zielseite statt aktueller Seite: auch während die Seite noch einrastet (z. B.
+                    // kurz nach der Home-Taste) greift die Geste
+                    val page = workspace.destinationPage
                     val panel =
                         when {
-                            dx > 0 && workspace.currentPage == 0 -> left()
-                            dx < 0 && workspace.currentPage == workspace.pageCount - 1 -> right()
+                            dx > 0 && page == 0 -> left()
+                            dx < 0 && page == workspace.pageCount - 1 -> right()
                             else -> null
                         } ?: return false
                     tracking = panel

@@ -27,9 +27,10 @@ import com.android.launcher3.model.data.AppInfo
 import com.android.launcher3.util.Executors.MAIN_EXECUTOR
 import com.android.launcher3.util.Executors.THREAD_POOL_EXECUTOR
 import com.android.launcher3.util.PackageManagerHelper
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.letzgo.launcher.model.HomeScreenApps
 import de.letzgo.launcher.ui.AppListRow
+import de.letzgo.launcher.ui.Backdrop
+import de.letzgo.launcher.ui.M3Menu
 import de.letzgo.launcher.ui.DragIconView
 import de.letzgo.launcher.ui.M3
 import de.letzgo.launcher.ui.SearchBar
@@ -92,6 +93,8 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
         addView(categoryFolder, LayoutParams(MATCH, MATCH))
         showTiles()
     }
+
+    override val backdropKey = Backdrop.LIBRARY
 
     override fun onOpening() {
         // Karten fluchten mit den Icon-Spalten: jede Karte ist zwei Spalten breit
@@ -193,24 +196,23 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
         close(animate = false)
     }
 
-    /** Kontextmenü: auf den Homescreen (falls sie dort nicht liegt) und App-Info. */
-    private fun showMenu(app: AppInfo): Boolean {
+    /** Kontextmenü an der App: auf den Homescreen (falls sie dort nicht liegt) und App-Info. */
+    private fun showMenu(anchor: View, app: AppInfo): Boolean {
         HomeScreenApps.isOnHome(launcher, app) { onHome ->
-            val actions =
+            val items =
                 listOfNotNull(
-                    if (onHome) null else R.string.library_add_to_home,
-                    R.string.library_app_info,
+                    if (onHome) {
+                        null
+                    } else {
+                        M3Menu.Item(R.drawable.ic_desktop_add, context.getString(R.string.library_add_to_home)) {
+                            HomeScreenApps.add(launcher, listOf(app))
+                        }
+                    },
+                    M3Menu.Item(R.drawable.ic_info_no_shadow, context.getString(R.string.library_app_info)) {
+                        PackageManagerHelper.startDetailsActivityForInfo(context, app, null, null)
+                    },
                 )
-            MaterialAlertDialogBuilder(m3)
-                .setTitle(app.title)
-                .setItems(actions.map(context::getString).toTypedArray()) { _, which ->
-                    when (actions[which]) {
-                        R.string.library_add_to_home -> HomeScreenApps.add(launcher, listOf(app))
-                        R.string.library_app_info ->
-                            PackageManagerHelper.startDetailsActivityForInfo(context, app, null, null)
-                    }
-                }
-                .show()
+            M3Menu.show(anchor, items)
         }
         return true
     }
@@ -245,7 +247,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
                         override fun onPreDragStart(dragObject: DropTarget.DragObject) {}
 
                         override fun onPreDragEnd(dragObject: DropTarget.DragObject, dragStarted: Boolean) {
-                            if (dragStarted) close(animate = true) else showMenu(app)
+                            if (dragStarted) close(animate = true) else showMenu(view, app)
                         }
                     }
             }

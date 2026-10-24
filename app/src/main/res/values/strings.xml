@@ -59,4 +59,10 @@
     <string name="update_downloaded">Downloaded. Android will ask whether to install the new version.</string>
     <string name="update_permission">Allow letzgo to install apps in the Android settings, then come back.</string>
     <string name="update_failed">The new version could not be downloaded.</string>
+    <string name="edit_pages">Edit Pages</string>
+    <string name="today_size_small">Small</string>
+    <string name="today_size_medium">Medium</string>
+    <string name="today_size_large">Large</string>
+    <string name="today_choose_widget">Add Widget</string>
+    <string name="today_no_preview">No preview</string>
 </resources>

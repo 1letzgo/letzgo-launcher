@@ -59,4 +59,10 @@
     <string name="update_downloaded">Geladen. Android fragt gleich, ob die neue Version installiert werden soll.</string>
     <string name="update_permission">Erlaube letzgo in den Android-Einstellungen, Apps zu installieren, und komm dann zurück.</string>
     <string name="update_failed">Die neue Version konnte nicht geladen werden.</string>
+    <string name="edit_pages">Seiten bearbeiten</string>
+    <string name="today_size_small">Klein</string>
+    <string name="today_size_medium">Mittel</string>
+    <string name="today_size_large">Groß</string>
+    <string name="today_choose_widget">Widget hinzufügen</string>
+    <string name="today_no_preview">Keine Vorschau</string>
 </resources>

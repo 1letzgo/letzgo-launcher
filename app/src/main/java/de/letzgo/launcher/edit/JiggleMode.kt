@@ -8,11 +8,15 @@ import android.window.OnBackInvokedCallback
 import android.window.OnBackInvokedDispatcher
 import com.android.launcher3.BubbleTextView
 import com.android.launcher3.CellLayout
+import com.android.launcher3.AbstractFloatingView
 import com.android.launcher3.Launcher
+import com.android.launcher3.R
 import com.android.launcher3.folder.FolderIcon
 import com.android.launcher3.model.data.ItemInfo
 import com.android.launcher3.popup.WorkspaceLongPressOptions
+import com.android.launcher3.popup.PopupCategory
 import com.android.launcher3.popup.PopupContainer
+import com.android.launcher3.popup.PopupData
 import java.util.WeakHashMap
 import kotlin.math.PI
 import kotlin.math.hypot
@@ -43,6 +47,9 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         startNanos = System.nanoTime()
         launcher.workspace.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         editBar.show()
+        // Wie auf iOS: im Bearbeitungsmodus gibt es eine leere Seite am Ende, damit Seitenpunkte und
+        // Seitenübersicht auch bei nur einer Seite erreichbar sind
+        launcher.workspace.addExtraEmptyScreens()
         launcher.onBackInvokedDispatcher.registerOnBackInvokedCallback(
             OnBackInvokedDispatcher.PRIORITY_OVERLAY,
             backCallback,
@@ -56,6 +63,7 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         Choreographer.getInstance().removeFrameCallback(this)
         launcher.onBackInvokedDispatcher.unregisterOnBackInvokedCallback(backCallback)
         editBar.hide()
+        if (!launcher.dragController.isDragging) launcher.workspace.removeExtraEmptyScreen(true)
         for ((view, badge) in badges) view.overlay.remove(badge)
         badges.clear()
         forEachItemView { it.rotation = 0f }
@@ -113,6 +121,7 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
     /** Seitenübersicht wie auf iOS; danach geht es im Bearbeitungsmodus weiter. */
     fun openPageOverview() {
         exit()
+        launcher.workspace.removeExtraEmptyScreen(true)
         overviewCreated = true
         pageOverview.open()
     }
@@ -123,7 +132,11 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         PopupContainer.showForMenuItems(
             launcher,
             launcher.dragLayer,
-            WorkspaceLongPressOptions.getAll(launcher),
+            WorkspaceLongPressOptions.getAll(launcher) +
+                PopupData(R.drawable.ic_view_carousel, R.string.edit_pages, PopupCategory.SYSTEM_SHORTCUT) { _, _, _ ->
+                    AbstractFloatingView.closeAllOpenViews(launcher)
+                    openPageOverview()
+                },
             pos,
         )
     }

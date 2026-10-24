@@ -1,6 +1,8 @@
 package de.letzgo.launcher
 
+import android.animation.ValueAnimator
 import android.content.Intent
+import android.graphics.Rect
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
@@ -8,6 +10,8 @@ import android.view.ViewGroup
 import com.android.launcher3.LauncherSettings.Favorites.CONTAINER_DESKTOP
 import com.android.launcher3.LauncherSettings.Favorites.CONTAINER_HOTSEAT
 import com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_APPLICATION
+import com.android.launcher3.AbstractFloatingView
+import com.android.launcher3.AbstractFloatingView.TYPE_ACTION_POPUP
 import com.android.launcher3.Launcher
 import com.android.launcher3.DropTarget
 import com.android.launcher3.LauncherState
@@ -35,7 +39,9 @@ import de.letzgo.launcher.panels.PanelSwipeController
 import de.letzgo.launcher.panels.TodayPanel
 import de.letzgo.launcher.popup.EditHomeShortcut
 import de.letzgo.launcher.popup.RemoveAppShortcut
+import de.letzgo.launcher.ui.Backdrop
 import de.letzgo.launcher.ui.DockBackground
+import de.letzgo.launcher.ui.FolderTitle
 import de.letzgo.launcher.system.SystemPanels
 import de.letzgo.launcher.update.AppUpdate
 import de.letzgo.launcher.update.AppUpdateDialog
@@ -57,6 +63,9 @@ class LetzgoLauncher : Launcher() {
     private val today by lazy { TodayPanel(this) }
     private lateinit var dock: DockBackground
     private var homeDimmedForFolder = false
+    val backdrop by lazy { Backdrop(this) }
+    private val folderTitle by lazy { FolderTitle(this) }
+    private var popupOpen = false
 
     private val syncAllApps = Runnable { HomeScreenApps.sync(this) }
     private val appsUpdateListener = AllAppsStore.OnUpdateListener(::scheduleSync)
@@ -107,10 +116,15 @@ class LetzgoLauncher : Launcher() {
         // Wer ein Element zieht, landet wie auf iOS im Bearbeitungsmodus
         dragController.addDragListener(
             object : DragController.DragListener {
-                override fun onDragStart(dragObject: DropTarget.DragObject, options: DragOptions) =
+                override fun onDragStart(dragObject: DropTarget.DragObject, options: DragOptions) {
                     jiggleMode.enter()
+                    // Leere Seite am Ende bleibt, solange der Bearbeitungsmodus läuft
+                    workspace.deferRemoveExtraEmptyScreen()
+                }
 
-                override fun onDragEnd() {}
+                override fun onDragEnd() {
+                    if (jiggleMode.isActive) dragLayer.post { workspace.addExtraEmptyScreens() }
+                }
             }
         )
     }
@@ -121,13 +135,39 @@ class LetzgoLauncher : Launcher() {
      */
     override fun onDragLayerHierarchyChanged() {
         super.onDragLayerHierarchyChanged()
-        val folderOpen = Folder.getOpen(this) != null
+        val folder = Folder.getOpen(this)
+        folderTitle.bind(folder?.takeIf { it.isOpen })
+        val popup = AbstractFloatingView.hasOpenView(this, TYPE_ACTION_POPUP)
+        if (popup != popupOpen) {
+            popupOpen = popup
+            animateBackdrop(Backdrop.POPUP, popup)
+        }
+        val folderOpen = folder != null
         if (folderOpen == homeDimmedForFolder) return
         homeDimmedForFolder = folderOpen
         val alpha = if (folderOpen) 0f else 1f
         listOf(workspace, hotseat, workspace.pageIndicator as View).forEach {
             it.animate().alpha(alpha).setDuration(FOLDER_FADE_MS).start()
         }
+        animateBackdrop(Backdrop.FOLDER, folderOpen)
+    }
+
+    private fun animateBackdrop(key: String, on: Boolean) {
+        ValueAnimator.ofFloat(if (on) 0f else 1f, if (on) 1f else 0f).apply {
+            duration = FOLDER_FADE_MS * 2
+            addUpdateListener { backdrop.set(key, it.animatedValue as Float) }
+            start()
+        }
+    }
+
+    /**
+     * Ordner öffnen wie auf iOS mittig auf dem Bildschirm; darüber steht ihr Name ([FolderTitle]),
+     * beide zusammen zentriert. Gleiche Lage wie eine geöffnete Mediathek-Kategorie.
+     */
+    override fun updateOpenFolderPosition(inOutPosition: IntArray, bounds: Rect, width: Int, height: Int) {
+        val title = FolderTitle.spaceAbove(this)
+        inOutPosition[0] = (dragLayer.width - width) / 2
+        inOutPosition[1] = ((dragLayer.height - height + title) / 2).coerceAtLeast(deviceProfile.insets.top + title)
     }
 
     /** Statt „Entfernen“/„Deinstallieren“ beim Ziehen gibt es Minus-Badges ([JiggleMode]). */

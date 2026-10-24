@@ -17,6 +17,7 @@ import com.android.app.animation.Interpolators
 import com.android.launcher3.icons.BitmapInfo.Companion.FLAG_THEMED
 import com.android.launcher3.model.data.AppInfo
 import de.letzgo.launcher.ui.DragIconView
+import de.letzgo.launcher.ui.FolderTitle
 import de.letzgo.launcher.ui.M3
 
 /**
@@ -37,11 +38,7 @@ class CategoryFolder(
     // Lage der Kachel in Koordinaten dieser View; beim Öffnen ermittelt (ohne eigene Transformation)
     private var origin: Rect? = null
     private val title =
-        TextView(context).apply {
-            M3.onWallpaper(this)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f)
-            gravity = Gravity.CENTER
-        }
+        TextView(context).apply { FolderTitle.style(this) }
     private val adapter = AppAdapter()
     private val list =
         RecyclerView(context).apply {
@@ -70,7 +67,7 @@ class CategoryFolder(
             LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER_HORIZONTAL
-                addView(title, LinearLayout.LayoutParams(WRAP, WRAP).apply { bottomMargin = dp(20) })
+                addView(title, LinearLayout.LayoutParams(WRAP, WRAP).apply { bottomMargin = FolderTitle.gap(context) })
                 addView(sheet, LinearLayout.LayoutParams(WRAP, WRAP))
             },
             LayoutParams(WRAP, WRAP, Gravity.CENTER),
@@ -87,8 +84,8 @@ class CategoryFolder(
         list.layoutManager = GridLayoutManager(context, columns)
         list.setPadding(padding, padding, padding, padding)
         list.clipToPadding = false
-        // Breite: vier Icon-Spalten wie auf dem Homescreen plus schmaler Rand, Höhe höchstens 60 %
-        val width = grid.width(columns) + 2 * padding
+        // Breite: bündig mit den Icon-Spalten wie die Kacheln der Mediathek, Höhe höchstens 60 %
+        val width = grid.width(columns)
         sheet.layoutParams = LinearLayout.LayoutParams(width, WRAP)
         val rows = (apps.size + columns - 1) / columns
         val rowHeight = grid.iconSize + dp(4) + dp(LABEL_HEIGHT_DP) + grid.gap

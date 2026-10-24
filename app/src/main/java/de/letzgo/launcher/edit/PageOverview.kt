@@ -28,8 +28,9 @@ import com.android.launcher3.model.data.LauncherAppWidgetInfo
 import com.android.launcher3.util.Executors.MAIN_EXECUTOR
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import de.letzgo.launcher.LetzgoLauncher
+import de.letzgo.launcher.ui.Backdrop
 import de.letzgo.launcher.ui.M3
-import com.google.android.material.R as MaterialR
 
 /**
  * Seitenübersicht im Bearbeitungsmodus (wie auf iOS über die Seitenpunkte): alle Homescreen-Seiten
@@ -59,7 +60,6 @@ class PageOverview(private val launcher: Launcher, private val onClosed: () -> U
 
     init {
         isClickable = true
-        setBackgroundColor(M3.color(m3, MaterialR.attr.colorSurface, 0.92f))
         val done =
             MaterialButton(m3).apply {
                 setText(R.string.edit_bar_done)
@@ -68,7 +68,8 @@ class PageOverview(private val launcher: Launcher, private val onClosed: () -> U
         val title =
             TextView(m3).apply {
                 setText(R.string.page_overview_title)
-                setTextColor(M3.color(m3, MaterialR.attr.colorOnSurface))
+                // Direkt auf dem abgedunkelten Hintergrundbild wie Ordner und Mediathek
+                M3.onWallpaper(this)
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
             }
         addView(
@@ -154,6 +155,7 @@ class PageOverview(private val launcher: Launcher, private val onClosed: () -> U
     /** Homescreen, Dock und Seitenpunkte treten hinter der Übersicht zurück. */
     private fun setHomeVisible(visible: Boolean) {
         val alpha = if (visible) 1f else 0f
+        (launcher as? LetzgoLauncher)?.backdrop?.set(Backdrop.OVERVIEW, 1f - alpha)
         listOf(launcher.workspace, launcher.hotseat, launcher.workspace.pageIndicator as View).forEach {
             it.animate().alpha(alpha).setDuration(FADE_MS).start()
         }
@@ -258,7 +260,7 @@ class PageOverview(private val launcher: Launcher, private val onClosed: () -> U
                     background =
                         GradientDrawable().apply {
                             cornerRadius = M3.SHAPE_LARGE_DP * density
-                            setColor(M3.color(m3, MaterialR.attr.colorSurfaceContainerHigh))
+                            setColor(M3.folderTileColor(m3))
                         }
                     val pad = dp(6)
                     setPadding(pad, pad, pad, pad)

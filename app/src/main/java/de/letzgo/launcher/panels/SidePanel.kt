@@ -13,6 +13,7 @@ import androidx.dynamicanimation.animation.SpringAnimation
 import androidx.dynamicanimation.animation.SpringForce
 import com.android.launcher3.Insettable
 import com.android.launcher3.Launcher
+import de.letzgo.launcher.LetzgoLauncher
 import kotlin.math.abs
 
 /**
@@ -155,7 +156,11 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
         hotseat.alpha = 1 - progress
         hotseat.translationY = hotseat.height * DOCK_SLIDE * progress
         (launcher.workspace.pageIndicator as View).alpha = 1 - progress
+        (launcher as? LetzgoLauncher)?.backdrop?.set(backdropKey, progress)
     }
+
+    /** Schlüssel für [de.letzgo.launcher.ui.Backdrop]: Hintergrundbild unscharf, solange offen. */
+    protected abstract val backdropKey: String
 
     // Schließen per Wischen zurück zur Kante, wie sie hereinkam
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
