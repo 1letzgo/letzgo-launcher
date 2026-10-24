@@ -174,6 +174,14 @@ class LetzgoLauncher : Launcher() {
         inOutPosition[1] = ((dragLayer.height - height + title) / 2).coerceAtLeast(deviceProfile.insets.top + title)
     }
 
+    /**
+     * Launcher3 sperrt auf dem Homescreen die Zurück-Geste des Systems. In unseren eigenen Ebenen
+     * (Mediathek, Heute-Seite, Bearbeitungsmodus, Seitenübersicht) muss sie wie Zurück wirken.
+     */
+    override fun shouldDisableBackGesture(): Boolean =
+        super.shouldDisableBackGesture() &&
+            !appLibrary.isOpen && !today.isOpen && !jiggleMode.isActive && !jiggleMode.isPageOverviewOpen
+
     /** Statt „Entfernen“/„Deinstallieren“ beim Ziehen gibt es Minus-Badges ([JiggleMode]). */
     private fun hideDropTargetBar() {
         dragController.removeDragListener(dropTargetBar)

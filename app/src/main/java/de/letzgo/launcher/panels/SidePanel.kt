@@ -136,12 +136,14 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
             OnBackInvokedDispatcher.PRIORITY_OVERLAY,
             backCallback,
         )
+        launcher.updateDisallowBack()
     }
 
     private fun finishClose() {
         visibility = View.GONE
         launcher.onBackInvokedDispatcher.unregisterOnBackInvokedCallback(backCallback)
         onClosed()
+        launcher.updateDisallowBack()
     }
 
     /**

@@ -55,6 +55,7 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
             backCallback,
         )
         Choreographer.getInstance().postFrameCallback(this)
+        launcher.updateDisallowBack()
     }
 
     fun exit() {
@@ -67,6 +68,7 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         for ((view, badge) in badges) view.overlay.remove(badge)
         badges.clear()
         forEachItemView { it.rotation = 0f }
+        launcher.updateDisallowBack()
     }
 
     override fun doFrame(frameTimeNanos: Long) {
@@ -124,6 +126,7 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         launcher.workspace.removeExtraEmptyScreen(true)
         overviewCreated = true
         pageOverview.open()
+        launcher.updateDisallowBack()
     }
 
     private fun showEditMenu(anchor: View) {
