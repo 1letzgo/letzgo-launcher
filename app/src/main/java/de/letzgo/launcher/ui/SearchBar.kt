@@ -53,7 +53,8 @@ class SearchBar(context: Context, @StringRes hint: Int, editable: Boolean) : Lin
         background =
             GradientDrawable().apply {
                 cornerRadius = dp(28).toFloat()
-                setColor(M3.color(context, MaterialR.attr.colorSurfaceContainerHigh))
+                // Wie die Ordner-Kacheln: dunkel und halbtransparent
+                setColor(M3.folderTileColor(context))
             }
         addView(leading, LayoutParams(dp(48), dp(48)))
         addView(field, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))

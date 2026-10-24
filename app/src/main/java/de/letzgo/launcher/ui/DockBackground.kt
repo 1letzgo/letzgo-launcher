@@ -10,11 +10,10 @@ import com.android.launcher3.BubbleTextView
 import com.android.launcher3.Hotseat
 import com.android.launcher3.InsettableFrameLayout
 import com.android.launcher3.Launcher
-import com.google.android.material.R as MaterialR
 
 /**
- * Halbtransparente Material-3-Fläche hinter den Dock-Icons (Tonfläche „surface container“, große
- * Ecken). Reicht fast bis an die Bildschirmränder und umschließt die Icons vertikal mit etwas Abstand.
+ * Halbtransparente Fläche hinter den Dock-Icons in der Farbe der Ordner-Kacheln, mit großen
+ * M3-Ecken. Reicht fast bis an die Bildschirmränder und umschließt die Icons vertikal mit etwas Abstand.
  *
  * Eigene View in der DragLayer direkt unter dem [Hotseat], nicht dessen Hintergrund: Die Fläche ragt
  * über den Hotseat hinaus, und sobald er halbtransparent oder in einer eigenen Ebene gezeichnet wird
@@ -28,7 +27,7 @@ class DockBackground(private val launcher: Launcher) :
     private val density = resources.displayMetrics.density
     private val fill =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = M3.color(M3.context(launcher), MaterialR.attr.colorSurfaceContainer, M3.DOCK_ALPHA)
+            color = M3.folderTileColor(launcher)
         }
     // Kapsel in Hotseat-Koordinaten
     private val capsule = RectF()

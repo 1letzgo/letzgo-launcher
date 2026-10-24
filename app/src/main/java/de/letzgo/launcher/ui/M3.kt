@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.annotation.AttrRes
 import androidx.core.graphics.ColorUtils
 import com.android.launcher3.Launcher
+import com.android.launcher3.R
 import com.android.launcher3.util.SystemUiController
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.R as MaterialR
@@ -54,8 +55,14 @@ object M3 {
 
     private const val RIPPLE_ALPHA = 0.12f
 
-    /** Deckkraft der halbtransparenten Dock-Fläche. */
-    const val DOCK_ALPHA = 0.7f
+    /**
+     * Farbe einer Ordner-Kachel auf dem Homescreen (Launcher3-Ordnerfarbe, bei letzgo immer dunkel und
+     * halbtransparent). Dock, Mediathek-Kacheln und Suchleisten nutzen sie, damit alles gleich wirkt.
+     */
+    fun folderTileColor(context: Context): Int = context.getColor(R.color.folder_preview_light)
+
+    /** Farbe eines geöffneten Ordners (dunkel, halbtransparent), auch für geöffnete Kategorien. */
+    fun folderSheetColor(context: Context): Int = context.getColor(R.color.folder_background_light)
 
     /**
      * Text direkt auf dem Hintergrundbild (Heute-Seite, Mediathek): weiß mit Schatten wie die

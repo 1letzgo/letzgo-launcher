@@ -37,9 +37,10 @@ import com.google.android.material.R as MaterialR
 
 /**
  * App-Mediathek als Seite rechts neben der letzten Homescreen-Seite (Logik wie iOS, Gestaltung
- * Material 3), direkt auf dem Hintergrundbild wie der Homescreen: Apps nach Kategorien in Karten, Suchleiste oben; Suche oder Tippen auf einen
- * Kartenstapel zeigt eine alphabetische Liste. Enthält alle Apps; per Festhalten und Ziehen oder über
- * das Kontextmenü kommen Apps auf den Homescreen.
+ * Material 3), direkt auf dem Hintergrundbild wie der Homescreen: Apps nach Kategorien in Kacheln
+ * in Ordnerfarbe, Suchleiste oben. Ein Kategorie-Stapel öffnet sich wie ein Ordner
+ * ([CategoryFolder]), die Suche zeigt eine alphabetische Liste. Enthält alle Apps; per Festhalten
+ * und Ziehen oder über das Kontextmenü kommen Apps auf den Homescreen.
  */
 class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false) {
 
@@ -49,14 +50,13 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
     private val density = resources.displayMetrics.density
     private var groups = emptyList<Group>()
     private var allApps = emptyList<AppInfo>()
-    private var listFilter: AppCategory? = null
     private var grid = IconGrid.of(launcher)
     private var listMode = false
     private val touchSlop = ViewConfiguration.get(launcher).scaledTouchSlop
 
     private val searchBar =
         SearchBar(m3, R.string.library_search_hint, editable = true).apply {
-            field.setOnFocusChangeListener { _, focused -> if (focused) showList(null) }
+            field.setOnFocusChangeListener { _, focused -> if (focused) showList() }
             field.addTextChangedListener(
                 object : TextWatcher {
                     override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
@@ -68,14 +68,15 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
             )
             leading.setOnClickListener { if (listMode) showTiles() }
         }
-    private val listTitle =
-        TextView(m3).apply {
-            M3.onWallpaper(this)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
-            visibility = View.GONE
-        }
     private val recycler = RecyclerView(m3).apply { clipToPadding = false }
     private val content = LinearLayout(m3)
+    private val categoryFolder =
+        CategoryFolder(
+            m3,
+            onLaunch = { view, app -> launch(view, app) },
+            onDrag = { view, app -> startDrag(view, app) },
+            onClose = ::closeCategory,
+        )
     private val tileAdapter = TileAdapter()
     private val listAdapter = ListAdapter()
 
@@ -84,11 +85,11 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
             content.apply {
                 orientation = LinearLayout.VERTICAL
                 addView(searchBar, LinearLayout.LayoutParams(MATCH, WRAP))
-                addView(listTitle, LinearLayout.LayoutParams(MATCH, WRAP).apply { topMargin = dp(20) })
                 addView(recycler, LinearLayout.LayoutParams(MATCH, 0, 1f).apply { topMargin = dp(16) })
             },
             LayoutParams(MATCH, MATCH),
         )
+        addView(categoryFolder, LayoutParams(MATCH, MATCH))
         showTiles()
     }
 
@@ -123,34 +124,47 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
         }
     }
 
-    override fun onClosed() = showTiles()
+    override fun onClosed() {
+        closeCategory()
+        showTiles()
+    }
 
     override fun onBack(): Boolean {
-        if (!listMode) return false
-        showTiles()
+        when {
+            categoryFolder.isOpen -> closeCategory()
+            listMode -> showTiles()
+            else -> return false
+        }
         return true
+    }
+
+    /** Kategorie wie einen Ordner öffnen; die Mediathek tritt dahinter zurück (wie der Homescreen). */
+    private fun openCategory(group: Group) {
+        categoryFolder.show(group.category, group.apps, grid)
+        content.animate().alpha(0f).setDuration(FADE_MS).start()
+    }
+
+    private fun closeCategory() {
+        categoryFolder.hide()
+        content.animate().alpha(1f).setDuration(FADE_MS).start()
     }
 
     override fun onBottomInset(bottom: Int) = recycler.setPadding(0, 0, 0, bottom + dp(16))
 
     private fun showTiles() {
         listMode = false
-        listFilter = null
         searchBar.field.text.clear()
         searchBar.field.clearFocus()
         searchBar.showBack(false)
-        listTitle.visibility = View.GONE
         hideKeyboard()
         recycler.layoutManager = GridLayoutManager(context, 2)
         recycler.adapter = tileAdapter
     }
 
-    private fun showList(filter: AppCategory?) {
+    /** Suche: alphabetische Liste aller Apps, gefiltert nach dem Suchtext. */
+    private fun showList() {
         listMode = true
-        listFilter = filter
         searchBar.showBack(true)
-        listTitle.visibility = if (filter != null) View.VISIBLE else View.GONE
-        filter?.let { listTitle.setText(it.title) }
         recycler.layoutManager = LinearLayoutManager(context)
         recycler.adapter = listAdapter
         updateList()
@@ -158,8 +172,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
 
     private fun updateList() {
         val query = searchBar.field.text.toString().trim().lowercase()
-        val source = listFilter?.let { f -> groups.firstOrNull { it.category == f }?.apps } ?: allApps
-        listAdapter.items = source.filter { query.isEmpty() || query in it.title.toString().lowercase() }
+        listAdapter.items = allApps.filter { query.isEmpty() || query in it.title.toString().lowercase() }
         listAdapter.notifyDataSetChanged()
     }
 
@@ -264,7 +277,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
                             )
                         }
                         foreground = M3.ripple(m3, cornerRadius = M3.SHAPE_LARGE_DP * density)
-                        setOnClickListener { showList(group.category) }
+                        setOnClickListener { openCategory(group) }
                     }
                 )
             }
@@ -304,11 +317,11 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
         }
     }
 
-    /** Karte nach Material 3: Tonfläche, extra große Ecken. */
+    /** Karte in der Farbe der Ordner-Kacheln, extra große M3-Ecken. */
     private fun card() =
         GradientDrawable().apply {
             cornerRadius = M3.SHAPE_EXTRA_LARGE_DP * density
-            setColor(M3.color(m3, MaterialR.attr.colorSurfaceContainer))
+            setColor(M3.folderTileColor(m3))
         }
 
     private fun dp(value: Int) = (value * density).toInt()
@@ -357,5 +370,6 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
         const val RECENT_COUNT = 8
         const val TILE_PADDING = 14
         const val TILE_GAP = 10
+        const val FADE_MS = 180L
     }
 }
