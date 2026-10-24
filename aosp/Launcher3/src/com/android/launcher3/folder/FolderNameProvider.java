@@ -28,6 +28,7 @@ import android.util.Log;
 
 import androidx.annotation.WorkerThread;
 
+import com.android.launcher3.BuildConfig;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.model.BgDataModel;
@@ -113,6 +114,15 @@ public class FolderNameProvider {
             // Place it as first viable suggestion and shift everything else
             info.ifPresent(i -> setAsFirstSuggestion(
                     nameInfos, i.title == null ? "" : i.title.toString()));
+        }
+
+        // letzgo: wie auf iOS nach der gemeinsamen Kategorie der App-Mediathek benennen
+        if (BuildConfig.FOLDER_CATEGORY_NAMES && !nameInfos.hasPrimary()) {
+            String category = de.letzgo.launcher.panels.CategoryFolderName.suggest(
+                    context, workspaceItemInfos, mAppInfos);
+            if (category != null) {
+                setAsFirstSuggestion(nameInfos, category);
+            }
         }
         if (DEBUG) {
             Log.d(TAG, "getSuggestedFolderName:" + nameInfos.toString());
