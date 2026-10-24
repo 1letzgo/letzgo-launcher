@@ -2,6 +2,7 @@ package de.letzgo.launcher.panels
 
 import android.app.SearchManager
 import android.content.Intent
+import android.graphics.Rect
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.graphics.drawable.GradientDrawable
@@ -24,15 +25,17 @@ import android.window.OnBackInvokedCallback
 import android.window.OnBackInvokedDispatcher
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.android.launcher3.Insettable
 import com.android.launcher3.Launcher
 import com.android.launcher3.R
+import com.android.launcher3.icons.BitmapInfo.Companion.FLAG_THEMED
 import com.android.launcher3.model.data.AppInfo
 
 /**
  * Suche wie Spotlight: Wischen nach unten oder Tippen auf „Suchen“ öffnet sie über dem
  * weichgezeichneten Homescreen. Findet Apps; die letzte Zeile sucht im Web.
  */
-class SearchOverlay(private val launcher: Launcher) : FrameLayout(launcher) {
+class SearchOverlay(private val launcher: Launcher) : FrameLayout(launcher), Insettable {
 
     private val density = resources.displayMetrics.density
     private val backCallback = OnBackInvokedCallback { close() }
@@ -84,6 +87,12 @@ class SearchOverlay(private val launcher: Launcher) : FrameLayout(launcher) {
 
     val isOpen
         get() = visibility == View.VISIBLE
+
+    /** Reicht hinter Status- und Gestenleiste, die Trefferliste scrollt unter die Gestenleiste. */
+    override fun setInsets(insets: Rect) {
+        setPadding(insets.left, insets.top, insets.right, 0)
+        list.setPadding(0, 0, 0, insets.bottom + dp(16))
+    }
 
     /** Sichtbarkeit hat sich geändert (beim Öffnen bzw. nach dem Schließen). */
     var onVisibilityChanged: (Boolean) -> Unit = {}
@@ -209,7 +218,7 @@ class SearchOverlay(private val launcher: Launcher) : FrameLayout(launcher) {
             if (position < results.size) {
                 val app = results[position]
                 row.addView(
-                    ImageView(context).apply { setImageDrawable(app.newIcon(context)) },
+                    ImageView(context).apply { setImageDrawable(app.newIcon(context, FLAG_THEMED)) },
                     LinearLayout.LayoutParams(dp(44), dp(44)),
                 )
                 title.text = app.title

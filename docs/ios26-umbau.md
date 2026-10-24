@@ -50,7 +50,12 @@ Ziel: Bedienlogik und Optik möglichst nah am iOS-26-Homescreen.
 | Suchleiste | QSB (`QSB_ON_FIRST_SCREEN`) | entfernen (`buildConfigField` auf `false`) |
 | Seitenindikator | `PageIndicatorDots` | Punkte über dem Dock, immer sichtbar. Die „Suchen“-Pille (iOS 26) kommt mit der Suche in Phase 6 |
 
-### 2 – Kein App-Drawer: alle Apps auf dem Homescreen
+### 2 – Kein App-Drawer
+
+> Stand: Alle Apps stehen in der App-Mediathek, der Homescreen ist eine Auswahl
+> (`model/HomeScreenApps.kt`). Neu installierte Apps kommen nach der Launcher-Einstellung
+> „Neue Apps zum Startbildschirm hinzufügen“ auf den Homescreen, beim ersten Start einmal alle.
+> Der ursprüngliche Plan unten (alle Apps immer auf dem Homescreen) ist damit überholt.
 
 - Beim Laden und bei Installationen jede startbare App, die nicht auf Homescreen/Dock/Ordner
   liegt, an der nächsten freien Stelle ab der letzten Seite einfügen.

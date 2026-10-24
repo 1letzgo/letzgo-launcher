@@ -7,7 +7,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.preference.Preference
 import com.android.launcher3.BuildConfig
 import com.android.launcher3.R
-import com.android.launcher3.SessionCommitReceiver.ADD_ICON_PREFERENCE_KEY
 import com.android.launcher3.settings.SettingsActivity.LauncherSettingsFragment
 import com.android.launcher3.util.Executors.MAIN_EXECUTOR
 import com.android.launcher3.util.Executors.THREAD_POOL_EXECUTOR
@@ -27,8 +26,6 @@ class LetzgoSettingsFragment : LauncherSettingsFragment() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         super.onCreatePreferences(savedInstanceState, rootKey)
         val screen = preferenceScreen
-        // Neue Apps landen ohnehin immer auf dem Homescreen (AllAppsOnHomeScreen)
-        screen.findPreference<Preference>(ADD_ICON_PREFERENCE_KEY)?.let(screen::removePreference)
         screen.addPreference(
             Preference(requireContext()).apply {
                 key = KEY_DEFAULT_HOME

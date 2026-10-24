@@ -3,6 +3,7 @@
     <string name="remove_app">App entfernen</string>
     <string name="remove_app_title">„%1$s“ entfernen?</string>
     <string name="remove_from_home">Vom Home-Bildschirm entfernen</string>
+    <string name="remove_app_message">Vom Home-Bildschirm entfernt bleibt die App in der App-Mediathek.</string>
     <string name="delete_app">App löschen</string>
 
     <!-- Bearbeitungsmodus (de.letzgo.launcher.edit) -->
@@ -11,7 +12,7 @@
     <string name="edit_bar_done">Fertig</string>
     <string name="remove_folder">Ordner entfernen</string>
     <string name="remove_folder_title">„%1$s“ entfernen?</string>
-    <string name="remove_folder_message">Die Apps in diesem Ordner werden vom Home-Bildschirm entfernt.</string>
+    <string name="remove_folder_message">Die Apps bleiben in der App-Mediathek.</string>
 
     <!-- App-Mediathek, Suche, Heute-Ansicht (de.letzgo.launcher.panels) -->
     <string name="library_title">App-Mediathek</string>

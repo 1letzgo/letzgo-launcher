@@ -3,6 +3,7 @@
     <string name="remove_app">Remove App</string>
     <string name="remove_app_title">Remove “%1$s”?</string>
     <string name="remove_from_home">Remove from Home Screen</string>
+    <string name="remove_app_message">Removing it from the Home Screen keeps the app in the App Library.</string>
     <string name="delete_app">Delete App</string>
 
     <!-- Bearbeitungsmodus (de.letzgo.launcher.edit) -->
@@ -11,7 +12,7 @@
     <string name="edit_bar_done">Done</string>
     <string name="remove_folder">Remove Folder</string>
     <string name="remove_folder_title">Remove “%1$s”?</string>
-    <string name="remove_folder_message">The apps in this folder will be removed from the Home Screen.</string>
+    <string name="remove_folder_message">The apps will stay in the App Library.</string>
 
     <!-- App-Mediathek, Suche, Heute-Ansicht (de.letzgo.launcher.panels) -->
     <string name="library_title">App Library</string>

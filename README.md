@@ -4,8 +4,8 @@ Ein schlanker Android Launcher auf Basis von AOSP Launcher3, der sich wie der iO
 (Ziel: möglichst nah an der Logik von iOS 26).
 
 Status: im Aufbau. Launcher3 aus AOSP (ohne Quickstep) baut als eigenständige Gradle-App;
-Meilensteine M1 bis M3 des [Umbau-Plans](docs/ios26-umbau.md) sind umgesetzt (iOS-Raster, alle Apps
-auf dem Homescreen, kein App-Drawer, Bearbeitungsmodus mit Wackeln, Ordner mit 3 × 3-Raster,
+Meilensteine M1 bis M3 des [Umbau-Plans](docs/ios26-umbau.md) sind umgesetzt (iOS-Raster, kein
+App-Drawer – alle Apps stehen in der App-Mediathek, der Homescreen ist eine Auswahl, Bearbeitungsmodus mit Wackeln, Ordner mit 3 × 3-Raster,
 Zahlen-Badges, App-Mediathek, Suche, Heute-Ansicht).
 
 ## Bauen

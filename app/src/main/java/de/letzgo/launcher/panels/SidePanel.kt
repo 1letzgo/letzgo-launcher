@@ -1,6 +1,7 @@
 package de.letzgo.launcher.panels
 
 import android.animation.ValueAnimator
+import android.graphics.Rect
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.view.MotionEvent
@@ -12,6 +13,7 @@ import android.window.OnBackInvokedCallback
 import android.window.OnBackInvokedDispatcher
 import androidx.core.animation.doOnEnd
 import com.android.app.animation.Interpolators
+import com.android.launcher3.Insettable
 import com.android.launcher3.Launcher
 import kotlin.math.abs
 
@@ -21,7 +23,7 @@ import kotlin.math.abs
  * abgedunkelt. Öffnen per [PanelSwipeController], Schließen per Wischen zurück, Zurück oder Home.
  */
 abstract class SidePanel(protected val launcher: Launcher, private val fromLeft: Boolean) :
-    FrameLayout(launcher) {
+    FrameLayout(launcher), Insettable {
 
     private val touchSlop = ViewConfiguration.get(launcher).scaledTouchSlop
     private val backCallback = OnBackInvokedCallback { close(animate = true) }
@@ -49,6 +51,17 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
         visibility = View.GONE
         isClickable = true
     }
+
+    /**
+     * Die Seite reicht hinter Status- und Gestenleiste; der Inhalt rückt oben ein, unten nur
+     * scrollende Inhalte (siehe [onBottomInset]).
+     */
+    override fun setInsets(insets: Rect) {
+        setPadding(insets.left, insets.top, insets.right, 0)
+        onBottomInset(insets.bottom)
+    }
+
+    protected open fun onBottomInset(bottom: Int) {}
 
     /** Wird beim ersten Hereinziehen aufgerufen, z. B. um Inhalte zu aktualisieren. */
     protected open fun onOpening() {}

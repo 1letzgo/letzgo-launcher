@@ -27,6 +27,7 @@ object RemoveItem {
                 val uninstallTarget = SecondaryDropTarget.getUninstallTarget(context, item)
                 dialog(context)
                     .setTitle(context.getString(R.string.remove_app_title, item.title))
+                    .setMessage(R.string.remove_app_message)
                     .setPositiveButton(R.string.remove_from_home) { _, _ ->
                         removeFromHome(target, item, view)
                     }

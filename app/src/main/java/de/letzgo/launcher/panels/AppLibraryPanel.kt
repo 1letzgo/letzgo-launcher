@@ -21,18 +21,17 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.android.launcher3.Launcher
 import com.android.launcher3.R
+import com.android.launcher3.icons.BitmapInfo.Companion.FLAG_THEMED
 import com.android.launcher3.model.data.AppInfo
-import com.android.launcher3.util.ComponentKey
 import com.android.launcher3.util.Executors.MAIN_EXECUTOR
 import com.android.launcher3.util.Executors.THREAD_POOL_EXECUTOR
 import com.android.launcher3.util.PackageManagerHelper
-import de.letzgo.launcher.model.AllAppsOnHomeScreen
-import de.letzgo.launcher.model.HomeScreenRemovals
+import de.letzgo.launcher.model.HomeScreenApps
 
 /**
  * App-Mediathek rechts neben der letzten Homescreen-Seite, wie auf iOS: Apps nach Kategorien in
  * Kacheln, Suchfeld oben; Suche oder Tippen auf einen Kachel-Stapel zeigt eine alphabetische Liste.
- * Über das Kontextmenü kommen vom Homescreen entfernte Apps zurück.
+ * Enthält alle Apps; über das Kontextmenü kommen Apps auf den Homescreen, die dort nicht liegen.
  */
 class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false) {
 
@@ -128,6 +127,8 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
 
     override fun onClosed() = showTiles()
 
+    override fun onBottomInset(bottom: Int) = recycler.setPadding(0, 0, 0, bottom + dp(16))
+
     private fun showTiles() {
         listFilter = null
         search.text.clear()
@@ -158,29 +159,25 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
         close(animate = false)
     }
 
-    /** Kontextmenü: zurück auf den Homescreen (falls entfernt) und App-Info. */
+    /** Kontextmenü: auf den Homescreen (falls sie dort nicht liegt) und App-Info. */
     private fun showMenu(view: View, app: AppInfo): Boolean {
-        val removals = HomeScreenRemovals.get(context)
-        val key = ComponentKey(app.componentName!!, app.user)
-        val removed = removals.removedAt(key) != null
-        val actions =
-            listOfNotNull(
-                if (removed) R.string.library_add_to_home else null,
-                R.string.library_app_info,
-            )
-        AlertDialog.Builder(context, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-            .setTitle(app.title)
-            .setItems(actions.map(context::getString).toTypedArray()) { _, which ->
-                when (actions[which]) {
-                    R.string.library_add_to_home -> {
-                        removals.forget(listOf(key))
-                        AllAppsOnHomeScreen.sync(launcher)
+        HomeScreenApps.isOnHome(launcher, app) { onHome ->
+            val actions =
+                listOfNotNull(
+                    if (onHome) null else R.string.library_add_to_home,
+                    R.string.library_app_info,
+                )
+            AlertDialog.Builder(context, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle(app.title)
+                .setItems(actions.map(context::getString).toTypedArray()) { _, which ->
+                    when (actions[which]) {
+                        R.string.library_add_to_home -> HomeScreenApps.add(launcher, listOf(app))
+                        R.string.library_app_info ->
+                            PackageManagerHelper.startDetailsActivityForInfo(context, app, null, null)
                     }
-                    R.string.library_app_info ->
-                        PackageManagerHelper.startDetailsActivityForInfo(context, app, null, null)
                 }
-            }
-            .show()
+                .show()
+        }
         return true
     }
 
@@ -190,7 +187,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
 
     private fun appIcon(app: AppInfo, size: Int) =
         ImageView(context).apply {
-            setImageDrawable(app.newIcon(context))
+            setImageDrawable(app.newIcon(context, FLAG_THEMED))
             layoutParams = ViewGroup.LayoutParams(size, size)
             contentDescription = app.title
             setOnClickListener { launch(it, app) }
@@ -227,7 +224,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
                         group.apps.drop(3).take(4).forEach { app ->
                             addView(
                                 ImageView(context).apply {
-                                    setImageDrawable(app.newIcon(context))
+                                    setImageDrawable(app.newIcon(context, FLAG_THEMED))
                                     layoutParams = ViewGroup.LayoutParams(small, small)
                                 }
                             )
@@ -261,7 +258,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
             row.setPadding(0, dp(6), 0, dp(6))
             row.layoutParams = RecyclerView.LayoutParams(MATCH, WRAP)
             row.addView(
-                ImageView(context).apply { setImageDrawable(app.newIcon(context)) },
+                ImageView(context).apply { setImageDrawable(app.newIcon(context, FLAG_THEMED)) },
                 LinearLayout.LayoutParams(dp(40), dp(40)),
             )
             row.addView(

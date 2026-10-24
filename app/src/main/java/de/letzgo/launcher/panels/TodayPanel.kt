@@ -8,6 +8,7 @@ import android.content.Intent
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.format.DateFormat
+import android.util.SizeF
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -39,6 +40,7 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
             setTypeface(typeface, android.graphics.Typeface.BOLD)
         }
     private val widgets = LinearLayout(launcher).apply { orientation = LinearLayout.VERTICAL }
+    private val scroll = ScrollView(launcher).apply { clipToPadding = false }
 
     init {
         setBackgroundColor(0x40000000)
@@ -55,7 +57,7 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
                 setOnClickListener { pickWidget() }
             }
         addView(
-            ScrollView(launcher).apply {
+            scroll.apply {
                 addView(
                     LinearLayout(launcher).apply {
                         orientation = LinearLayout.VERTICAL
@@ -83,6 +85,8 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
     }
 
     override fun onClosed() = host.stopListening()
+
+    override fun onBottomInset(bottom: Int) = scroll.setPadding(0, 0, 0, bottom)
 
     /** Ergebnis der Widget-Auswahl bzw. -Konfiguration aus [Launcher.onActivityResult]. */
     fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
@@ -112,22 +116,46 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
         )
     }
 
+    /**
+     * Widgets in iOS-Größen: klein (halbe Breite, quadratisch), mittel (volle Breite) und groß
+     * (volle Breite, doppelt hoch), abgeleitet aus der Zielgröße des Widgets. Kleine stehen paarweise.
+     */
     private fun rebuild() {
         widgets.removeAllViews()
-        val width = resources.displayMetrics.widthPixels - dp(40)
+        val gap = dp(WIDGET_GAP_DP)
+        val full = resources.displayMetrics.widthPixels - dp(40)
+        val square = (full - gap) / 2
+        var row: LinearLayout? = null
         for (id in loadIds()) {
             val info = widgetManager.getAppWidgetInfo(id) ?: continue
-            val height = (info.minHeight).coerceAtLeast(dp(MIN_WIDGET_HEIGHT_DP))
+            val wide = info.targetCellWidth > 2 || (info.targetCellWidth == 0 && info.minWidth > square)
+            val tall = info.targetCellHeight > 2 || (info.targetCellHeight == 0 && info.minHeight > square)
+            val width = if (wide) full else square
+            val height = if (tall) square * 2 + gap else square
             val view = host.createView(context, id, info)
-            view.updateAppWidgetSize(
-                Bundle(),
-                listOf(android.util.SizeF(width / density, height / density)),
-            )
-            view.setOnLongClickListener { confirmRemove(id, info.loadLabel(context.packageManager)); true }
-            widgets.addView(
-                RoundedFrame(view).apply { background = glass(22 * density) },
-                LinearLayout.LayoutParams(width, height).apply { bottomMargin = dp(12) },
-            )
+            view.updateAppWidgetSize(Bundle(), listOf(SizeF(width / density, height / density)))
+            view.setOnLongClickListener {
+                confirmRemove(id, info.loadLabel(context.packageManager))
+                true
+            }
+            val card = RoundedFrame(view).apply { background = glass(22 * density) }
+            if (wide) {
+                row = null
+                widgets.addView(card, LinearLayout.LayoutParams(width, height).apply { bottomMargin = gap })
+            } else {
+                val target =
+                    row?.takeIf { it.childCount == 1 }
+                        ?: LinearLayout(context).also {
+                            row = it
+                            widgets.addView(it, LinearLayout.LayoutParams(full, WRAP).apply { bottomMargin = gap })
+                        }
+                target.addView(
+                    card,
+                    LinearLayout.LayoutParams(width, height).apply {
+                        if (target.childCount == 1) marginStart = gap
+                    },
+                )
+            }
         }
     }
 
@@ -173,6 +201,6 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
         const val KEY_IDS = "widget_ids"
         const val REQUEST_PICK = 0x4C01
         const val REQUEST_CONFIGURE = 0x4C02
-        const val MIN_WIDGET_HEIGHT_DP = 140
+        const val WIDGET_GAP_DP = 16
     }
 }

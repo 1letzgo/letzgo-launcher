@@ -28,8 +28,7 @@ import com.android.launcher3.touch.ItemClickHandler
 import com.android.launcher3.util.TouchController
 import de.letzgo.launcher.edit.JiggleMode
 import de.letzgo.launcher.edit.JiggleTouchController
-import de.letzgo.launcher.model.AllAppsOnHomeScreen
-import de.letzgo.launcher.model.HomeScreenRemovals
+import de.letzgo.launcher.model.HomeScreenApps
 import de.letzgo.launcher.panels.AppLibraryPanel
 import de.letzgo.launcher.panels.PanelSwipeController
 import de.letzgo.launcher.panels.SearchOverlay
@@ -61,7 +60,7 @@ class LetzgoLauncher : Launcher() {
     private val searchPill by lazy { SearchPill(this) { openSearch() } }
     private lateinit var dock: DockBackground
 
-    private val syncAllApps = Runnable { AllAppsOnHomeScreen.sync(this) }
+    private val syncAllApps = Runnable { HomeScreenApps.sync(this) }
     private val appsUpdateListener = AllAppsStore.OnUpdateListener(::scheduleSync)
     private var updateDialog: AppUpdateDialog? = null
     private var checkingForUpdate = false
@@ -251,16 +250,6 @@ class LetzgoLauncher : Launcher() {
             return super.getSupportedShortcuts(itemInfo)
         }
         return Stream.of(APP_INFO, WIDGETS, INSTALL, EditHomeShortcut.FACTORY, RemoveAppShortcut.FACTORY)
-    }
-
-    override fun removeItem(
-        v: View?,
-        itemInfo: ItemInfo,
-        deleteFromDb: Boolean,
-        reason: String?,
-    ): Boolean {
-        if (deleteFromDb) HomeScreenRemovals.get(this).onRemovedFromHome(itemInfo)
-        return super.removeItem(v, itemInfo, deleteFromDb, reason)
     }
 
     /** Popup-Controller, der nichts anzeigt (Bearbeitungsmodus). */
