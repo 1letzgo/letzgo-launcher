@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Launcher3 setzt diese Farben ab API 31 aus der Systempalette; siehe values/colors.xml -->
-    <color name="folder_text_color_light">#FFFFFFFF</color>
-    <color name="folder_text_color_dark">#FFFFFFFF</color>
-    <color name="folder_hint_text_color_light">#B3FFFFFF</color>
-    <color name="folder_hint_text_color_dark">#B3FFFFFF</color>
-</resources>

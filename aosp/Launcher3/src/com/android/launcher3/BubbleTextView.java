@@ -403,6 +403,9 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
 
         mDotParams = new DotRenderer.DrawParams();
         mDotParams.setDotColor(Themes.getAttrColor(context, R.attr.notificationDotColor));
+        // Zahlen-Badge (BuildConfig.NUMERIC_BADGES) in den Fehlerfarben des Material-3-Schemas
+        mDotParams.badgeColor = context.getColor(R.color.materialColorError);
+        mDotParams.badgeTextColor = context.getColor(R.color.materialColorOnError);
 
         if (mDisplay == DISPLAY_ALL_APPS) {
             mDotRenderer = new DotRenderer(

@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Geöffneter Ordner wie auf iOS als transparentes Glas (ersetzt die Launcher3-Farbe ab API 31) -->
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="#4DFFFFFF" />
-</selector>

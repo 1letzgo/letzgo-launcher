@@ -63,9 +63,8 @@ public class DotRenderer {
     private final Paint mCirclePaint = new Paint(ANTI_ALIAS_FLAG | FILTER_BITMAP_FLAG);
 
     // Zahlen-Badge (siehe drawCountBadge)
-    private static final float BADGE_SIZE_PERCENTAGE = 0.38f;
-    private static final float BADGE_TEXT_SIZE_FACTOR = 0.64f;
-    private static final int BADGE_COLOR = 0xFFFF3B30;
+    private static final float BADGE_SIZE_PERCENTAGE = 0.3f;
+    private static final float BADGE_TEXT_SIZE_FACTOR = 0.68f;
     private static final int MAX_BADGE_COUNT = 999;
     private final Paint mBadgePaint = new Paint(ANTI_ALIAS_FLAG);
     private final Paint mBadgeTextPaint = new Paint(ANTI_ALIAS_FLAG);
@@ -85,10 +84,8 @@ public class DotRenderer {
         mShadowDrawRect = new RectF(-mDrawnRadius, -mDrawnRadius, mDrawnRadius, mDrawnRadius);
 
         int shadowBitmapSize = Math.max(MIN_DOT_SIZE, Math.round(2 * mDrawnRadius));
-        mBadgePaint.setColor(BADGE_COLOR);
-        mBadgeTextPaint.setColor(Color.WHITE);
         mBadgeTextPaint.setTextAlign(Paint.Align.CENTER);
-        mBadgeTextPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        mBadgeTextPaint.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         mShadowBitmap = getCachedShadowBitmap(shadowBitmapSize);
     }
 
@@ -169,16 +166,18 @@ public class DotRenderer {
     }
 
     /**
-     * Rotes Badge mit Anzahl an der oberen rechten Ecke des Icons, wie auf iOS. Wird statt des
-     * Punkts gezeichnet, wenn {@link DrawParams#count} gesetzt ist.
+     * Badge mit Anzahl an der oberen rechten Ecke des Icons (Material 3 „large badge“). Wird statt
+     * des Punkts gezeichnet, wenn {@link DrawParams#count} gesetzt ist; Farben aus den DrawParams.
      */
     private void drawCountBadge(Canvas canvas, DrawParams params) {
         Rect iconBounds = params.iconBounds;
         float height = iconBounds.width() * BADGE_SIZE_PERCENTAGE;
         String text = params.count > MAX_BADGE_COUNT ? MAX_BADGE_COUNT + "+"
                 : Integer.toString(params.count);
+        mBadgePaint.setColor(params.badgeColor);
+        mBadgeTextPaint.setColor(params.badgeTextColor);
         mBadgeTextPaint.setTextSize(height * BADGE_TEXT_SIZE_FACTOR);
-        float width = Math.max(height, mBadgeTextPaint.measureText(text) + height * 0.6f);
+        float width = Math.max(height, mBadgeTextPaint.measureText(text) + height * 0.5f);
 
         // Mittelpunkt leicht innerhalb der Ecke, das Badge darf über das Icon hinausragen
         float centerX = iconBounds.right - height * 0.2f;
@@ -201,6 +200,9 @@ public class DotRenderer {
         /** Anzahl der Mitteilungen; größer 0 zeichnet ein Zahlen-Badge statt des Punkts. */
         @ViewDebug.ExportedProperty(category = "notification dot")
         public int count;
+        /** Hintergrund- und Textfarbe des Zahlen-Badges. */
+        public int badgeColor = Color.RED;
+        public int badgeTextColor = Color.WHITE;
 
         @ViewDebug.ExportedProperty(category = "notification dot", formatToHexString = true)
         private int mDotColor;

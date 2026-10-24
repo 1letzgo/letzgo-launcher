@@ -189,6 +189,9 @@ public class FolderIcon extends FrameLayout implements FloatingIconViewCompanion
         mPreviewItemManager = new PreviewItemManager(this);
         mDotParams = new DotRenderer.DrawParams();
         mDotParams.setDotColor(Themes.getAttrColor(context, R.attr.notificationDotColor));
+        // Zahlen-Badge (BuildConfig.NUMERIC_BADGES) in den Fehlerfarben des Material-3-Schemas
+        mDotParams.badgeColor = context.getColor(R.color.materialColorError);
+        mDotParams.badgeTextColor = context.getColor(R.color.materialColorOnError);
         mDotParams.shapeInfo = ThemeManager.INSTANCE.get(context).getIconState().getIconShapeInfo();
     }
 
