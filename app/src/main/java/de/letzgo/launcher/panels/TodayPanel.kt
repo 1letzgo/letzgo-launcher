@@ -59,7 +59,7 @@ class TodayPanel(launcher: Launcher, onSearch: () -> Unit) : SidePanel(launcher,
         }
 
     init {
-        setBackgroundColor(M3.color(m3, MaterialR.attr.colorSurface))
+        setBackgroundColor(M3.color(m3, MaterialR.attr.colorSurface, M3.PAGE_ALPHA))
         val edit =
             MaterialButton(m3).apply {
                 setText(R.string.today_add_widget)

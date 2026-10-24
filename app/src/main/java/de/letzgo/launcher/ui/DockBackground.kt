@@ -14,7 +14,8 @@ import com.android.launcher3.Hotseat
 import com.google.android.material.R as MaterialR
 
 /**
- * Material-3-Fläche hinter den Dock-Icons (Tonfläche „surface container“, große Ecken). Liegt als
+ * Halbtransparente Material-3-Fläche hinter den Dock-Icons (Tonfläche „surface container“, große
+ * Ecken). Liegt als
  * Hintergrund auf dem [Hotseat], reicht fast bis an die Bildschirmränder und umschließt die Icons
  * vertikal mit etwas Abstand.
  */
@@ -23,7 +24,7 @@ class DockBackground(private val hotseat: Hotseat) : Drawable(), View.OnLayoutCh
     private val density = Resources.getSystem().displayMetrics.density
     private val fill =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = M3.color(M3.context(hotseat.context), MaterialR.attr.colorSurfaceContainer)
+            color = M3.color(M3.context(hotseat.context), MaterialR.attr.colorSurfaceContainer, M3.DOCK_ALPHA)
         }
     private val capsule = RectF()
 

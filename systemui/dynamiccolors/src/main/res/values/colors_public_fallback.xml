@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Ersatz für customColor*-Einträge, die in AOSP auf private Framework-Farben zeigen. Launcher3
-    nutzt sie als Hintergrund geöffneter Ordner: Material-3-Fläche.
+    nutzt sie als Hintergrund geöffneter Ordner (hell/dunkel in color/ bzw. color-night/).
 -->
 <resources>
-    <color name="customColorSurfaceEffect0">@android:color/system_surface_container_high_light</color>
-    <color name="customColorSurfaceEffect0Fallback">@android:color/system_surface_container_high_light</color>
+    <color name="customColorSurfaceEffect0">@color/letzgo_folder_background</color>
+    <color name="customColorSurfaceEffect0Fallback">@color/letzgo_folder_background</color>
 </resources>

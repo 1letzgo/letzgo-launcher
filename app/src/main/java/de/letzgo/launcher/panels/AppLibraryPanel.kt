@@ -75,7 +75,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
     private val listAdapter = ListAdapter()
 
     init {
-        setBackgroundColor(M3.color(m3, MaterialR.attr.colorSurface))
+        setBackgroundColor(M3.color(m3, MaterialR.attr.colorSurface, M3.PAGE_ALPHA))
         addView(
             content.apply {
                 orientation = LinearLayout.VERTICAL

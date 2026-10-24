@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.view.ContextThemeWrapper
 import androidx.annotation.AttrRes
+import androidx.core.graphics.ColorUtils
 import com.android.launcher3.Launcher
 import com.android.launcher3.util.SystemUiController
 import com.google.android.material.color.MaterialColors
@@ -21,6 +22,14 @@ object M3 {
 
     fun color(context: Context, @AttrRes attr: Int): Int =
         MaterialColors.getColor(context, attr, "M3")
+
+    /** M3-Farbe mit Deckkraft [alpha] (0..1), damit das Hintergrundbild durchscheint. */
+    fun color(context: Context, @AttrRes attr: Int, alpha: Float): Int =
+        ColorUtils.setAlphaComponent(color(context, attr), (alpha * 255).toInt())
+
+    /** Deckkraft halbtransparenter Flächen: Seiten (Mediathek, Heute) und Dock. */
+    const val PAGE_ALPHA = 0.8f
+    const val DOCK_ALPHA = 0.7f
 
     /** Helles Schema (Tag)? Dann brauchen Status- und Navigationsleiste dunkle Symbole. */
     fun isLight(context: Context): Boolean =
