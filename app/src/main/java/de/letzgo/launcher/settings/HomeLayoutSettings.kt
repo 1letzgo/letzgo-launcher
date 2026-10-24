@@ -36,6 +36,17 @@ object HomeLayoutSettings {
             .getInt(KEY_ICON_SCALE, DEFAULT_PERCENT)
             .coerceIn(MIN_PERCENT, MAX_PERCENT) / 100f
 
+    /**
+     * Launcher3 hält für jedes Raster eine eigene Datenbank und übernimmt beim Wechsel nur Elemente,
+     * die dort noch fehlen; schon vorhandene behalten ihre alte Lage und Größe. Wie auf iOS soll der
+     * aktuelle Homescreen umziehen: alter Stand des Zielrasters wird vorher gelöscht.
+     */
+    private fun switchGrid(context: Context, idp: InvariantDeviceProfile, grid: String) {
+        if (grid == (LauncherPrefs.get(context).get(GRID_NAME).takeUnless { it.isNullOrEmpty() } ?: DEFAULT_GRID)) return
+        context.deleteDatabase("launcher_$grid.db")
+        idp.setCurrentGrid(grid)
+    }
+
     /** Fügt „Raster“ und „Icon-Größe“ oben in die Einstellungen ein. */
     fun addTo(screen: PreferenceScreen) {
         val context = screen.context
@@ -56,7 +67,7 @@ object HomeLayoutSettings {
                     MaterialAlertDialogBuilder(M3.context(context))
                         .setTitle(R.string.settings_grid)
                         .setSingleChoiceItems(GRIDS.map { it.second }.toTypedArray(), selected) { dialog, which ->
-                            idp.setCurrentGrid(GRIDS[which].first)
+                            switchGrid(context, idp, GRIDS[which].first)
                             pref.summary = GRIDS[which].second
                             dialog.dismiss()
                         }

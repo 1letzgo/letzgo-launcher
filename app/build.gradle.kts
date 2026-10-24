@@ -70,6 +70,7 @@ android {
         buildConfigField("boolean", "FOLDER_TITLE_ABOVE", "true")
         buildConfigField("boolean", "STABLE_STATUS_BAR_INSET", "true")
         buildConfigField("boolean", "ICON_SIZE_SETTING", "true")
+        buildConfigField("boolean", "GRID_MIGRATION_KEEP_SPANS", "true")
     }
 
     buildFeatures {

@@ -61,16 +61,20 @@ class DockBackground(private val launcher: Launcher) :
         oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int,
     ) {
         val icons = hotseat.shortcutsAndWidgets
-        val icon = (0 until icons.childCount).map(icons::getChildAt).firstOrNull { it is BubbleTextView }
-            as BubbleTextView? ?: return
+        val all = (0 until icons.childCount).map(icons::getChildAt).filterIsInstance<BubbleTextView>()
+        val icon = all.firstOrNull() ?: return
         icon.getIconBounds(iconBounds)
         val iconTop = icons.top + icon.top + iconBounds.top
         val padding = PADDING_DP * density
         val margin = MARGIN_DP * density
+        // Breit genug für alle Icons samt Rand (bei 5 Spalten liegen sie weiter außen), sonst wie
+        // die Icon-Spalten bis kurz vor den Bildschirmrand
+        val outer =
+            all.minOf { icons.left + it.left + (it.width - iconBounds.width()) / 2 }.toFloat() - padding
         capsule.set(
-            margin,
+            minOf(margin, outer).coerceAtLeast(0f),
             iconTop - padding,
-            hotseat.width - margin,
+            hotseat.width - minOf(margin, outer).coerceAtLeast(0f),
             iconTop + iconBounds.height() + padding,
         )
         invalidate()

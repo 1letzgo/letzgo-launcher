@@ -911,6 +911,10 @@ public class DeviceProfile {
             float hotseatCellWidth = (float) mDeviceProperties.getWidthPx()
                     / mHotseatProfile.getNumShownIcons();
             int hotseatAdjustment = Math.round((workspaceCellWidth - hotseatCellWidth) / 2);
+            if (com.android.launcher3.BuildConfig.GRID_MIGRATION_KEEP_SPANS) {
+                // letzgo: bei mehr Spalten als Dock-Plätzen nicht über die Icon-Spalten hinaus
+                hotseatAdjustment = Math.max(0, hotseatAdjustment);
+            }
             hotseatBarPadding.set(
                     hotseatAdjustment + mWorkspaceProfile.getWorkspacePadding().left
                             + mWorkspaceProfile.getCellLayoutPaddingPx().left

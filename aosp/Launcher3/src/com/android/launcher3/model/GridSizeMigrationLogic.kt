@@ -551,6 +551,24 @@ constructor(
         trg: Point,
         occupied: GridOccupancy,
     ): CellAndSpan? {
+        if (com.android.launcher3.BuildConfig.GRID_MIGRATION_KEEP_SPANS) {
+            // letzgo: Widgets behalten beim Rasterwechsel ihre Größe (auf das Raster begrenzt) statt
+            // auf die Mindestgröße zu schrumpfen; erst wenn sie so nirgends passen, Mindestgröße
+            val spanX = entry.spanX.coerceAtMost(trg.x).coerceAtLeast(entry.minSpanX)
+            val spanY = entry.spanY.coerceAtMost(trg.y).coerceAtLeast(entry.minSpanY)
+            if (spanX != entry.minSpanX || spanY != entry.minSpanY) {
+                var x0 = startPosX
+                for (y in startPosY until trg.y) {
+                    for (x in x0 until trg.x) {
+                        if (x + spanX <= trg.x && y + spanY <= trg.y &&
+                            occupied.isRegionVacant(x, y, spanX, spanY)) {
+                            return CellAndSpan(x, y, spanX, spanY)
+                        }
+                    }
+                    x0 = 0
+                }
+            }
+        }
         var newStartPosX = startPosX
         for (y in startPosY until trg.y) {
             for (x in newStartPosX until trg.x) {

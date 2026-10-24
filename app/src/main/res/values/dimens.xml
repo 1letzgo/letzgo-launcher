@@ -4,8 +4,9 @@
     <dimen name="qsb_widget_height">0dp</dimen>
     <dimen name="qsb_shadow_height">0dp</dimen>
 
-    <!-- Abstand der ersten Icon-Reihe zur Statusleiste (gleich auf Heute-Seite und Mediathek) -->
-    <dimen name="dynamic_grid_edge_margin">12dp</dimen>
+    <!-- Abstand der ersten Rasterreihe zur Statusleiste; Heute-Seite und Mediathek beginnen auf
+         derselben Höhe (IconGrid.top) -->
+    <dimen name="dynamic_grid_edge_margin">26dp</dimen>
 
     <!-- Dock wie bei iOS etwas über der Gestenleiste -->
     <dimen name="dynamic_grid_hotseat_bottom_tall_padding">12dp</dimen>

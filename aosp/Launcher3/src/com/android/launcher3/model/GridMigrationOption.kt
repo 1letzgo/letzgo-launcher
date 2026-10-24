@@ -54,6 +54,7 @@ sealed class GridMigrationOption(val columns: Int, val rows: Int) {
                 FourBySix,
                 FiveByFive,
                 FiveBySix,
+                FiveBySeven,
                 EightByThree,
                 SevenByThree -> validDestinationsForPhone
                 SixByFive -> validDestinationsForTablet
@@ -69,6 +70,7 @@ sealed class GridMigrationOption(val columns: Int, val rows: Int) {
                 FourBySix,
                 FiveByFive,
                 FiveBySix,
+                FiveBySeven,
                 EightByThree,
                 SevenByThree,
             )
@@ -89,6 +91,9 @@ sealed class GridMigrationOption(val columns: Int, val rows: Int) {
     data object FiveByFive : GridMigrationOption(columns = 5, rows = 5)
 
     data object FiveBySix : GridMigrationOption(columns = 5, rows = 6)
+
+    /** letzgo: dichtestes Telefon-Raster (res/xml/device_profiles.xml, ios_5_by_7). */
+    data object FiveBySeven : GridMigrationOption(columns = 5, rows = 7)
 
     data object SixByFive : GridMigrationOption(columns = 6, rows = 5)
 
@@ -112,6 +117,7 @@ sealed class GridMigrationOption(val columns: Int, val rows: Int) {
                 columns == 4 && rows == 6 -> FourBySix
                 columns == 5 && rows == 5 -> FiveByFive
                 columns == 5 && rows == 6 -> FiveBySix
+                columns == 5 && rows == 7 -> FiveBySeven
                 columns == 6 && rows == 5 -> SixByFive
                 columns == 8 && rows == 3 -> EightByThree
                 columns == 7 && rows == 3 -> SevenByThree
