@@ -30,21 +30,36 @@ import de.letzgo.launcher.edit.JiggleMode
 import de.letzgo.launcher.edit.JiggleTouchController
 import de.letzgo.launcher.model.AllAppsOnHomeScreen
 import de.letzgo.launcher.model.HomeScreenRemovals
+import de.letzgo.launcher.panels.AppLibraryPanel
+import de.letzgo.launcher.panels.PanelSwipeController
+import de.letzgo.launcher.panels.SearchOverlay
+import de.letzgo.launcher.panels.TodayPanel
 import de.letzgo.launcher.popup.EditHomeShortcut
 import de.letzgo.launcher.popup.RemoveAppShortcut
 import de.letzgo.launcher.ui.DockBackground
+import de.letzgo.launcher.ui.SearchPill
 import de.letzgo.launcher.update.AppUpdate
 import de.letzgo.launcher.update.AppUpdateDialog
 import java.util.stream.Stream
 
 /**
  * Launcher-Activity mit iOS-Verhalten: kein App-Drawer, alle Apps liegen auf den
- * Homescreen-Seiten, Bearbeitungsmodus mit Wackeln ([JiggleMode]).
+ * Homescreen-Seiten, Bearbeitungsmodus mit Wackeln ([JiggleMode]), App-Mediathek rechts,
+ * Heute-Ansicht links und Suche ([PanelSwipeController]).
  */
 class LetzgoLauncher : Launcher() {
 
     /** Lazy, weil Launcher3 die Touch-Controller schon während `setupViews()` anlegt. */
-    val jiggleMode by lazy { JiggleMode(this) }
+    val jiggleMode by lazy { JiggleMode(this) { onJiggleChanged() } }
+    private val appLibrary by lazy {
+        AppLibraryPanel(this).apply { onVisibilityChanged = { updateSearchPill() } }
+    }
+    private val today by lazy { TodayPanel(this).apply { onVisibilityChanged = { updateSearchPill() } } }
+    private val search by lazy {
+        SearchOverlay(this).apply { onVisibilityChanged = { updateSearchPill() } }
+    }
+    private val searchPill by lazy { SearchPill(this) { openSearch() } }
+    private lateinit var dock: DockBackground
 
     private val syncAllApps = Runnable { AllAppsOnHomeScreen.sync(this) }
     private val appsUpdateListener = AllAppsStore.OnUpdateListener(::scheduleSync)
@@ -85,9 +100,13 @@ class LetzgoLauncher : Launcher() {
 
     override fun setupViews() {
         super.setupViews()
-        DockBackground(hotseat).attach()
+        dock = DockBackground(hotseat).apply { onCapsuleChanged = ::layoutDockAccessories }
+        dock.attach()
+        searchPill.attach()
         showPageDots()
-        keepPageDotsAboveDock()
+        (workspace.pageIndicator as View).addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            layoutDockAccessories()
+        }
         hideDropTargetBar()
         // Wer ein Element zieht, landet wie auf iOS im Bearbeitungsmodus
         dragController.addDragListener(
@@ -128,8 +147,11 @@ class LetzgoLauncher : Launcher() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        // Home-Taste beendet den Bearbeitungsmodus
-        if (Intent.ACTION_MAIN == intent.action) jiggleMode.exit()
+        // Home-Taste beendet den Bearbeitungsmodus und schließt Mediathek, Heute-Ansicht und Suche
+        if (Intent.ACTION_MAIN == intent.action) {
+            jiggleMode.exit()
+            closeOverlays(animate = true)
+        }
     }
 
     override fun onStop() {
@@ -142,28 +164,62 @@ class LetzgoLauncher : Launcher() {
         showPageDots()
     }
 
-    /** Seitenpunkte über dem Dock bleiben sichtbar und sind immer weiß (Launcher3 blendet sie aus). */
+    /**
+     * Seitenpunkte sind weiß. Im Ruhezustand liegt an ihrer Stelle die „Suchen“-Pille, die Punkte
+     * erscheinen nur beim Blättern; im Bearbeitungsmodus bleiben sie sichtbar.
+     */
     private fun showPageDots() {
-        workspace.pageIndicator.setShouldAutoHide(false)
+        val editing = jiggleMode.isActive
+        workspace.pageIndicator.setShouldAutoHide(!editing)
         workspace.pageIndicator.setPaintColor(Color.WHITE)
     }
 
-    /**
-     * Launcher3 setzt die Seitenpunkte direkt auf das Dock ([com.android.launcher3.Workspace]
-     * `setPageIndicatorInset`). Wegen der Dock-Kapsel brauchen sie mehr Luft; der Abstand wird nach
-     * jedem Neusetzen wieder ergänzt.
-     */
-    private fun keepPageDotsAboveDock() {
-        val indicator = workspace.pageIndicator as View
-        val extra = (PAGE_DOTS_EXTRA_SPACING_DP * resources.displayMetrics.density).toInt()
-        indicator.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
-            val lp = v.layoutParams as ViewGroup.MarginLayoutParams
-            val wanted = deviceProfile.hotseatProfile.barSizePx + extra
-            if (lp.bottomMargin != wanted) {
-                lp.bottomMargin = wanted
-                v.post { v.layoutParams = lp }
-            }
+    private fun onJiggleChanged() {
+        updateSearchPill()
+        showPageDots()
+    }
+
+    /** Die Pille gibt es nur auf dem ruhenden Homescreen. */
+    private fun updateSearchPill() {
+        searchPill.setEnabled(
+            !jiggleMode.isActive && !appLibrary.isOpen && !today.isOpen && !search.isOpen
+        )
+    }
+
+    private fun openSearch() {
+        if (jiggleMode.isActive) return
+        search.open()
+    }
+
+    /** Offene Mediathek, Heute-Ansicht oder Suche schließen, z. B. bei der Home-Taste. */
+    private fun closeOverlays(animate: Boolean) {
+        appLibrary.close(animate)
+        today.close(animate)
+        search.close()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (!today.onActivityResult(requestCode, resultCode, data)) {
+            super.onActivityResult(requestCode, resultCode, data)
         }
+    }
+
+    /**
+     * Seitenpunkte und „Suchen“-Pille liegen mittig über der Dock-Kapsel. Launcher3 setzt die Punkte
+     * direkt aufs Dock ([com.android.launcher3.Workspace] `setPageIndicatorInset`), deshalb wird
+     * ihr Abstand nach jedem Neusetzen korrigiert.
+     */
+    private fun layoutDockAccessories() {
+        val capsuleTop = dock.capsuleTop ?: return
+        val indicator = workspace.pageIndicator as View
+        val centerY = hotseat.top + capsuleTop - DOCK_ACCESSORY_GAP_DP * resources.displayMetrics.density
+        val lp = indicator.layoutParams as ViewGroup.MarginLayoutParams
+        val wanted = (dragLayer.height - centerY - indicator.height / 2f).toInt()
+        if (indicator.height > 0 && lp.bottomMargin != wanted) {
+            lp.bottomMargin = wanted
+            indicator.post { indicator.layoutParams = lp }
+        }
+        searchPill.placeAt(dragLayer.width / 2f, centerY)
     }
 
     private fun scheduleSync() {
@@ -176,7 +232,17 @@ class LetzgoLauncher : Launcher() {
      * Der [DragController] steht vorn, weil er sich den Startpunkt jeder Geste merkt.
      */
     override fun createTouchControllers(): Array<TouchController> =
-        arrayOf(dragController, JiggleTouchController(this, jiggleMode))
+        arrayOf(
+            dragController,
+            JiggleTouchController(this, jiggleMode),
+            PanelSwipeController(
+                this,
+                left = { today },
+                right = { appLibrary },
+                isBlocked = { jiggleMode.isActive || appLibrary.isOpen || today.isOpen || search.isOpen },
+                onSwipeDown = ::openSearch,
+            ),
+        )
 
     /** Wie Launcher3, aber „Entfernen“ fragt bei Apps nach Löschen oder Vom-Homescreen-Entfernen. */
     override fun getSupportedShortcuts(itemInfo: ItemInfo): Stream<SystemShortcut.Factory<*>> {
@@ -206,6 +272,6 @@ class LetzgoLauncher : Launcher() {
 
     private companion object {
         const val SYNC_DELAY_MS = 300L
-        const val PAGE_DOTS_EXTRA_SPACING_DP = 10f
+        const val DOCK_ACCESSORY_GAP_DP = 24f
     }
 }

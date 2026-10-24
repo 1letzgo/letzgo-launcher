@@ -13,6 +13,29 @@
     <string name="remove_folder_title">„%1$s“ entfernen?</string>
     <string name="remove_folder_message">Die Apps in diesem Ordner werden vom Home-Bildschirm entfernt.</string>
 
+    <!-- App-Mediathek, Suche, Heute-Ansicht (de.letzgo.launcher.panels) -->
+    <string name="library_title">App-Mediathek</string>
+    <string name="library_recent">Zuletzt hinzugefügt</string>
+    <string name="library_utilities">Dienstprogramme</string>
+    <string name="library_productivity">Produktivität &amp; Finanzen</string>
+    <string name="library_social">Soziale Netze</string>
+    <string name="library_creativity">Kreativität</string>
+    <string name="library_entertainment">Unterhaltung</string>
+    <string name="library_information">Information &amp; Lesen</string>
+    <string name="library_travel">Reisen</string>
+    <string name="library_shopping">Shopping &amp; Essen</string>
+    <string name="library_health">Gesundheit &amp; Fitness</string>
+    <string name="library_games">Spiele</string>
+    <string name="library_other">Andere</string>
+    <string name="library_add_to_home">Zum Home-Bildschirm hinzufügen</string>
+    <string name="library_app_info">App-Info</string>
+    <string name="search_pill">Suchen</string>
+    <string name="search_hint">Suchen</string>
+    <string name="search_web">„%1$s“ im Web suchen</string>
+    <string name="today_add_widget">Widget hinzufügen</string>
+    <string name="today_remove_widget">„%1$s“ entfernen?</string>
+    <string name="today_remove">Entfernen</string>
+
     <!-- Einstellungen (de.letzgo.launcher.settings) -->
     <string name="set_default_home">Als Standard-Startbildschirm festlegen</string>
     <string name="set_default_home_summary">letzgo statt des bisherigen Launchers verwenden.</string>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lupe für die „Suchen“-Pille -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10,3a7,7 0,1 1,0 14a7,7 0,1 1,0 -14zM10,5.2a4.8,4.8 0,1 0,0 9.6a4.8,4.8 0,1 0,0 -9.6zM15.3,14.1l5.4,5.4a0.85,0.85 0,0 1,-1.2 1.2l-5.4,-5.4z" />
+</vector>

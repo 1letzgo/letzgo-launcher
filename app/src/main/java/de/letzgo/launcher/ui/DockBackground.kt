@@ -27,6 +27,13 @@ class DockBackground(private val hotseat: Hotseat) : Drawable(), View.OnLayoutCh
             color = STROKE_COLOR
         }
     private val capsule = RectF()
+
+    /** Oberkante der Kapsel in Hotseat-Koordinaten; null, solange noch nichts gelayoutet ist. */
+    val capsuleTop: Float?
+        get() = capsule.top.takeUnless { capsule.isEmpty }
+
+    /** Wird aufgerufen, wenn sich die Lage der Kapsel ändert (Seitenpunkte und Suchen-Pille folgen). */
+    var onCapsuleChanged: () -> Unit = {}
     private val iconBounds = Rect()
 
     fun attach() {
@@ -52,6 +59,7 @@ class DockBackground(private val hotseat: Hotseat) : Drawable(), View.OnLayoutCh
             iconTop + iconBounds.height() + padding,
         )
         invalidateSelf()
+        onCapsuleChanged()
     }
 
     override fun draw(canvas: Canvas) {
