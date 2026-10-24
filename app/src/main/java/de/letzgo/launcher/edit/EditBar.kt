@@ -5,6 +5,7 @@ import android.graphics.Rect
 import android.view.Gravity
 import android.view.View
 import android.widget.FrameLayout
+import com.android.launcher3.InsettableFrameLayout
 import com.android.launcher3.Launcher
 import com.android.launcher3.R
 import com.google.android.material.button.MaterialButton
@@ -45,11 +46,17 @@ class EditBar(
 
     fun show() {
         if (bar.parent == null) {
-            launcher.dragLayer.addView(bar, FrameLayout.LayoutParams(MATCH, WRAP, Gravity.TOP))
+            // Wie auf iOS im Bereich der Statusleiste, damit die erste Icon-Reihe frei bleibt
+            val lp =
+                InsettableFrameLayout.LayoutParams(MATCH, launcher.deviceProfile.insets.top).apply {
+                    gravity = Gravity.TOP
+                    ignoreInsets = true
+                }
+            launcher.dragLayer.addView(bar, lp)
         }
-        // Die DragLayer rückt ihre Kinder selbst unter die Statusleiste
         val side = (16 * density).toInt()
         bar.setPadding(side, 0, side, 0)
+        bar.layoutParams.height = launcher.deviceProfile.insets.top.coerceAtLeast((48 * density).toInt())
         bar.bringToFront()
         bar.visibility = View.VISIBLE
         bar.animate().alpha(1f).setDuration(FADE_MS).withEndAction(null).start()

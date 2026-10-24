@@ -68,6 +68,9 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
 
     protected open fun onBottomInset(bottom: Int) {}
 
+    /** Wischen nach unten auf der Seite (z. B. Suche öffnen); true = erledigt. */
+    protected open fun onSwipeDown(): Boolean = false
+
     /** Zurück-Taste innerhalb der Seite, z. B. aus einer Unteransicht; true = erledigt. */
     protected open fun onBack(): Boolean = false
 
@@ -171,6 +174,12 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
                     velocityTracker = VelocityTracker.obtain()
                     downX = ev.x
                     return true
+                }
+                val dy = ev.y - downY
+                if (dy > touchSlop * 2 && dy > abs(dx) * 1.5f && onSwipeDown()) {
+                    // Rest der Geste nicht an die Inhalte weitergeben
+                    downY = Float.MAX_VALUE
+                    return false
                 }
             }
         }

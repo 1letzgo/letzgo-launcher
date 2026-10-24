@@ -77,9 +77,12 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
     }
 
     override fun onOpening() {
-        // Widgets fluchten mit den Icon-Spalten des Homescreens
+        // Widgets fluchten mit den Icon-Spalten und der ersten Icon-Reihe des Homescreens
         grid = IconGrid.of(launcher)
-        content.setPadding(grid.inset, dp(8), grid.inset, dp(32))
+        // Erstes Widget beginnt auf Höhe der ersten Icon-Reihe des Homescreens
+        val own = IntArray(2).also(::getLocationInWindow)
+        val top = (grid.top - own[1] - paddingTop).coerceAtLeast(dp(8))
+        content.setPadding(grid.inset, top, grid.inset, dp(32))
         host.startListening()
         rebuild()
     }

@@ -39,7 +39,7 @@ import com.google.android.material.R as MaterialR
  * App-Mediathek als Seite rechts neben der letzten Homescreen-Seite (Logik wie iOS, Gestaltung
  * Material 3), direkt auf dem Hintergrundbild wie der Homescreen: Apps nach Kategorien in Kacheln
  * in Ordnerfarbe, Suchleiste oben. Ein Kategorie-Stapel öffnet sich wie ein Ordner
- * ([CategoryFolder]), die Suche zeigt eine alphabetische Liste. Enthält alle Apps; per Festhalten
+ * ([CategoryFolder]), die Suche (Suchleiste oder Herunterwischen) zeigt eine alphabetische Liste. Enthält alle Apps; per Festhalten
  * und Ziehen oder über das Kontextmenü kommen Apps auf den Homescreen.
  */
 class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false) {
@@ -96,7 +96,10 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
     override fun onOpening() {
         // Karten fluchten mit den Icon-Spalten: jede Karte ist zwei Spalten breit
         grid = IconGrid.of(launcher)
-        content.setPadding(grid.inset, dp(8), grid.inset, 0)
+        // Suchleiste beginnt auf Höhe der ersten Icon-Reihe des Homescreens
+        val own = IntArray(2).also(::getLocationInWindow)
+        val top = (grid.top - own[1] - paddingTop).coerceAtLeast(dp(8))
+        content.setPadding(grid.inset, top, grid.inset, 0)
         val apps = launcher.appsView.appsStore.apps.toList()
         val pm = context.packageManager
         THREAD_POOL_EXECUTOR.execute {
@@ -127,6 +130,15 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
     override fun onClosed() {
         closeCategory()
         showTiles()
+    }
+
+    /** Wie auf iOS: Herunterwischen in der Mediathek öffnet die Suche (nur ganz oben in den Karten). */
+    override fun onSwipeDown(): Boolean {
+        if (listMode || categoryFolder.isOpen || recycler.canScrollVertically(-1)) return false
+        searchBar.field.requestFocus()
+        context.getSystemService(InputMethodManager::class.java)
+            .showSoftInput(searchBar.field, InputMethodManager.SHOW_IMPLICIT)
+        return true
     }
 
     override fun onBack(): Boolean {
