@@ -35,6 +35,7 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
     private var startNanos = 0L
     private val backCallback = OnBackInvokedCallback { exit() }
     private val editBar = EditBar(launcher, onEdit = ::showEditMenu, onDone = ::exit)
+    private val pageOverview by lazy { PageOverview(launcher) { enter() } }
 
     fun enter() {
         if (isActive) return
@@ -95,6 +96,26 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
     }
 
     fun isOnEditBar(x: Float, y: Float) = editBar.isOnButton(x, y)
+
+    /** Liegt der Punkt (DragLayer-Koordinaten) auf den Seitenpunkten über dem Dock? */
+    fun isOnPageDots(x: Float, y: Float): Boolean {
+        val dots = launcher.workspace.pageIndicator as View
+        if (dots.visibility != View.VISIBLE || dots.alpha == 0f) return false
+        launcher.dragLayer.getDescendantRectRelativeToSelf(dots, tmpRect)
+        return tmpRect.contains(x.toInt(), y.toInt())
+    }
+
+    val isPageOverviewOpen
+        get() = overviewCreated && pageOverview.isOpen
+
+    private var overviewCreated = false
+
+    /** Seitenübersicht wie auf iOS; danach geht es im Bearbeitungsmodus weiter. */
+    fun openPageOverview() {
+        exit()
+        overviewCreated = true
+        pageOverview.open()
+    }
 
     private fun showEditMenu(anchor: View) {
         val pos = Rect()

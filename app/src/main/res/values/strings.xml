@@ -10,6 +10,10 @@
     <string name="edit_home_screen_ios">Edit Home Screen</string>
     <string name="edit_bar_edit">Edit</string>
     <string name="edit_bar_done">Done</string>
+    <string name="page_overview_title">Pages</string>
+    <string name="page_overview_delete_title">Delete Page?</string>
+    <string name="page_overview_delete_message">The apps on this page will stay in the App Library.</string>
+    <string name="page_overview_delete">Delete Page</string>
     <string name="remove_folder">Remove Folder</string>
     <string name="remove_folder_title">Remove “%1$s”?</string>
     <string name="remove_folder_message">The apps will stay in the App Library.</string>

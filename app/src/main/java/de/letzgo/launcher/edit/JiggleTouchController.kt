@@ -16,6 +16,7 @@ import kotlin.math.hypot
  * Touch-Verhalten im Bearbeitungsmodus:
  * - Ziehen an einem Element hebt es sofort an (ohne langes Drücken).
  * - Tippen auf ein Minus-Badge entfernt das Element ([RemoveItem]).
+ * - Tippen auf die Seitenpunkte öffnet die Seitenübersicht ([PageOverview]).
  * - Tippen auf eine freie Stelle beendet den Modus.
  */
 class JiggleTouchController(private val launcher: Launcher, private val jiggle: JiggleMode) :
@@ -29,6 +30,7 @@ class JiggleTouchController(private val launcher: Launcher, private val jiggle: 
     private var moved = false
     private var dragging = false
     private var ignore = false
+    private var onDots = false
 
     override fun onControllerInterceptTouchEvent(ev: MotionEvent): Boolean {
         if (!jiggle.isActive) return false
@@ -42,6 +44,7 @@ class JiggleTouchController(private val launcher: Launcher, private val jiggle: 
                     AbstractFloatingView.getTopOpenView(launcher) != null ||
                         jiggle.isOnEditBar(ev.x, ev.y)
                 if (ignore) return false
+                onDots = jiggle.isOnPageDots(ev.x, ev.y)
                 badgeView = jiggle.badgeViewAt(ev.x, ev.y)
                 downView = badgeView ?: jiggle.itemViewAt(ev.x, ev.y)
                 return badgeView != null
@@ -57,8 +60,12 @@ class JiggleTouchController(private val launcher: Launcher, private val jiggle: 
                 }
             }
             MotionEvent.ACTION_UP -> {
-                // Tippen ins Leere beendet den Modus
-                if (!ignore && !moved && downView == null) jiggle.exit()
+                when {
+                    ignore || moved || downView != null -> {}
+                    onDots -> jiggle.openPageOverview()
+                    // Tippen ins Leere beendet den Modus
+                    else -> jiggle.exit()
+                }
             }
         }
         return false

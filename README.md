@@ -83,7 +83,8 @@ Launcher3-Ressourcen registriert und haben deshalb Vorrang; so lassen sich Launc
 - `BuildConfig.ALL_APPS_ENABLED` blendet „Apps list“ im Homescreen-Menü aus
   (`popup/WorkspaceLongPressOptions.kt`)
 - `BuildConfig.SPRING_LOADED_SHRINK`: beim Ziehen bleibt der Homescreen in voller Größe
-  (`states/SpringLoadedState.java`)
+  (`states/SpringLoadedState.java`); stattdessen blättert der Bildschirmrand beim Ziehen zur
+  Nachbarseite (`Workspace.java`)
 - `BuildConfig.FOLDER_PREVIEW_GRID`: Ordner-Vorschau als 3 × 3-Raster, Ordner immer mit vollen
   Seiten (`folder/ClippedFolderIconLayoutRule.java`, `folder/FolderGridOrganizer.java`)
 - `BuildConfig.WIDGETS_ALIGN_TO_ICONS`: Widgets auf dem Homescreen enden bündig mit den Icons

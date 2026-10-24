@@ -249,7 +249,10 @@ class LetzgoLauncher : Launcher() {
                 this,
                 left = { today },
                 right = { appLibrary },
-                isBlocked = { jiggleMode.isActive || appLibrary.isOpen || today.isOpen || search.isOpen },
+                isBlocked = {
+                    jiggleMode.isActive || jiggleMode.isPageOverviewOpen ||
+                        appLibrary.isOpen || today.isOpen || search.isOpen
+                },
                 onSwipeDown = ::onSwipeDown,
             ),
         )

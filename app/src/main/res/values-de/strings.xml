@@ -10,6 +10,10 @@
     <string name="edit_home_screen_ios">Home-Bildschirm bearbeiten</string>
     <string name="edit_bar_edit">Bearbeiten</string>
     <string name="edit_bar_done">Fertig</string>
+    <string name="page_overview_title">Seiten</string>
+    <string name="page_overview_delete_title">Seite löschen?</string>
+    <string name="page_overview_delete_message">Die Apps dieser Seite bleiben in der App-Mediathek.</string>
+    <string name="page_overview_delete">Seite löschen</string>
     <string name="remove_folder">Ordner entfernen</string>
     <string name="remove_folder_title">„%1$s“ entfernen?</string>
     <string name="remove_folder_message">Die Apps bleiben in der App-Mediathek.</string>
