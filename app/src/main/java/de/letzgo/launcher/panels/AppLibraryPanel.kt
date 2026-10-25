@@ -11,6 +11,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -178,7 +179,38 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
         content.animate().alpha(1f).setDuration(FADE_MS).start()
     }
 
-    override fun onBottomInset(bottom: Int) = recycler.setPadding(0, 0, 0, bottom + dp(16))
+    private var navBottom = 0
+    private var imeBottom = 0
+
+    override fun onBottomInset(bottom: Int) {
+        navBottom = bottom
+        applyBottom()
+    }
+
+    /**
+     * Mit offener Tastatur enden Liste und Buchstabenleiste über der Tastatur (der Launcher selbst
+     * verkleinert sich dafür nicht).
+     */
+    private fun applyBottom() {
+        val bottom = maxOf(navBottom, imeBottom)
+        recycler.setPadding(0, 0, 0, bottom + dp(16))
+        (letterIndex.layoutParams as? LayoutParams)?.let {
+            val margin = bottom + dp(8)
+            if (it.bottomMargin != margin) {
+                it.bottomMargin = margin
+                letterIndex.layoutParams = it
+            }
+        }
+    }
+
+    override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
+        val ime = insets.getInsets(WindowInsets.Type.ime()).bottom
+        if (ime != imeBottom) {
+            imeBottom = ime
+            applyBottom()
+        }
+        return super.onApplyWindowInsets(insets)
+    }
 
     private fun showTiles() {
         listMode = false
