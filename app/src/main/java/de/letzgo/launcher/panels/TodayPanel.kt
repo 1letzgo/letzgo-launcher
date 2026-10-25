@@ -50,6 +50,8 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
     private val scroll = ScrollView(m3).apply { clipToPadding = false }
     private val content = LinearLayout(m3)
     private var grid = IconGrid.of(launcher)
+    private var contentTop = 0
+    private val alignFirstRow = Runnable { alignFirstRow() }
 
     // Wie auf iOS: Hinzufügen nur im Bearbeiten-Zustand (langes Drücken auf eine freie Stelle oder
     // „Bearbeiten“ im Widget-Menü); bei leerer Seite immer
@@ -126,8 +128,8 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
         grid = IconGrid.of(launcher)
         // Erstes Widget beginnt auf Höhe der ersten Icon-Reihe des Homescreens
         val own = IntArray(2).also(::getLocationInWindow)
-        val top = (grid.top - own[1] - paddingTop).coerceAtLeast(dp(8))
-        content.setPadding(grid.inset, top, grid.inset, dp(32))
+        contentTop = (grid.top - own[1] - paddingTop).coerceAtLeast(dp(8))
+        content.setPadding(grid.inset, contentTop, grid.inset, dp(32))
         host.startListening()
         rebuild()
     }
@@ -196,6 +198,9 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
     private fun rebuild() {
         widgets.removeAllViews()
         updateEditRow()
+        // Widgets zeichnen ihren Inhalt verzögert; danach die erste Reihe ausrichten
+        removeCallbacks(alignFirstRow)
+        postDelayed(alignFirstRow, ALIGN_DELAY_MS)
         // Klein = zwei Spalten breit, mittel/groß = alle Spalten, Abstand wie zwischen Icons
         val columns = launcher.deviceProfile.inv.numColumns
         val gap = grid.gap
@@ -243,6 +248,40 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
                     },
                 )
             }
+        }
+    }
+
+    /**
+     * Viele Widgets lassen über ihrer sichtbaren Fläche einen durchsichtigen Rand. Damit die sichtbare
+     * Fläche der ersten Reihe auf der Höhe der ersten Icon-Reihe beginnt (wie Widgets und Icons auf
+     * dem Homescreen), rückt die Seite um den kleinsten solchen Rand nach oben. Gemessen am
+     * gezeichneten Widget.
+     */
+    private fun alignFirstRow() {
+        if (!isOpen) return
+        val first = widgets.getChildAt(0) ?: return
+        val cards = (first as? StackCard)?.let { listOf(it) }
+            ?: (0 until ((first as? ViewGroup)?.childCount ?: 0)).mapNotNull { (first as ViewGroup).getChildAt(it) as? StackCard }
+        val inset = cards.mapNotNull { transparentTop(it) }.minOrNull() ?: 0
+        val top = (contentTop - inset).coerceAtLeast(0)
+        if (content.paddingTop != top) content.setPadding(grid.inset, top, grid.inset, dp(32))
+    }
+
+    /** Durchsichtige Zeilen oben im gezeichneten Widget (über ein Picture, Icons sind Hardware-Bitmaps). */
+    private fun transparentTop(card: View): Int? {
+        if (card.width == 0 || card.height == 0) return null
+        return try {
+            val picture = android.graphics.Picture()
+            card.draw(picture.beginRecording(card.width, card.height))
+            picture.endRecording()
+            val bitmap = android.graphics.Bitmap.createBitmap(picture).copy(android.graphics.Bitmap.Config.ARGB_8888, false)
+            val limit = card.height / 3
+            val step = (card.width / 40).coerceAtLeast(1)
+            (0 until limit).firstOrNull { y ->
+                (0 until card.width step step).any { x -> android.graphics.Color.alpha(bitmap.getPixel(x, y)) > 64 }
+            } ?: 0
+        } catch (e: RuntimeException) {
+            null
         }
     }
 
@@ -469,6 +508,7 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
         const val KEY_STACKS = "widget_stacks"
         const val REQUEST_BIND = 0x4C01
         const val KEY_SIZE = "size_"
+        const val ALIGN_DELAY_MS = 600L
         const val REQUEST_CONFIGURE = 0x4C02
     }
 }
