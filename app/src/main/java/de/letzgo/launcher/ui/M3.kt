@@ -7,7 +7,13 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
 import android.view.ContextThemeWrapper
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.ListAdapter
+import android.widget.ListView
 import android.widget.TextView
+import com.google.android.material.radiobutton.MaterialRadioButton
 import androidx.annotation.AttrRes
 import androidx.core.graphics.ColorUtils
 import com.android.launcher3.R
@@ -82,6 +88,28 @@ object M3 {
 
     private const val WALLPAPER_SHADOW_RADIUS = 4f
     private const val WALLPAPER_SHADOW_COLOR = 0x8A000000.toInt()
+
+    /**
+     * Einträge für eine Einfachauswahl im M3-Dialog mit sichtbarem Radiobutton (der Standard des
+     * Dialogs zeigt in unserem Theme-Kontext keinen).
+     */
+    fun choiceAdapter(context: Context, labels: List<CharSequence>): ListAdapter =
+        object : ArrayAdapter<CharSequence>(context, 0, labels) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                val row = (convertView as? MaterialRadioButton) ?: MaterialRadioButton(context).apply {
+                    val pad = (24 * context.resources.displayMetrics.density).toInt()
+                    setPadding(pad / 2, 0, pad, 0)
+                    minHeight = (48 * context.resources.displayMetrics.density).toInt()
+                    isClickable = false
+                    isFocusable = false
+                    setTextAppearance(MaterialR.style.TextAppearance_Material3_BodyLarge)
+                    setTextColor(color(context, MaterialR.attr.colorOnSurface))
+                }
+                row.text = getItem(position)
+                row.isChecked = (parent as? ListView)?.isItemChecked(position) == true
+                return row
+            }
+        }
 
     /** Eckenradien der M3-Formskala in dp. */
     const val SHAPE_LARGE_DP = 16f

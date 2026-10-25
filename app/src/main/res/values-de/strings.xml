@@ -71,4 +71,6 @@
     <string name="today_edit">Heute-Ansicht bearbeiten</string>
     <string name="settings_grid">Raster</string>
     <string name="settings_icon_size">Icon-Größe (%)</string>
+    <string name="library_change_category">Kategorie ändern</string>
+    <string name="library_category_auto">Automatisch</string>
 </resources>

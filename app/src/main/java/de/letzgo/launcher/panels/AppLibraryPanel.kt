@@ -29,6 +29,7 @@ import com.android.launcher3.model.data.AppInfo
 import com.android.launcher3.util.Executors.MAIN_EXECUTOR
 import com.android.launcher3.util.Executors.THREAD_POOL_EXECUTOR
 import com.android.launcher3.util.PackageManagerHelper
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.letzgo.launcher.model.AppUsage
 import de.letzgo.launcher.model.HomeScreenApps
 import de.letzgo.launcher.ui.AppListRow
@@ -114,6 +115,11 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
         val own = IntArray(2).also(::getLocationInWindow)
         val top = (grid.top - own[1] - paddingTop).coerceAtLeast(dp(8))
         content.setPadding(grid.inset, top, grid.inset, 0)
+        loadGroups()
+    }
+
+    /** Apps nach Kategorien sortieren (auch nach „Kategorie ändern“). */
+    private fun loadGroups() {
         val apps = launcher.appsView.appsStore.apps.toList()
         val pm = context.packageManager
         THREAD_POOL_EXECUTOR.execute {
@@ -266,6 +272,9 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
                             HomeScreenApps.add(launcher, listOf(app))
                         }
                     },
+                    M3Menu.Item(R.drawable.ic_create_new_folder, context.getString(R.string.library_change_category)) {
+                        chooseCategory(app)
+                    },
                     M3Menu.Item(R.drawable.ic_info_no_shadow, context.getString(R.string.library_app_info)) {
                         PackageManagerHelper.startDetailsActivityForInfo(context, app, null, null)
                     },
@@ -273,6 +282,25 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
             M3Menu.show(anchor, items)
         }
         return true
+    }
+
+    /** Eigene Kategorie wählen (M3-Auswahl); „Automatisch“ nimmt die eigene Wahl zurück. */
+    private fun chooseCategory(app: AppInfo) {
+        val pkg = app.componentName?.packageName ?: return
+        val choices = AppCategories.choosable
+        val current = AppCategories.override(context, pkg)
+        val labels =
+            listOf(context.getString(R.string.library_category_auto)) + choices.map { context.getString(it.title) }
+        MaterialAlertDialogBuilder(m3)
+            .setTitle(app.title)
+            .setSingleChoiceItems(M3.choiceAdapter(m3, labels), current?.let { choices.indexOf(it) + 1 } ?: 0) { dialog, which ->
+                AppCategories.setOverride(context, pkg, if (which == 0) null else choices[which - 1])
+                dialog.dismiss()
+                if (categoryFolder.isOpen) closeCategory()
+                loadGroups()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun hideKeyboard() =

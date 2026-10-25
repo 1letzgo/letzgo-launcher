@@ -66,7 +66,7 @@ object HomeLayoutSettings {
                     val selected = GRIDS.indexOfFirst { it.first == (LauncherPrefs.get(context).get(GRID_NAME).takeUnless { n -> n.isNullOrEmpty() } ?: DEFAULT_GRID) }
                     MaterialAlertDialogBuilder(M3.context(context))
                         .setTitle(R.string.settings_grid)
-                        .setSingleChoiceItems(GRIDS.map { it.second }.toTypedArray(), selected) { dialog, which ->
+                        .setSingleChoiceItems(M3.choiceAdapter(M3.context(context), GRIDS.map { it.second }), selected) { dialog, which ->
                             switchGrid(context, idp, GRIDS[which].first)
                             pref.summary = GRIDS[which].second
                             dialog.dismiss()
