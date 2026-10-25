@@ -24,6 +24,17 @@ class LetzgoApplication : LauncherApplication() {
         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
         resetHomePagesOnce(prefs)
         resetIconShapeOnce(prefs)
+        removeTodayViewOnce(prefs)
+    }
+
+    /**
+     * 0.13 removed the Today view: release its widgets (own AppWidgetHost) and stored stacks.
+     */
+    private fun removeTodayViewOnce(prefs: SharedPreferences) {
+        if (prefs.getBoolean(KEY_TODAY_REMOVED, false)) return
+        runCatching { android.appwidget.AppWidgetHost(this, TODAY_HOST_ID).deleteHost() }
+        deleteSharedPreferences("letzgo_today")
+        prefs.edit().putBoolean(KEY_TODAY_REMOVED, true).apply()
     }
 
     /**
@@ -59,5 +70,7 @@ class LetzgoApplication : LauncherApplication() {
         private const val PREFS = "letzgo_migrations"
         private const val KEY_SHAPE_RESET = "icon_shape_reset"
         private const val KEY_HOME_PAGES_RESET = "home_pages_reset_0_7"
+        private const val KEY_TODAY_REMOVED = "today_removed_0_13"
+        private const val TODAY_HOST_ID = 0x4C47
     }
 }

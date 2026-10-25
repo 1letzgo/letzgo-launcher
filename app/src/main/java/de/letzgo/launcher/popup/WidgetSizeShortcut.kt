@@ -26,9 +26,9 @@ import de.letzgo.launcher.LetzgoApplication
 object WidgetSizeShortcut {
 
     private enum class Size(val label: Int, val icon: Int, val wide: Boolean, val tall: Boolean) {
-        SMALL(R.string.today_size_small, R.drawable.ic_widget_width_decrease, wide = false, tall = false),
-        MEDIUM(R.string.today_size_medium, R.drawable.ic_widget_width_increase, wide = true, tall = false),
-        LARGE(R.string.today_size_large, R.drawable.ic_widget_height_increase, wide = true, tall = true),
+        SMALL(R.string.widget_size_small, R.drawable.ic_widget_width_decrease, wide = false, tall = false),
+        MEDIUM(R.string.widget_size_medium, R.drawable.ic_widget_width_increase, wide = true, tall = false),
+        LARGE(R.string.widget_size_large, R.drawable.ic_widget_height_increase, wide = true, tall = true),
     }
 
     private val entries =

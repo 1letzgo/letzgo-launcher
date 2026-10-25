@@ -11,7 +11,7 @@ import kotlin.math.abs
 
 /**
  * Wischgesten auf dem Homescreen:
- * - über die erste Seite hinaus nach rechts: [left] (Heute-Ansicht)
+ * - über die erste Seite hinaus nach rechts: [left] (derzeit keine Seite)
  * - über die letzte Seite hinaus nach links: [right] (App-Mediathek)
  * - nach unten: [onSwipeDown] mit der x-Position des Fingers (Mitteilungen bzw. Schnelleinstellungen)
  */

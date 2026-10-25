@@ -2,13 +2,12 @@
 
 An Android home screen app built on AOSP Launcher3 that **works like the iOS home screen** but
 **looks like Material 3**: dynamic colors from your wallpaper, tonal surfaces, M3 shapes, menus and
-dialogs. No app drawer, no Google search bar – instead an App Library, a Today view, jiggle mode
-and widget stacks.
+dialogs. No app drawer, no Google search bar – instead an App Library, jiggle mode and a default page
+of your choice.
 
 <p>
   <img src="docs/screenshots/home.png" width="19%" alt="Home screen">
   <img src="docs/screenshots/app-library.png" width="19%" alt="App Library">
-  <img src="docs/screenshots/today.png" width="19%" alt="Today view">
   <img src="docs/screenshots/edit-mode.png" width="19%" alt="Edit mode">
   <img src="docs/screenshots/folder.png" width="19%" alt="Folder">
 </p>
@@ -33,8 +32,9 @@ and widget stacks.
 - Icons, folders and widgets wiggle and show a minus badge to remove them (apps can be removed
   from the home screen or uninstalled). Widgets get a corner handle to resize them.
 - *Edit* opens: wallpaper & style, widgets, home settings and **Edit Pages**.
-- Page overview: reorder or delete pages (their apps stay in the App Library). Tap the page dots
-  to get there directly. An empty extra page is available while editing.
+- Page overview: reorder or delete pages (their apps stay in the App Library), tap a page to make
+  it the **default page** (shown at start and when pressing home) and **Add Page**. Tap the page
+  dots to get there directly.
 - *Done*, back or tapping empty space leaves edit mode.
 
 <br clear="right">
@@ -67,16 +67,6 @@ and widget stacks.
 - **How categories are chosen:** your own choice (*Change Category* in the context menu) → a list
   of ~150 well-known apps → the category the app declares → keywords in package name and title →
   *Other*.
-
-### Today view
-<img src="docs/screenshots/today.png" width="24%" align="right" alt="Today view">
-
-- Swipe right past the first page. Widgets aligned to the icon grid, in iOS sizes.
-- Long-press a widget: size, **stack** it with the widget above (swipe vertically through a
-  stack), unstack, edit, remove.
-- Long-press empty space to show *Add Widget* (own widget gallery with previews).
-
-<br clear="right">
 
 ### Settings and updates
 <img src="docs/screenshots/settings.png" width="24%" align="right" alt="Settings">
@@ -140,8 +130,8 @@ Our own code (`app/src/main/java/de/letzgo/launcher`):
 | Package | Contents |
 |---|---|
 | `LetzgoLauncher` | Activity: panels, gestures, backdrop, dock, folder title, popups |
-| `edit/` | Edit mode, minus badges, resize handle, edit bar, page overview |
-| `panels/` | App Library, categories, Today view, widget gallery, side panel base and swipe controller |
+| `edit/` | Edit mode, minus badges, resize handle, edit bar, page overview, default page |
+| `panels/` | App Library, categories, side panel base and swipe controller |
 | `popup/` | Context menu entries (edit home screen, remove app, widget sizes) |
 | `settings/` | Settings additions (grid, icon size, default home, updates) |
 | `model/` | Home screen app selection, app usage for suggestions |
@@ -188,6 +178,7 @@ Every behavior change in Launcher3 is gated by a `BuildConfig` flag (see `app/bu
 | `STABLE_STATUS_BAR_INSET` | Hidden status bar in edit mode doesn't move the grid | `util/window/WindowManagerProxy.java` |
 | `ICON_SIZE_SETTING` | Icon size factor from settings | `InvariantDeviceProfile.java` |
 | `GRID_MIGRATION_KEEP_SPANS` | Grid changes keep widget sizes, no shifting; 5 × 7 grid | `model/GridSizeMigrationLogic.kt`, `model/GridMigrationOption.kt`, `DeviceProfile.java` |
+| – | Default page for start and home button | `Workspace.java` (`moveToDefaultScreen`) |
 
 Not a patch, but good to know: swiping down uses `StatusBarManager.expandNotificationsPanel()` /
 `expandSettingsPanel()` via reflection (`de.letzgo.launcher.system.SystemPanels`).

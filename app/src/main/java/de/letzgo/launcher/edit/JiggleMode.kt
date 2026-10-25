@@ -46,7 +46,20 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
     private var startNanos = 0L
     private val backCallback = OnBackInvokedCallback { exit() }
     private val editBar = EditBar(launcher, onEdit = ::showEditMenu, onDone = ::exit)
-    private val pageOverview by lazy { PageOverview(launcher) { enter() } }
+    private val pageOverview by lazy { PageOverview(launcher, onClosed = { enter() }, onAddPage = ::showNewPage) }
+
+    /**
+     * Neue Seite: Launcher3 hält leere Seiten nur als leere Zusatzseite am Ende (im Bearbeitungsmodus).
+     * Dorthin blättern; sobald etwas darauf liegt, bleibt sie.
+     */
+    private fun showNewPage() {
+        // Nach dem Ausblenden der Übersicht, sonst bleibt der Homescreen stehen
+        launcher.workspace.postDelayed({
+            enter()
+            launcher.workspace.addExtraEmptyScreens()
+            launcher.workspace.post { launcher.workspace.snapToPage(launcher.workspace.pageCount - 1) }
+        }, NEW_PAGE_DELAY_MS)
+    }
 
     fun enter() {
         if (isActive) return
@@ -75,6 +88,7 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         launcher.onBackInvokedDispatcher.unregisterOnBackInvokedCallback(backCallback)
         editBar.hide()
         launcher.window?.insetsController?.show(WindowInsets.Type.statusBars())
+        // Während eines Ziehens räumt onDragEnd (LetzgoLauncher) die leere Seite weg
         if (!launcher.dragController.isDragging) launcher.workspace.removeExtraEmptyScreen(true)
         for ((view, badge) in badges) (badgeHosts[view] ?: view).overlay.remove(badge)
         for ((view, handle) in handles) (badgeHosts[view] ?: view).overlay.remove(handle)
@@ -179,7 +193,8 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         when (view) {
             is BubbleTextView -> view.getIconBounds(tmpRect)
             is FolderIcon -> view.getPreviewBounds(tmpRect)
-            else -> tmpRect.set(0, 0, view.width, view.height)
+            // Widgets: ohne ihren Innenabstand (WIDGETS_ALIGN_TO_ICONS), also an der sichtbaren Kante
+            else -> tmpRect.set(view.paddingLeft, view.paddingTop, view.width - view.paddingRight, view.height - view.paddingBottom)
         }
         if (host !== view) tmpRect.offset((view.left + view.translationX).toInt(), (view.top + view.translationY).toInt())
         val inset = BADGE_DIAMETER_DP * density * 0.15f
@@ -243,5 +258,6 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         const val BADGE_TOUCH_DP = 22f
         // Etwa der Eckenradius der Widgets
         const val HANDLE_DP = 20f
+        const val NEW_PAGE_DELAY_MS = 250L
     }
 }

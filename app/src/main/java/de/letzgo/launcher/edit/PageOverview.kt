@@ -1,5 +1,6 @@
 package de.letzgo.launcher.edit
 
+import android.content.res.ColorStateList
 import android.graphics.Picture
 import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
@@ -31,13 +32,18 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.letzgo.launcher.LetzgoLauncher
 import de.letzgo.launcher.ui.Backdrop
 import de.letzgo.launcher.ui.M3
+import com.google.android.material.R as MaterialR
 
 /**
  * Seitenübersicht im Bearbeitungsmodus (wie auf iOS über die Seitenpunkte): alle Homescreen-Seiten
  * als Vorschau; Ziehen sortiert sie um, das Minus löscht eine Seite (ihre Apps bleiben in der
- * App-Mediathek). „Fertig“ übernimmt die Änderungen ins Modell und lädt den Homescreen neu.
+ * App-Mediathek), Antippen macht sie zur Standardseite ([DefaultPage]), „+“ fügt eine Seite hinzu. „Fertig“ übernimmt die Änderungen ins Modell und lädt den Homescreen neu.
  */
-class PageOverview(private val launcher: Launcher, private val onClosed: () -> Unit) :
+class PageOverview(
+    private val launcher: Launcher,
+    private val onClosed: () -> Unit,
+    private val onAddPage: () -> Unit,
+) :
     FrameLayout(launcher), Insettable {
 
     private data class Page(val screenId: Int, val preview: Picture)
@@ -47,6 +53,8 @@ class PageOverview(private val launcher: Launcher, private val onClosed: () -> U
     private val backCallback = OnBackInvokedCallback { close(apply = false) }
     private val pages = mutableListOf<Page>()
     private var originalOrder = emptyList<Int>()
+    // Standardseite (Screen-ID); erst bei „Fertig“ gespeichert
+    private var defaultScreen: Int? = null
     private val adapter = PageAdapter()
     private val list =
         RecyclerView(m3).apply {
@@ -83,6 +91,14 @@ class PageOverview(private val launcher: Launcher, private val onClosed: () -> U
                     },
                     LinearLayout.LayoutParams(MATCH, WRAP),
                 )
+                addView(
+                    TextView(m3).apply {
+                        setText(R.string.page_overview_default_hint)
+                        M3.onWallpaper(this)
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                    },
+                    LinearLayout.LayoutParams(MATCH, WRAP).apply { topMargin = dp(8) },
+                )
                 addView(list, LinearLayout.LayoutParams(MATCH, 0, 1f).apply { topMargin = dp(16) })
             },
             LayoutParams(MATCH, MATCH),
@@ -99,6 +115,7 @@ class PageOverview(private val launcher: Launcher, private val onClosed: () -> U
                         from: RecyclerView.ViewHolder,
                         to: RecyclerView.ViewHolder,
                     ): Boolean {
+                        if (from.bindingAdapterPosition >= pages.size || to.bindingAdapterPosition >= pages.size) return false
                         val page = pages.removeAt(from.bindingAdapterPosition)
                         pages.add(to.bindingAdapterPosition, page)
                         adapter.notifyItemMoved(from.bindingAdapterPosition, to.bindingAdapterPosition)
@@ -106,6 +123,9 @@ class PageOverview(private val launcher: Launcher, private val onClosed: () -> U
                     }
 
                     override fun onSwiped(holder: RecyclerView.ViewHolder, direction: Int) {}
+
+                    override fun getMovementFlags(rv: RecyclerView, holder: RecyclerView.ViewHolder) =
+                        if (holder.bindingAdapterPosition >= pages.size) 0 else super.getMovementFlags(rv, holder)
                 }
             )
             .attachToRecyclerView(list)
@@ -126,6 +146,7 @@ class PageOverview(private val launcher: Launcher, private val onClosed: () -> U
             pages += Page(screenId, preview(page))
         }
         originalOrder = pages.map { it.screenId }
+        defaultScreen = DefaultPage.screenId(launcher)?.takeIf { it in originalOrder } ?: originalOrder.firstOrNull()
         adapter.notifyDataSetChanged()
         if (parent == null) {
             launcher.dragLayer.addView(this, LayoutParams(MATCH, MATCH))
@@ -144,7 +165,14 @@ class PageOverview(private val launcher: Launcher, private val onClosed: () -> U
     private fun close(apply: Boolean) {
         launcher.onBackInvokedDispatcher.unregisterOnBackInvokedCallback(backCallback)
         val newOrder = pages.map { it.screenId }
-        if (apply && newOrder != originalOrder) applyChanges(newOrder)
+        if (apply) {
+            // Screen-IDs werden beim Umsortieren neu vergeben (siehe applyChanges)
+            val targetIds = originalOrder.sorted()
+            val index = newOrder.indexOf(defaultScreen)
+            DefaultPage.setScreenId(launcher, if (index >= 0) targetIds[index] else null)
+            if (newOrder != originalOrder) applyChanges(newOrder)
+            launcher.workspace.post { launcher.workspace.moveToDefaultScreen() }
+        }
         setHomeVisible(true)
         animate().alpha(0f).setDuration(FADE_MS).withEndAction {
             visibility = GONE
@@ -210,8 +238,9 @@ class PageOverview(private val launcher: Launcher, private val onClosed: () -> U
             .setTitle(R.string.page_overview_delete_title)
             .setMessage(R.string.page_overview_delete_message)
             .setPositiveButton(R.string.page_overview_delete) { _, _ ->
-                pages.removeAt(position)
-                adapter.notifyItemRemoved(position)
+                val removed = pages.removeAt(position)
+                if (removed.screenId == defaultScreen) defaultScreen = pages.firstOrNull()?.screenId
+                adapter.notifyDataSetChanged()
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
@@ -240,19 +269,26 @@ class PageOverview(private val launcher: Launcher, private val onClosed: () -> U
     }
 
     private inner class PageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-        override fun getItemCount() = pages.size
+        // Letzte Kachel: Seite hinzufügen
+        override fun getItemCount() = pages.size + 1
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
             object : RecyclerView.ViewHolder(FrameLayout(parent.context)) {}
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-            val page = pages[position]
             val cell = holder.itemView as FrameLayout
             cell.removeAllViews()
             cell.layoutParams = RecyclerView.LayoutParams(MATCH, WRAP)
             cell.setPadding(dp(8), dp(8), dp(8), dp(8))
-            val ratio = page.preview.height.toFloat() / page.preview.width.coerceAtLeast(1)
             val width = (resources.displayMetrics.widthPixels - dp(32)) / 2 - dp(16)
+            val ratio = pages.firstOrNull()?.preview?.let { it.height.toFloat() / it.width.coerceAtLeast(1) } ?: 2f
+            val height = (width * ratio).toInt()
+            if (position == pages.size) {
+                bindAddTile(cell, width, height)
+                return
+            }
+            val page = pages[position]
+            val isDefault = page.screenId == defaultScreen
             cell.addView(
                 ImageView(m3).apply {
                     setImageDrawable(PictureDrawable(page.preview))
@@ -261,11 +297,18 @@ class PageOverview(private val launcher: Launcher, private val onClosed: () -> U
                         GradientDrawable().apply {
                             cornerRadius = M3.SHAPE_LARGE_DP * density
                             setColor(M3.folderTileColor(m3))
+                            // Standardseite: Rahmen in Akzentfarbe
+                            if (isDefault) setStroke(dp(3), M3.color(m3, android.R.attr.colorPrimary))
                         }
                     val pad = dp(6)
                     setPadding(pad, pad, pad, pad)
+                    contentDescription = context.getString(R.string.page_overview_default)
+                    setOnClickListener {
+                        defaultScreen = page.screenId
+                        notifyDataSetChanged()
+                    }
                 },
-                LayoutParams(width, (width * ratio).toInt()),
+                LayoutParams(width, height),
             )
             cell.addView(
                 ImageView(m3).apply {
@@ -274,6 +317,60 @@ class PageOverview(private val launcher: Launcher, private val onClosed: () -> U
                     setOnClickListener { confirmDelete(holder.bindingAdapterPosition) }
                 },
                 LayoutParams(dp(24), dp(24), Gravity.TOP or Gravity.START),
+            )
+            if (isDefault) {
+                // Haus-Symbol unten mittig auf der Standardseite
+                cell.addView(
+                    ImageView(m3).apply {
+                        setImageResource(R.drawable.ic_letzgo_home)
+                        imageTintList = ColorStateList.valueOf(M3.color(m3, MaterialR.attr.colorOnPrimary))
+                        background = GradientDrawable().apply {
+                            shape = GradientDrawable.OVAL
+                            setColor(M3.color(m3, android.R.attr.colorPrimary))
+                        }
+                        val pad = dp(6)
+                        setPadding(pad, pad, pad, pad)
+                    },
+                    LayoutParams(dp(32), dp(32), Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
+                        bottomMargin = dp(12)
+                    },
+                )
+            }
+        }
+
+        /** Kachel „Seite hinzufügen“: im Bearbeitungsmodus auf eine neue, leere Seite wechseln. */
+        private fun bindAddTile(cell: FrameLayout, width: Int, height: Int) {
+            cell.addView(
+                LinearLayout(m3).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = Gravity.CENTER
+                    background =
+                        GradientDrawable().apply {
+                            cornerRadius = M3.SHAPE_LARGE_DP * density
+                            setColor(M3.folderTileColor(m3))
+                        }
+                    foreground = M3.ripple(m3, cornerRadius = M3.SHAPE_LARGE_DP * density)
+                    addView(
+                        ImageView(m3).apply {
+                            setImageResource(R.drawable.ic_plus)
+                            imageTintList = ColorStateList.valueOf(M3.onFolderColor(m3))
+                        },
+                        LinearLayout.LayoutParams(dp(40), dp(40)),
+                    )
+                    addView(
+                        TextView(m3).apply {
+                            setText(R.string.page_overview_add)
+                            setTextColor(M3.onFolderColor(m3))
+                            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                        },
+                        LinearLayout.LayoutParams(WRAP, WRAP).apply { topMargin = dp(8) },
+                    )
+                    setOnClickListener {
+                        close(apply = true)
+                        onAddPage()
+                    }
+                },
+                LayoutParams(width, height),
             )
         }
     }

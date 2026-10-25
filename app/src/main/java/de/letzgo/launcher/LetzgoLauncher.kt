@@ -35,13 +35,13 @@ import com.android.launcher3.util.Executors.THREAD_POOL_EXECUTOR
 import com.android.launcher3.touch.ItemClickHandler
 import com.android.launcher3.util.RunnableList
 import com.android.launcher3.util.TouchController
+import de.letzgo.launcher.edit.DefaultPage
 import de.letzgo.launcher.edit.JiggleMode
 import de.letzgo.launcher.edit.JiggleTouchController
 import de.letzgo.launcher.model.AppUsage
 import de.letzgo.launcher.model.HomeScreenApps
 import de.letzgo.launcher.panels.AppLibraryPanel
 import de.letzgo.launcher.panels.PanelSwipeController
-import de.letzgo.launcher.panels.TodayPanel
 import de.letzgo.launcher.popup.EditHomeShortcut
 import de.letzgo.launcher.popup.RemoveAppShortcut
 import de.letzgo.launcher.ui.Backdrop
@@ -65,13 +65,13 @@ class LetzgoLauncher : Launcher() {
     private val appLibrary by lazy {
         AppLibraryPanel(this)
     }
-    private val today by lazy { TodayPanel(this) }
     private lateinit var dock: DockBackground
     private var homeDimmedForFolder = false
     val backdrop by lazy { Backdrop(this) }
     private val folderTitle by lazy { FolderTitle(this) { dimHomeForFolder(false) } }
     private var popupOpen = false
     private var popupAnchor: View? = null
+    private val blurredViews = mutableListOf<View>()
 
     private val syncAllApps = Runnable { HomeScreenApps.sync(this) }
     private val appsUpdateListener = AllAppsStore.OnUpdateListener(::scheduleSync)
@@ -123,13 +123,18 @@ class LetzgoLauncher : Launcher() {
         dragController.addDragListener(
             object : DragController.DragListener {
                 override fun onDragStart(dragObject: DropTarget.DragObject, options: DragOptions) {
+                    blurAroundPopup(false)
                     jiggleMode.enter()
                     // Leere Seite am Ende bleibt, solange der Bearbeitungsmodus läuft
                     workspace.deferRemoveExtraEmptyScreen()
                 }
 
                 override fun onDragEnd() {
-                    if (jiggleMode.isActive) dragLayer.post { workspace.addExtraEmptyScreens() }
+                    // Leere Zusatzseite nur, solange der Bearbeitungsmodus läuft
+                    dragLayer.post {
+                        if (jiggleMode.isActive) workspace.addExtraEmptyScreens()
+                        else workspace.removeExtraEmptyScreen(true)
+                    }
                 }
             }
         )
@@ -187,7 +192,19 @@ class LetzgoLauncher : Launcher() {
      */
     override fun shouldDisableBackGesture(): Boolean =
         super.shouldDisableBackGesture() &&
-            !appLibrary.isOpen && !today.isOpen && !jiggleMode.isActive && !jiggleMode.isPageOverviewOpen
+            !appLibrary.isOpen && !jiggleMode.isActive && !jiggleMode.isPageOverviewOpen
+
+    private var shownDefaultPage = false
+
+    /** Nach dem ersten Laden auf der Standardseite beginnen ([DefaultPage]). */
+    override fun finishBindingItems(pagesBoundFirst: com.android.launcher3.util.IntSet?) {
+        super.finishBindingItems(pagesBoundFirst)
+        if (!shownDefaultPage) {
+            shownDefaultPage = true
+            val page = DefaultPage.index(workspace)
+            if (page != workspace.currentPage) workspace.setCurrentPage(page)
+        }
+    }
 
     /** Starts merken für die Vorschläge der Mediathek ([AppUsage]). */
     override fun startActivitySafely(v: View?, intent: Intent, item: ItemInfo?): RunnableList? {
@@ -236,17 +253,26 @@ class LetzgoLauncher : Launcher() {
      * unscharf, das gedrückte bleibt scharf.
      */
     private fun blurAroundPopup(on: Boolean) {
+        // Immer genau die Views zurücksetzen, die unscharf gemacht wurden (auch wenn inzwischen die
+        // Seite gewechselt, ein Ziehen begonnen oder der Homescreen neu geladen wurde)
+        blurredViews.forEach { it.setRenderEffect(null) }
+        blurredViews.clear()
+        if (!on) {
+            popupAnchor = null
+            return
+        }
         val radius = POPUP_BLUR_DP * resources.displayMetrics.density
-        val effect = if (on) RenderEffect.createBlurEffect(radius, radius, Shader.TileMode.CLAMP) else null
+        val effect = RenderEffect.createBlurEffect(radius, radius, Shader.TileMode.CLAMP)
         val page = workspace.getChildAt(workspace.currentPage) as? CellLayout
         listOfNotNull(page, hotseat).forEach { layout ->
             val container = layout.shortcutsAndWidgets
             for (i in 0 until container.childCount) {
                 val child = container.getChildAt(i)
-                child.setRenderEffect(if (child === popupAnchor) null else effect)
+                if (child === popupAnchor) continue
+                child.setRenderEffect(effect)
+                blurredViews += child
             }
         }
-        if (!on) popupAnchor = null
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -260,6 +286,7 @@ class LetzgoLauncher : Launcher() {
 
     override fun onStop() {
         jiggleMode.exit()
+        blurAroundPopup(false)
         super.onStop()
     }
 
@@ -289,13 +316,6 @@ class LetzgoLauncher : Launcher() {
     /** Offene Mediathek oder Heute-Seite schließen, z. B. bei der Home-Taste. */
     private fun closeOverlays(animate: Boolean) {
         appLibrary.close(animate)
-        today.close(animate)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (!today.onActivityResult(requestCode, resultCode, data)) {
-            super.onActivityResult(requestCode, resultCode, data)
-        }
     }
 
     /**
@@ -330,11 +350,11 @@ class LetzgoLauncher : Launcher() {
             JiggleTouchController(this, jiggleMode),
             PanelSwipeController(
                 this,
-                left = { today },
+                left = { null },
                 right = { appLibrary },
                 isBlocked = {
                     jiggleMode.isActive || jiggleMode.isPageOverviewOpen ||
-                        appLibrary.isOpen || today.isOpen
+                        appLibrary.isOpen
                 },
                 onSwipeDown = ::onSwipeDown,
             ),

@@ -51,7 +51,6 @@ class Backdrop(private val launcher: Launcher) {
         const val FOLDER = "folder"
         const val POPUP = "popup"
         const val LIBRARY = "library"
-        const val TODAY = "today"
         const val OVERVIEW = "overview"
 
         // M3-Scrim ist 32 % Schwarz; mit Unschärfe reicht weniger
