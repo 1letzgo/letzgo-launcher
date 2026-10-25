@@ -256,13 +256,13 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
         val current = widgetManager.getAppWidgetInfo(stack.first())?.let { sizeOf(stack.first(), it, grid.halfWidth) }
         val items =
             Size.entries.map { size ->
-                M3Menu.Item(null, context.getString(size.label), checked = size == current) {
+                M3Menu.Item(size.icon, size.label, checked = size == current) {
                     setSize(stack.first(), size)
                 }
             } +
                 listOfNotNull(
                     if (stackIndex > 0) {
-                        M3Menu.Item(R.drawable.ic_view_carousel, context.getString(R.string.today_stack_with_above)) {
+                        M3Menu.Item(R.drawable.ic_view_carousel, R.string.today_stack_with_above) {
                             val merged = stacks.toMutableList()
                             val moved = merged.removeAt(stackIndex)
                             merged[stackIndex - 1] = merged[stackIndex - 1] + moved
@@ -273,7 +273,7 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
                         null
                     },
                     if (stack.size > 1) {
-                        M3Menu.Item(R.drawable.ic_split_vertical, context.getString(R.string.today_unstack)) {
+                        M3Menu.Item(R.drawable.ic_split_vertical, R.string.today_unstack) {
                             val split = stacks.toMutableList()
                             split[stackIndex] = split[stackIndex] - id
                             split.add(stackIndex + 1, listOf(id))
@@ -283,10 +283,10 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
                     } else {
                         null
                     },
-                    M3Menu.Item(R.drawable.enter_home_gardening_icon, context.getString(R.string.today_edit)) {
+                    M3Menu.Item(R.drawable.enter_home_gardening_icon, R.string.today_edit) {
                         setEditing(true)
                     },
-                    M3Menu.Item(R.drawable.ic_remove_no_shadow, context.getString(R.string.today_remove), destructive = true) {
+                    M3Menu.Item(R.drawable.ic_remove_no_shadow, R.string.today_remove, destructive = true) {
                         confirmRemove(id, label)
                     },
                 )
@@ -294,10 +294,10 @@ class TodayPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = true) {
     }
 
     /** Widget-Größen wie auf iOS. */
-    private enum class Size(val key: String, val label: Int) {
-        SMALL("s", R.string.today_size_small),
-        MEDIUM("m", R.string.today_size_medium),
-        LARGE("l", R.string.today_size_large),
+    private enum class Size(val key: String, val label: Int, val icon: Int) {
+        SMALL("s", R.string.today_size_small, R.drawable.ic_widget_width_decrease),
+        MEDIUM("m", R.string.today_size_medium, R.drawable.ic_widget_width_increase),
+        LARGE("l", R.string.today_size_large, R.drawable.ic_widget_height_increase),
     }
 
     /** Gewählte Größe, sonst aus den Angaben des Widgets ([square] = Breite eines kleinen). */

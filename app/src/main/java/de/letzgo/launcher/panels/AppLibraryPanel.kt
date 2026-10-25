@@ -268,14 +268,14 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
                     if (onHome) {
                         null
                     } else {
-                        M3Menu.Item(R.drawable.ic_desktop_add, context.getString(R.string.library_add_to_home)) {
+                        M3Menu.Item(R.drawable.ic_desktop_add, R.string.library_add_to_home) {
                             HomeScreenApps.add(launcher, listOf(app))
                         }
                     },
-                    M3Menu.Item(R.drawable.ic_create_new_folder, context.getString(R.string.library_change_category)) {
+                    M3Menu.Item(R.drawable.ic_create_new_folder, R.string.library_change_category) {
                         chooseCategory(app)
                     },
-                    M3Menu.Item(R.drawable.ic_info_no_shadow, context.getString(R.string.library_app_info)) {
+                    M3Menu.Item(R.drawable.ic_info_no_shadow, R.string.library_app_info) {
                         PackageManagerHelper.startDetailsActivityForInfo(context, app, null, null)
                     },
                 )

@@ -88,6 +88,7 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
     override fun doFrame(frameTimeNanos: Long) {
         if (!isActive) return
         val seconds = (frameTimeNanos - startNanos) / 1e9
+        removeStaleBadges()
         forEachItemView { view ->
             // Leicht unterschiedliche Frequenz und Phase je Element, damit nichts synchron wackelt
             val seed = System.identityHashCode(view)
@@ -97,6 +98,16 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
             updateBadge(view)
         }
         Choreographer.getInstance().postFrameCallback(this)
+    }
+
+    /** Badges und Griffe entfernter Elemente (Widgets liegen im Overlay des Containers) wegräumen. */
+    private fun removeStaleBadges() {
+        val gone = badges.keys.filter { it.parent == null || it.visibility != View.VISIBLE }
+        for (view in gone) {
+            val host = badgeHosts.remove(view) ?: view
+            badges.remove(view)?.let { host.overlay.remove(it) }
+            handles.remove(view)?.let { host.overlay.remove(it) }
+        }
     }
 
     /** Element-View unter dem Punkt (DragLayer-Koordinaten) auf der aktuellen Seite oder im Dock. */

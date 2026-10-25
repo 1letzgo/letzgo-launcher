@@ -78,6 +78,11 @@ android {
         compose = true
     }
 
+    // The launcher is English only: drops the translations of Launcher3, Material and AndroidX too
+    androidResources {
+        localeFilters += "en"
+    }
+
     (sourceSets.getByName("main") as com.android.build.api.dsl.AndroidSourceSet).apply {
         java.setSrcDirs(launcherSources)
         kotlin.setSrcDirs(launcherSources)

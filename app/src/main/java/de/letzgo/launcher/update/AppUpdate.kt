@@ -132,7 +132,7 @@ object AppUpdate {
         val hash = digest.digest().joinToString("") { "%02x".format(it) }
         if (release.sha256 != null && !release.sha256.equals(hash, ignoreCase = true)) {
             file.delete()
-            error("Prüfsumme stimmt nicht")
+            error("Checksum mismatch")
         }
         return file
     }

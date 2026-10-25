@@ -1,105 +1,196 @@
-# letzgo-launcher
+# letzgo launcher
 
-Ein schlanker Android Launcher auf Basis von AOSP Launcher3: **Bedienlogik wie iOS 26, Gestaltung
-immer Material 3** (dynamische Farben, Tonflächen, M3-Komponenten).
+An Android home screen app built on AOSP Launcher3 that **works like the iOS home screen** but
+**looks like Material 3**: dynamic colors from your wallpaper, tonal surfaces, M3 shapes, menus and
+dialogs. No app drawer, no Google search bar – instead an App Library, a Today view, jiggle mode
+and widget stacks.
 
-Status: im Aufbau. Launcher3 aus AOSP (ohne Quickstep) baut als eigenständige Gradle-App;
-Meilensteine M1 bis M3 des [Umbau-Plans](docs/ios26-umbau.md) sind umgesetzt (iOS-Raster, kein
-App-Drawer – alle Apps stehen in der App-Mediathek, der Homescreen ist eine Auswahl, Bearbeitungsmodus mit Wackeln, Ordner mit 3 × 3-Raster,
-Zahlen-Badges, App-Mediathek, Suche, Heute-Ansicht).
+<p>
+  <img src="docs/screenshots/home.png" width="19%" alt="Home screen">
+  <img src="docs/screenshots/app-library.png" width="19%" alt="App Library">
+  <img src="docs/screenshots/today.png" width="19%" alt="Today view">
+  <img src="docs/screenshots/edit-mode.png" width="19%" alt="Edit mode">
+  <img src="docs/screenshots/folder.png" width="19%" alt="Folder">
+</p>
 
-## Bauen
+## Features
 
-Voraussetzungen: JDK 21 oder neuer (getestet mit JDK 25), Android SDK mit Plattform 37.1
-(lädt AGP bei akzeptierter Lizenz selbst nach).
+### Home screen
+- iOS-style grid (4 × 6 by default; 4 × 5, 5 × 6 and 5 × 7 in settings) with an adjustable icon
+  size (80–120 %, default 110 %). The dock follows the grid (4 or 5 slots) and sits in a
+  translucent capsule.
+- The home screen is a *selection* of your apps – every app always lives in the App Library.
+  Newly installed apps can be added to the home screen automatically (setting).
+- Folders show a 3 × 3 preview, open centered with their name above them and are named after
+  the App Library category of their apps.
+- Red numeric notification badges.
+- Swipe down on the left half for notifications, on the right half for quick settings.
+
+### Edit mode (“jiggle mode”)
+<img src="docs/screenshots/edit-mode.png" width="24%" align="right" alt="Edit mode">
+
+- Long-press empty space, drag any icon or choose *Edit Home Screen* in a context menu.
+- Icons, folders and widgets wiggle and show a minus badge to remove them (apps can be removed
+  from the home screen or uninstalled). Widgets get a corner handle to resize them.
+- *Edit* opens: wallpaper & style, widgets, home settings and **Edit Pages**.
+- Page overview: reorder or delete pages (their apps stay in the App Library). Tap the page dots
+  to get there directly. An empty extra page is available while editing.
+- *Done*, back or tapping empty space leaves edit mode.
+
+<br clear="right">
+
+### Context menus
+<img src="docs/screenshots/context-menu.png" width="24%" align="right" alt="Context menu">
+
+- Long-press an app, folder or widget for an anchored M3 menu; the rest of the home screen
+  blurs.
+- Widgets offer **Small / Medium / Large** (iOS sizes 2 × 2, 4 × 2, 4 × 4 – only the sizes the
+  widget supports).
+
+<br clear="right">
+
+### App Library
+<p>
+  <img src="docs/screenshots/app-library.png" width="24%" alt="App Library">
+  <img src="docs/screenshots/category.png" width="24%" alt="Open category">
+  <img src="docs/screenshots/search.png" width="24%" alt="Search">
+</p>
+
+- Swipe left past the last page. Apps are grouped into tiles: **Suggestions** (most used, counted
+  on device), **Recently Added** and categories (Utilities, Social, Productivity & Finance,
+  Creativity, Entertainment, Information & Reading, Travel, Shopping & Food, Health & Fitness,
+  Games, Other).
+- Tap an app to launch it, tap the small icons to open the whole category like a folder.
+- Drag an app out to place it on the home screen.
+- Search: tap the search bar or swipe down. Alphabetical list with an A–Z index above the
+  keyboard; back closes the search.
+- **How categories are chosen:** your own choice (*Change Category* in the context menu) → a list
+  of ~150 well-known apps → the category the app declares → keywords in package name and title →
+  *Other*.
+
+### Today view
+<img src="docs/screenshots/today.png" width="24%" align="right" alt="Today view">
+
+- Swipe right past the first page. Widgets aligned to the icon grid, in iOS sizes.
+- Long-press a widget: size, **stack** it with the widget above (swipe vertically through a
+  stack), unstack, edit, remove.
+- Long-press empty space to show *Add Widget* (own widget gallery with previews).
+
+<br clear="right">
+
+### Settings and updates
+<img src="docs/screenshots/settings.png" width="24%" align="right" alt="Settings">
+
+- Grid, icon size, notification badges, adding new apps to the home screen.
+- Release builds check GitHub for a new version (at most every six hours), download it in the
+  app, verify the SHA-256 checksum and hand it to the package installer. *Check for updates* in
+  settings does the same on demand.
+- The launcher is English only.
+
+<br clear="right">
+
+## Install
+
+Download the latest APK from [Releases](https://github.com/1letzgo/letzgo-launcher/releases),
+install it and choose **letzgo** as the default home app (Android settings → Apps → Default apps,
+or *Set as default* in the launcher settings). Requires Android 14 (API 34) or newer.
+
+## Build
+
+Requirements: JDK 21 or newer (tested with JDK 25) and the Android SDK with platform 37.1 (AGP
+downloads it when the license is accepted).
 
 ```sh
 ./gradlew :app:assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Danach in den Android-Einstellungen „letzgo“ als Standard-Startbildschirm wählen.
+Debug builds don't check for updates.
 
-## Releases und Updates
-
-Fertige APKs liegen als [GitHub-Releases](https://github.com/1letzgo/letzgo-launcher/releases)
-(Tag `launcher-android-<versionCode>`). Release-Builds prüfen beim Start höchstens alle sechs Stunden
-auf eine neue Version, laden sie in der App (Prüfsumme gegen den GitHub-Digest) und übergeben sie
-dem Paketinstaller; in den Launcher-Einstellungen gibt es zusätzlich „Nach Updates suchen“.
+## Releases
 
 ```sh
-tools/release.sh "Was ist neu"
+tools/release.sh "What's new"
 ```
 
-- `versionCode` = Anzahl Commits, `versionName` steht in `gradle.properties` (`letzgoVersionName`).
-- Release-APKs sind mit dem Debug-Key dieses Macs (`~/.android/debug.keystore`) signiert. Der Key
-  darf sich nicht ändern, sonst lehnt Android die Updates ab.
+builds the release APK and publishes it as a GitHub release `launcher-android-<versionCode>`,
+which the in-app updater picks up.
 
-## Aufbau
+- `versionCode` is the number of commits, `versionName` is `letzgoVersionName` in
+  `gradle.properties`.
+- Release APKs are signed with the debug key of the build machine (`~/.android/debug.keystore`).
+  It must never change, otherwise Android rejects the updates.
 
-| Verzeichnis | Inhalt |
+## Project layout
+
+| Directory | Contents |
 |---|---|
-| `aosp/` | AOSP-Snapshot (git subtree vom Branch `aosp/<tag>`), mit wenigen markierten Anpassungen |
-| `app/` | App-Modul: baut Launcher3 aus `aosp/Launcher3` (`src`, `src_no_quickstep`, …), eigenes Manifest, eigener Code unter `de.letzgo.launcher`, eigene Ressourcen in `app/src/main/res` (überschreiben die von Launcher3) |
-| `flags/` | aconfig-Flags als Java-Klassen, erzeugt von `buildSrc/GenerateAconfigFlags.kt`; Werte in `flags/overrides.properties` |
-| `compat/` | Stubs für Klassen aus `frameworks/base`, die nicht im Snapshot liegen |
-| `systemui/*` | Bibliotheken aus `frameworks/libs/systemui` (iconloader, animation, dynamiccolors, usertype) |
-| `launcher/*` | Launcher3-Module: Protos, Widget-Picker, AppFunctions |
+| `aosp/` | AOSP snapshot (git subtree of branch `aosp/<tag>`), with a few marked patches |
+| `app/` | App module: builds Launcher3 from `aosp/Launcher3` (without Quickstep), own manifest, own code in `de.letzgo.launcher`, own resources in `app/src/main/res` (they override Launcher3's) |
+| `flags/` | aconfig flags as Java classes, generated by `buildSrc/GenerateAconfigFlags.kt` |
+| `compat/` | Stubs for `frameworks/base` classes that are not in the snapshot |
+| `systemui/*` | Libraries from `frameworks/libs/systemui` (iconloader, animation, dynamiccolors, usertype) |
+| `launcher/*` | Launcher3 modules: protos, widget picker, app functions |
 
-### aconfig-Flags
+Our own code (`app/src/main/java/de/letzgo/launcher`):
 
-AOSP erzeugt `Flags`-Klassen mit dem Tool `aconfig`. Hier übernimmt das der Gradle-Task
-`generateFlags` im Modul `flags`. Die Werte entsprechen dem AOSP-Release-Config (für
-android-17.0.0_r1: `cp1a`) und liegen in `flags/release-values.properties`, erzeugt mit
+| Package | Contents |
+|---|---|
+| `LetzgoLauncher` | Activity: panels, gestures, backdrop, dock, folder title, popups |
+| `edit/` | Edit mode, minus badges, resize handle, edit bar, page overview |
+| `panels/` | App Library, categories, Today view, widget gallery, side panel base and swipe controller |
+| `popup/` | Context menu entries (edit home screen, remove app, widget sizes) |
+| `settings/` | Settings additions (grid, icon size, default home, updates) |
+| `model/` | Home screen app selection, app usage for suggestions |
+| `ui/` | M3 helpers, dock capsule, backdrop, folder title, menus, search bar, letter index |
+| `update/` | GitHub release check and in-app update |
+
+### aconfig flags
+
+AOSP generates `Flags` classes with the `aconfig` tool. Here the Gradle task `generateFlags` in the
+`flags` module does that. Values match the AOSP release config (for android-17.0.0_r1: `cp1a`)
+and live in `flags/release-values.properties`, generated with
 
 ```sh
 tools/import_flag_values.py android-17.0.0_r1 cp1a
 ```
 
-Eigene Abweichungen gehören in `flags/overrides.properties`. Nicht gelistete Flags sind aus.
+Own overrides go into `flags/overrides.properties`; flags not listed are off. Platform flags from
+`frameworks/base` are hidden API on devices, so Launcher3 references them through
+`de.letzgo.launcher.fwflags.*` (stub declarations in `flags/aconfig/`).
 
-Plattform-Flags aus `frameworks/base` (z. B. `android.security.Flags`) liegen auf dem Gerät im
-Boot-Classpath und sind dort hidden API. Launcher3 referenziert sie deshalb über
-`de.letzgo.launcher.fwflags.*`; die Stub-Deklarationen stehen in `flags/aconfig/`.
+### Resources
 
-### Ressourcen
+Some AOSP resources reference private framework resources (`@androidprv:`) and non-public
+`@android:color/system_*` colors. The `PublicizeResources` task (buildSrc) copies the resources of
+Launcher3 and dynamiccolors to `build/generated/res` and maps those references to public colors.
+Resources in `app/src/main/res` are registered after them and take precedence.
 
-AOSP-Ressourcen verweisen teils auf private Framework-Ressourcen (`@androidprv:`) und auf
-nicht-öffentliche `@android:color/system_*`-Farben, deren IDs auf Geräten nicht stabil sind. Der
-Task `PublicizeResources` (buildSrc) kopiert die Ressourcen von Launcher3 und dynamiccolors nach
-`build/generated/res` und bildet diese Verweise auf öffentliche Farben ab.
+### Patches to `aosp/`
 
-Eigene Ressourcen der App liegen in `app/src/main/res`. Sie werden nach den generierten
-Launcher3-Ressourcen registriert und haben deshalb Vorrang; so lassen sich Launcher3-Ressourcen
-(z. B. `xml/device_profiles.xml`, Dimensionen, Themes) gezielt ersetzen.
+Every behavior change in Launcher3 is gated by a `BuildConfig` flag (see `app/build.gradle.kts`):
 
-### Änderungen an `aosp/`
+| Flag | Effect | Files |
+|---|---|---|
+| `ALL_APPS_ENABLED=false` | No app drawer entry | `popup/WorkspaceLongPressOptions.kt` |
+| `SPRING_LOADED_SHRINK=false` | Home screen keeps its size while dragging; screen edge flips pages | `states/SpringLoadedState.java`, `Workspace.java` |
+| `FOLDER_PREVIEW_GRID` | 3 × 3 folder preview | `folder/ClippedFolderIconLayoutRule.java`, `folder/FolderGridOrganizer.java` |
+| `FOLDER_ROUNDED_SQUARE` | Folders as rounded squares | `graphics/ThemeManager.kt` |
+| `FOLDER_TITLE_ABOVE` | Folder name above the open folder | `folder/Folder.java` |
+| `FOLDER_CATEGORY_NAMES` | Name new folders after their category | `folder/FolderNameProvider.java` |
+| `NUMERIC_BADGES` | Red count badges instead of dots | `BubbleTextView.java`, `folder/FolderIcon.java`, `DotRenderer.java` |
+| `WIDGETS_ALIGN_TO_ICONS` | Widgets end flush with the icons | `deviceprofile/WorkspaceProfileNonResponsiveFactory.kt` |
+| `WIDGETS_IOS_SIZES` | New widgets start in iOS sizes | `widget/LauncherAppWidgetProviderInfo.java` |
+| `LETZGO_POPUPS` | Own context menu entries (sizes, edit, remove) | `popup/PopupDataSource.kt` |
+| `STABLE_STATUS_BAR_INSET` | Hidden status bar in edit mode doesn't move the grid | `util/window/WindowManagerProxy.java` |
+| `ICON_SIZE_SETTING` | Icon size factor from settings | `InvariantDeviceProfile.java` |
+| `GRID_MIGRATION_KEEP_SPANS` | Grid changes keep widget sizes, no shifting; 5 × 7 grid | `model/GridSizeMigrationLogic.kt`, `model/GridMigrationOption.kt`, `DeviceProfile.java` |
 
-- Plattform-Flags auf `de.letzgo.launcher.fwflags.*` umgebogen (7 Dateien)
-- App-Lock-APIs (nicht im öffentlichen SDK) über `de.letzgo.launcher.compat.AppLockCompat`
-- Keine Änderung, aber zu wissen: Wischen nach unten nutzt `StatusBarManager.expandNotificationsPanel()`
-  bzw. `expandSettingsPanel()` per Reflection (nicht im öffentlichen SDK, Stand Android 16/17 erlaubt;
-  `de.letzgo.launcher.system.SystemPanels`)
-- `BuildConfig.ALL_APPS_ENABLED` blendet „Apps list“ im Homescreen-Menü aus
-  (`popup/WorkspaceLongPressOptions.kt`)
-- `BuildConfig.SPRING_LOADED_SHRINK`: beim Ziehen bleibt der Homescreen in voller Größe
-  (`states/SpringLoadedState.java`); stattdessen blättert der Bildschirmrand beim Ziehen zur
-  Nachbarseite (`Workspace.java`)
-- `BuildConfig.FOLDER_PREVIEW_GRID`: Ordner-Vorschau als 3 × 3-Raster, Ordner immer mit vollen
-  Seiten (`folder/ClippedFolderIconLayoutRule.java`, `folder/FolderGridOrganizer.java`)
-- `BuildConfig.WIDGETS_ALIGN_TO_ICONS`: Widgets auf dem Homescreen enden bündig mit den Icons
-  (`deviceprofile/WorkspaceProfileNonResponsiveFactory.kt`)
-- `BuildConfig.WIDGETS_IOS_SIZES`: Widgets auf dem Homescreen nur klein/mittel/groß, ohne freies
-  Skalieren (`widget/LauncherAppWidgetProviderInfo.java`)
-- `BuildConfig.FOLDER_ROUNDED_SQUARE`: Ordner als abgerundetes Quadrat statt Kreis
-  (`graphics/ThemeManager.kt`)
-- `BuildConfig.FOLDER_CATEGORY_NAMES`: neue Ordner nach Mediathek-Kategorie benennen
-  (`folder/FolderNameProvider.java`)
-- `BuildConfig.NUMERIC_BADGES`: rote Zahlen-Badges statt Punkten (`BubbleTextView.java`,
-  `folder/FolderIcon.java`; Zeichnen in `iconloaderlib/.../DotRenderer.java`)
+Not a patch, but good to know: swiping down uses `StatusBarManager.expandNotificationsPanel()` /
+`expandSettingsPanel()` via reflection (`de.letzgo.launcher.system.SystemPanels`).
 
-### AOSP aktualisieren
+### Updating AOSP
 
-1. In `aosp-tag.txt` den Tag eintragen (leer = neuester) und pushen; der Workflow
-   `import-aosp.yml` legt den Snapshot auf dem Branch `aosp/<tag>` ab.
+1. Put the tag into `aosp-tag.txt` (empty = latest) and push; the `import-aosp.yml` workflow stores
+   the snapshot on branch `aosp/<tag>`.
 2. `git fetch && git subtree merge --prefix=aosp --squash origin/aosp/<tag>`
