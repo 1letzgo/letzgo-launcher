@@ -24,7 +24,7 @@ object HomeLayoutSettings {
     private const val DEFAULT_GRID = "ios_4_by_6"
     private const val MIN_PERCENT = 80
     private const val MAX_PERCENT = 120
-    private const val DEFAULT_PERCENT = 100
+    private const val DEFAULT_PERCENT = 110
     private const val STEP = 5
 
     /** Raster: Name in device_profiles.xml zu Anzeige (Spalten × Reihen). */

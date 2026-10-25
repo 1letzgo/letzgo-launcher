@@ -398,6 +398,8 @@ constructor(
         srcDeviceState: DeviceGridState,
         destDeviceState: DeviceGridState,
     ): Boolean {
+        // letzgo: nicht nach unten verschieben; neue Reihen kommen wie auf iOS unten dazu
+        if (com.android.launcher3.BuildConfig.GRID_MIGRATION_KEEP_SPANS) return false
         return srcDeviceState.columns == destDeviceState.columns &&
             srcDeviceState.rows < destDeviceState.rows
     }
