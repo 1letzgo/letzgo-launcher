@@ -1371,6 +1371,12 @@ public class Launcher extends StatefulActivity<LauncherState>
             LauncherAppWidgetHostView launcherHostView,
             LauncherAppWidgetInfo launcherInfo,
             CellPos presenterPos) {
+        if (BuildConfig.LETZGO_POPUPS) {
+            // letzgo: like iOS no resize frame right after adding; the size is changed with the
+            // corner handle in edit mode or the context menu (the frame could also point to a
+            // widget view that is replaced once binding completes)
+            return;
+        }
         CellLayout cellLayout = getCellLayout(launcherInfo.container, presenterPos.screenId);
         // We should wait until launcher is not animating to show resize frame so that
         // {@link View#hasIdentityMatrix()} returns true (no scale effect) from CellLayout and

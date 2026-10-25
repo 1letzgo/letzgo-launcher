@@ -71,6 +71,7 @@ class LetzgoLauncher : Launcher() {
     private val folderTitle by lazy { FolderTitle(this) { dimHomeForFolder(false) } }
     private var popupOpen = false
     private var popupAnchor: View? = null
+    private var resumeEditUntil = 0L
     private val blurredViews = mutableListOf<View>()
 
     private val syncAllApps = Runnable { HomeScreenApps.sync(this) }
@@ -217,6 +218,15 @@ class LetzgoLauncher : Launcher() {
         return super.startActivitySafely(v, intent, item)
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        // Back from widget binding/setup started in edit mode: continue editing (resize, move)
+        if (System.currentTimeMillis() < resumeEditUntil) {
+            resumeEditUntil = 0L
+            dragLayer.post { jiggleMode.enter() }
+        }
+    }
+
     /** Statt „Entfernen“/„Deinstallieren“ beim Ziehen gibt es Minus-Badges ([JiggleMode]). */
     private fun hideDropTargetBar() {
         dragController.removeDragListener(dropTargetBar)
@@ -296,6 +306,9 @@ class LetzgoLauncher : Launcher() {
     }
 
     override fun onStop() {
+        // A widget added from edit mode may still need the bind permission or its setup screen:
+        // come back to edit mode afterwards (onActivityResult)
+        if (jiggleMode.isActive) resumeEditUntil = System.currentTimeMillis() + RESUME_EDIT_MS
         if (!jiggleMode.keepWhileAway) jiggleMode.exit()
         blurAroundPopup(false)
         super.onStop()
@@ -393,5 +406,6 @@ class LetzgoLauncher : Launcher() {
         const val FOLDER_FADE_MS = 150L
         const val POPUP_BLUR_DP = 6f
         const val KEEP_EDIT_RESET_MS = 1000L
+        const val RESUME_EDIT_MS = 120_000L
     }
 }

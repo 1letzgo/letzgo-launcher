@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Geöffneter Ordner immer dunkel (wie Launcher3 im dunklen Modus), halbtransparent.
-    Die Basisfarbe kommt aus den generierten Launcher3-Ressourcen, die Lint hier nicht sieht.
+    Open folder and open category (dark), translucent like widgets.
 -->
 <selector
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <item
-        android:color="@android:color/system_neutral2_900"
+        android:color="@android:color/system_neutral1_900"
         android:lStar="12"
-        android:alpha="0.85" />
+        android:alpha="0.72" />
 </selector>

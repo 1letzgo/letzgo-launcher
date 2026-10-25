@@ -5,6 +5,7 @@
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:color="@android:color/system_surface_container_high_dark"
-        android:alpha="0.85" />
+        android:color="@android:color/system_neutral1_900"
+        android:lStar="12"
+        android:alpha="0.72" />
 </selector>

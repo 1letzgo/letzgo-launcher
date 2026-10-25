@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Geöffneter Ordner: Material-You-Farbe von Launcher3 (hell), halbtransparent.
-    Die Basisfarbe kommt aus den generierten Launcher3-Ressourcen, die Lint hier nicht sieht.
+    Open folder and open App Library category: same surface as widgets (light), translucent.
 -->
 <selector
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -10,5 +9,5 @@
     <item
         android:color="@android:color/system_neutral1_50"
         android:lStar="94"
-        android:alpha="0.85" />
+        android:alpha="0.72" />
 </selector>

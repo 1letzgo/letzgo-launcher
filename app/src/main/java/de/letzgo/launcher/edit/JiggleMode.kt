@@ -106,7 +106,14 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         if (!isActive) return
         val seconds = (frameTimeNanos - startNanos) / 1e9
         removeStaleBadges()
+        // While the resize frame is open nothing wiggles (the frame follows the widget's bounds)
+        val resizing = AbstractFloatingView.hasOpenView(launcher, AbstractFloatingView.TYPE_WIDGET_RESIZE_FRAME)
         forEachItemView { view ->
+            if (resizing) {
+                view.rotation = 0f
+                updateBadge(view)
+                return@forEachItemView
+            }
             // Leicht unterschiedliche Frequenz und Phase je Element, damit nichts synchron wackelt
             val seed = System.identityHashCode(view)
             val period = PERIOD_S * (1 + (seed % 7) / 40.0)
