@@ -55,8 +55,10 @@ class EditBar(
             launcher.dragLayer.addView(bar, lp)
         }
         val side = (16 * density).toInt()
-        bar.setPadding(side, 0, side, 0)
-        bar.layoutParams.height = launcher.deviceProfile.insets.top.coerceAtLeast((48 * density).toInt())
+        // Etwas Abstand zum oberen Bildschirmrand (Kamera-Aussparung, abgerundete Ecken)
+        val top = (TOP_PADDING_DP * density).toInt()
+        bar.setPadding(side, top, side, 0)
+        bar.layoutParams.height = launcher.deviceProfile.insets.top.coerceAtLeast((48 * density).toInt()) + top
         bar.bringToFront()
         bar.visibility = View.VISIBLE
         bar.animate().alpha(1f).setDuration(FADE_MS).withEndAction(null).start()
@@ -80,5 +82,6 @@ class EditBar(
         const val WRAP = FrameLayout.LayoutParams.WRAP_CONTENT
         const val MATCH = FrameLayout.LayoutParams.MATCH_PARENT
         const val FADE_MS = 150L
+        const val TOP_PADDING_DP = 12f
     }
 }
