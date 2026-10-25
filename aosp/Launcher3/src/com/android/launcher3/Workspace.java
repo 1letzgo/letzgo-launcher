@@ -3813,7 +3813,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
      * Calls {@link #snapToPage(int)} on the {@link #DEFAULT_PAGE}, then requests focus on it.
      */
     public void moveToDefaultScreen() {
-        // letzgo: Standardseite aus „Seiten bearbeiten“
+        // letzgo: Standardseite aus „Seiten bearbeiten“; nicht springen, solange die Widget-Auswahl
+        // aus dem Bearbeitungsmodus offen ist
+        if (de.letzgo.launcher.edit.DefaultPage.holdCurrentPage) return;
         int page = de.letzgo.launcher.edit.DefaultPage.index(this);
         if (!workspaceInModalState() && getNextPage() != page) {
             snapToPage(page);

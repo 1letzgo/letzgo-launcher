@@ -21,6 +21,13 @@ object DefaultPage {
         }.apply()
     }
 
+    /**
+     * While our widget picker is open the launcher stays on the current page: the picker returns via
+     * the home intent, which would otherwise jump to the default page before the widget is placed.
+     */
+    @JvmField
+    var holdCurrentPage = false
+
     /** Page index of the default page, or the first page if it is not set or no longer exists. */
     @JvmStatic
     fun index(workspace: Workspace<*>): Int {

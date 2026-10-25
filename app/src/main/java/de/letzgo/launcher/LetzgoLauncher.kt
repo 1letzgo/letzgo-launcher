@@ -86,6 +86,11 @@ class LetzgoLauncher : Launcher() {
 
     override fun onResume() {
         super.onResume()
+        // Widget picker closed without adding: back to normal handling
+        dragLayer.postDelayed({
+            jiggleMode.keepWhileAway = false
+            DefaultPage.holdCurrentPage = false
+        }, KEEP_EDIT_RESET_MS)
         updateDialog?.onResume() ?: checkForUpdate()
     }
 
@@ -277,15 +282,21 @@ class LetzgoLauncher : Launcher() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        // Home-Taste beendet den Bearbeitungsmodus und schließt Mediathek und Heute-Seite
+        // Home-Taste beendet den Bearbeitungsmodus und schließt die Mediathek
         if (Intent.ACTION_MAIN == intent.action) {
+            // Coming back from our widget picker (it reopens home to add the widget): stay in edit
+            // mode on the same page
+            if (jiggleMode.keepWhileAway) {
+                jiggleMode.keepWhileAway = false
+                return
+            }
             jiggleMode.exit()
             closeOverlays(animate = true)
         }
     }
 
     override fun onStop() {
-        jiggleMode.exit()
+        if (!jiggleMode.keepWhileAway) jiggleMode.exit()
         blurAroundPopup(false)
         super.onStop()
     }
@@ -381,5 +392,6 @@ class LetzgoLauncher : Launcher() {
         const val DOCK_ACCESSORY_GAP_DP = 20f
         const val FOLDER_FADE_MS = 150L
         const val POPUP_BLUR_DP = 6f
+        const val KEEP_EDIT_RESET_MS = 1000L
     }
 }

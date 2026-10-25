@@ -366,6 +366,13 @@ public class LauncherAccessibilityDelegate extends BaseAccessibilityDelegate<Lau
         CellLayout layout = (CellLayout) workspace.getPageAt(screenIndex);
 
         boolean found = layout.findCellForSpan(outCoordinates, info.spanX, info.spanY);
+        if (found && com.android.launcher3.BuildConfig.LETZGO_POPUPS
+                && screenId == com.android.launcher3.WorkspaceLayoutManager.EXTRA_EMPTY_SCREEN_ID) {
+            // letzgo: current page is the new, still empty page from "Add Page" – make it a real
+            // page instead of putting the item on another one
+            IntSet committed = workspace.commitExtraEmptyScreens();
+            if (!committed.isEmpty()) return committed.getArray().get(0);
+        }
         screenIndex = 0;
         while (!found && screenIndex < workspaceScreens.size()) {
             screenId = workspaceScreens.get(screenIndex);

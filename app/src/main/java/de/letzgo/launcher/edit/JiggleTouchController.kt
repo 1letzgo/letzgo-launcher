@@ -67,6 +67,8 @@ class JiggleTouchController(private val launcher: Launcher, private val jiggle: 
                     ignore || moved || downView != null -> {}
                     onDots -> jiggle.openPageOverview()
                     // Tippen ins Leere beendet den Modus
+                    // Taps on "Edit"/"Done" (checked again: the down may not have reached us)
+                    jiggle.isOnEditBar(ev.x, ev.y) -> {}
                     else -> jiggle.exit()
                 }
             }

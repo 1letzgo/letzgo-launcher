@@ -36,6 +36,9 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
     var isActive = false
         private set
 
+    /** Set while our own widget picker is in front: leaving the launcher keeps edit mode. */
+    var keepWhileAway = false
+
     private val density = launcher.resources.displayMetrics.density
     private val badges = WeakHashMap<View, MinusBadge>()
     // View, in deren Overlay das Badge liegt (bei Widgets der Container, siehe [badgeHost])
@@ -174,7 +177,15 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         PopupContainer.showForMenuItems(
             launcher,
             launcher.dragLayer,
-            WorkspaceLongPressOptions.getAll(launcher) +
+            WorkspaceLongPressOptions.getAll(launcher).map { item ->
+                // Widgets: edit mode (and a new, empty page) stays while the widget picker is open
+                if (item.labelResId != R.string.widget_button_text) item
+                else item.copy { target, info, view ->
+                    keepWhileAway = true
+                    DefaultPage.holdCurrentPage = true
+                    item.popupAction(target, info, view)
+                }
+            } +
                 PopupData(R.drawable.ic_view_carousel, R.string.edit_pages, PopupCategory.SYSTEM_SHORTCUT) { _, _, _ ->
                     AbstractFloatingView.closeAllOpenViews(launcher)
                     openPageOverview()
