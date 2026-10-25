@@ -3,6 +3,7 @@ package de.letzgo.launcher.panels
 import android.graphics.Rect
 import com.android.launcher3.CellLayout
 import com.android.launcher3.Launcher
+import com.android.launcher3.Utilities
 
 /**
  * Lage der Icon-Spalten auf dem Homescreen, damit Widgets und Mediathek-Kacheln wie auf iOS bündig
@@ -12,7 +13,7 @@ import com.android.launcher3.Launcher
  * @property pitch Abstand von einer Icon-Kante zur gleichen Kante in der nächsten Spalte
  * @property iconSize Kantenlänge eines Icons
  * @property columns Spalten des Rasters
- * @property top Oberkante der ersten Rasterreihe (dort beginnen auch Widgets), in Fensterkoordinaten
+ * @property top sichtbare Oberkante der ersten Reihe (Icons und Widgets), in Fensterkoordinaten
  */
 data class IconGrid(val inset: Int, val pitch: Int, val iconSize: Int, val top: Int, val columns: Int) {
 
@@ -35,6 +36,13 @@ data class IconGrid(val inset: Int, val pitch: Int, val iconSize: Int, val top: 
         get() = pitch - iconSize
 
     companion object {
+        /** Oberkante eines Widgets in der ersten Reihe relativ zum Container (Zelle plus Innenabstand). */
+        private fun widgetTop(launcher: Launcher, page: CellLayout, first: Rect): Int {
+            val container = page.shortcutsAndWidgets
+            val padding = launcher.deviceProfile.workspaceProfile.cellSize.y - launcher.deviceProfile.workspaceProfile.cellHeightPx
+            return first.top - container.top + (padding / 2).coerceAtLeast(0)
+        }
+
         /** Misst das Raster der aktuellen Seite; ohne Seite eine Schätzung aus dem Bildschirm. */
         fun of(launcher: Launcher): IconGrid {
             val iconSize = launcher.deviceProfile.workspaceProfile.iconSizePx
@@ -56,7 +64,9 @@ data class IconGrid(val inset: Int, val pitch: Int, val iconSize: Int, val top: 
             // Oberkante der ersten Zelle im Fenster: dort beginnen Widgets der ersten Reihe
             val container = page.shortcutsAndWidgets
             val containerPos = IntArray(2).also(container::getLocationInWindow)
-            val top = containerPos[1] + first.top - container.top
+            // Widgets beginnen am sichtbaren Icon (durchsichtiger Rand im Icon-Bild abgezogen)
+            val visibleInset = (iconSize - Utilities.getIconVisibleSizePx(iconSize)) / 2
+            val top = containerPos[1] + widgetTop(launcher, page, first) + visibleInset
             return IconGrid(left, pitch, iconSize, top, columns)
         }
     }

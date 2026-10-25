@@ -6,7 +6,7 @@
 
     <!-- Abstand der ersten Rasterreihe zur Statusleiste; Heute-Seite und Mediathek beginnen auf
          derselben Höhe (IconGrid.top) -->
-    <dimen name="dynamic_grid_edge_margin">26dp</dimen>
+    <dimen name="dynamic_grid_edge_margin">14dp</dimen>
 
     <!-- Dock wie bei iOS etwas über der Gestenleiste -->
     <dimen name="dynamic_grid_hotseat_bottom_tall_padding">12dp</dimen>

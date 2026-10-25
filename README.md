@@ -118,6 +118,9 @@ which the in-app updater picks up.
 
 - `versionCode` is the number of commits, `versionName` is `letzgoVersionName` in
   `gradle.properties`.
+- Release builds are shrunk with R8 (Launcher3's `proguard.flags` plus `app/proguard-rules.pro`),
+  which takes the APK from about 65 MB to about 7 MB. Code that is only reached via reflection
+  needs a keep rule there.
 - Release APKs are signed with the debug key of the build machine (`~/.android/debug.keystore`).
   It must never change, otherwise Android rejects the updates.
 

@@ -262,7 +262,14 @@ object WorkspaceProfileNonResponsiveFactory {
             if (BuildConfig.WIDGETS_ALIGN_TO_ICONS) {
                 val horizontal = ((cellSize.x - iconSizePx) / 2).coerceAtLeast(0)
                 val vertical = ((cellSize.y - cellHeightPx) / 2).coerceAtLeast(0)
-                Rect(horizontal, vertical, horizontal, vertical)
+                // Wie auf iOS: oben bündig mit dem sichtbaren Icon, unten mit dem Text der
+                // Beschriftung (nicht mit ihrem Textfeld, das darunter noch Platz lässt). So ist der
+                // Abstand Widget → Icon so groß wie Beschriftung → Icon.
+                val iconInset =
+                    (iconSizePx - com.android.launcher3.Utilities.getIconVisibleSizePx(iconSizePx)) / 2
+                val labelBottom = iconSizePx + iconDrawablePaddingPx + iconTextSizePx
+                val below = (cellHeightPx - labelBottom).coerceAtLeast(0)
+                Rect(horizontal, vertical + iconInset, horizontal, vertical + below)
             } else {
                 Rect()
             }

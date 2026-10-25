@@ -96,8 +96,15 @@ android {
         release {
             // Prüft beim Start auf neue GitHub-Releases (de.letzgo.launcher.update)
             buildConfigField("boolean", "UPDATE_CHECK", "true")
-            // Wie in AOSP: Proguard aus, bis die Keep-Regeln für den Gradle-Build geprüft sind
-            isMinifyEnabled = false
+            // R8 with the keep rules of Launcher3 plus our own: removes unused code (mostly Compose
+            // icons and libraries), the APK shrinks from about 65 MB to a fraction
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                rootProject.file("aosp/Launcher3/proguard.flags"),
+                "proguard-rules.pro",
+            )
             // GitHub-Releases (wie abstand) mit dem Debug-Key dieses Macs (~/.android/debug.keystore).
             // Er darf sich nie ändern, sonst lehnt Android die In-App-Updates ab.
             signingConfig = signingConfigs.getByName("debug")
