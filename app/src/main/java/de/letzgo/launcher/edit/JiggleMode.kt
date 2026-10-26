@@ -47,7 +47,14 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
     private val tmpRect = Rect()
     private val tmpPoint = FloatArray(2)
     private var startNanos = 0L
-    private val backCallback = OnBackInvokedCallback { exit() }
+    // Back closes an open resize frame first, then leaves edit mode
+    private val backCallback = OnBackInvokedCallback {
+        if (AbstractFloatingView.hasOpenView(launcher, AbstractFloatingView.TYPE_WIDGET_RESIZE_FRAME)) {
+            AbstractFloatingView.closeOpenViews(launcher, true, AbstractFloatingView.TYPE_WIDGET_RESIZE_FRAME)
+        } else {
+            exit()
+        }
+    }
     private val editBar = EditBar(launcher, onEdit = ::showEditMenu, onDone = ::exit)
     private val pageOverview by lazy { PageOverview(launcher, onClosed = { enter() }, onAddPage = ::showNewPage) }
 
@@ -90,6 +97,7 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         Choreographer.getInstance().removeFrameCallback(this)
         launcher.onBackInvokedDispatcher.unregisterOnBackInvokedCallback(backCallback)
         editBar.hide()
+        AbstractFloatingView.closeOpenViews(launcher, true, AbstractFloatingView.TYPE_WIDGET_RESIZE_FRAME)
         launcher.window?.insetsController?.show(WindowInsets.Type.statusBars())
         // Während eines Ziehens räumt onDragEnd (LetzgoLauncher) die leere Seite weg
         if (!launcher.dragController.isDragging) launcher.workspace.removeExtraEmptyScreen(true)

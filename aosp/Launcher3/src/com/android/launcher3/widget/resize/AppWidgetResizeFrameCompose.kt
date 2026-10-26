@@ -91,6 +91,25 @@ constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 
     @VisibleForTesting fun getViewModelForTest() = viewModel
 
+    /** letzgo: resize from the bottom-right corner, driven by the corner handle in edit mode. */
+    fun letzgoBeginCornerResize() {
+        if (!::viewModel.isInitialized) return
+        viewModel.onDragStart(
+            Edge.Right,
+            androidx.compose.ui.geometry.Offset(width.toFloat(), height.toFloat()),
+            androidx.compose.ui.unit.IntSize(width, height),
+        )
+    }
+
+    /** letzgo: drag by the given amount since the last call. */
+    fun letzgoDragBy(dx: Float, dy: Float) {
+        if (::viewModel.isInitialized) viewModel.onDrag(androidx.compose.ui.geometry.Offset(dx, dy))
+    }
+
+    fun letzgoEndResize() {
+        if (::viewModel.isInitialized) viewModel.onDragEnd()
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(ev: MotionEvent?): Boolean {
         // Let the widget underneath get events; the compose view will react to events based on
