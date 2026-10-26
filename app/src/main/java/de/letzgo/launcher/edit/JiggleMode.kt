@@ -56,7 +56,9 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         }
     }
     private val editBar = EditBar(launcher, onEdit = ::showEditMenu, onDone = ::exit)
-    private val pageOverview by lazy { PageOverview(launcher, onClosed = { enter() }, onAddPage = ::showNewPage) }
+    private val pageOverview by lazy {
+        PageOverview(launcher, onClosed = { enter() }, onAddPage = ::showNewPage, actions = ::homeActions)
+    }
 
     /**
      * Neue Seite: Launcher3 hält leere Seiten nur als leere Zusatzseite am Ende (im Bearbeitungsmodus).
@@ -192,15 +194,7 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         PopupContainer.showForMenuItems(
             launcher,
             launcher.dragLayer,
-            WorkspaceLongPressOptions.getAll(launcher).map { item ->
-                // Widgets: edit mode (and a new, empty page) stays while the widget picker is open
-                if (item.labelResId != R.string.widget_button_text) item
-                else item.copy { target, info, view ->
-                    keepWhileAway = true
-                    DefaultPage.holdCurrentPage = true
-                    item.popupAction(target, info, view)
-                }
-            } +
+            homeActions() +
                 PopupData(R.drawable.ic_view_carousel, R.string.edit_pages, PopupCategory.SYSTEM_SHORTCUT) { _, _, _ ->
                     AbstractFloatingView.closeAllOpenViews(launcher)
                     openPageOverview()
@@ -208,6 +202,18 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
             pos,
         )
     }
+
+    /** Wallpaper & style, widgets, home settings (Launcher3 entries; also in the page overview). */
+    fun homeActions(): List<PopupData> =
+        WorkspaceLongPressOptions.getAll(launcher).map { item ->
+            // Widgets: edit mode (and a new, empty page) stays while the widget picker is open
+            if (item.labelResId != R.string.widget_button_text) item
+            else item.copy { target, info, view ->
+                keepWhileAway = true
+                DefaultPage.holdCurrentPage = true
+                item.popupAction(target, info, view)
+            }
+        }
 
     private fun updateBadge(view: View) {
         val host = badgeHost(view)

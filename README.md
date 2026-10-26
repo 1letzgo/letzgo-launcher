@@ -33,9 +33,11 @@ of your choice.
 - Icons, folders and widgets wiggle and show a minus badge to remove them (apps can be removed
   from the home screen or uninstalled). Widgets get a corner handle to resize them.
 - *Edit* opens: wallpaper & style, widgets, home settings and **Edit Pages**.
-- Page overview: reorder or delete pages (their apps stay in the App Library), tap a page to make
-  it the **default page** (shown at start and when pressing home) and **Add Page**. Tap the page
-  dots to get there directly.
+- **Edit Pages** (like Samsung's page editor): pages as large cards to swipe through. The home
+  button above a card makes it the **default page** (shown at start and when pressing home), the
+  trash button deletes it (its apps stay in the App Library). Page dots below show the default
+  page as a house and end with **+** to add a page; long-press and drag a card to reorder. Wallpaper
+  & style, widgets and settings sit at the bottom. Tap a card to go there.
 - *Done*, back or tapping empty space leaves edit mode.
 
 <br clear="right">
