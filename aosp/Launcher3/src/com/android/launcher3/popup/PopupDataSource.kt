@@ -79,10 +79,12 @@ object PopupDataSource {
             dropTargetHandler.onDeleteComplete(itemInfo, view)
         }
 
-    /** letzgo: vor die Einträge für Ordner und Widgets „Home-Bildschirm bearbeiten“ setzen. */
+    /** letzgo: „Home-Bildschirm bearbeiten“ für Ordner und Widgets, vor „Entfernen“. */
     fun withEditHome(items: List<PopupData>): List<PopupData> =
         if (BuildConfig.LETZGO_POPUPS) {
-            listOf(de.letzgo.launcher.popup.EditHomeShortcut.POPUP_DATA) + items
+            // Order like iOS: item-specific entries, then "Edit Home Screen", "Remove" last
+            val (remove, others) = items.partition { it === removePopupData }
+            others + de.letzgo.launcher.popup.EditHomeShortcut.POPUP_DATA + remove
         } else {
             items
         }

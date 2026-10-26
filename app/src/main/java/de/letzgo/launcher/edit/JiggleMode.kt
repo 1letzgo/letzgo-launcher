@@ -194,13 +194,25 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         PopupContainer.showForMenuItems(
             launcher,
             launcher.dragLayer,
-            homeActions() +
-                PopupData(R.drawable.ic_view_carousel, R.string.edit_pages, PopupCategory.SYSTEM_SHORTCUT) { _, _, _ ->
-                    AbstractFloatingView.closeAllOpenViews(launcher)
-                    openPageOverview()
-                },
+            editMenu(),
             pos,
         )
+    }
+
+    /**
+     * Order like iOS (Add Widget, Edit Pages, Edit Wallpaper): what changes the home screen first,
+     * settings last.
+     */
+    private fun editMenu(): List<PopupData> {
+        val actions = homeActions()
+        val widgets = actions.filter { it.labelResId == R.string.widget_button_text }
+        val pages =
+            PopupData(R.drawable.ic_view_carousel, R.string.edit_pages, PopupCategory.SYSTEM_SHORTCUT) { _, _, _ ->
+                AbstractFloatingView.closeAllOpenViews(launcher)
+                openPageOverview()
+            }
+        val settings = actions.filter { it.labelResId == R.string.settings_button_text }
+        return widgets + pages + (actions - widgets.toSet() - settings.toSet()) + settings
     }
 
     /** Wallpaper & style, widgets, home settings (Launcher3 entries; also in the page overview). */

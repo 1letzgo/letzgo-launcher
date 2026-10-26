@@ -176,6 +176,13 @@ private constructor(
 
         if (deepShortcutCount > 0) {
             addAllShortcuts(deepShortcutCount, systemShortcuts)
+            if (com.android.launcher3.BuildConfig.LETZGO_POPUPS) {
+                // letzgo: like iOS the app's own shortcuts come first, "Remove" stays at the bottom
+                deepShortcutContainer?.let {
+                    removeView(it)
+                    addView(it, 0)
+                }
+            }
         } else if (systemShortcuts.isNotEmpty()) {
             addSystemShortcuts(
                 systemShortcuts,
