@@ -6,10 +6,11 @@ dialogs. No app drawer, no Google search bar – instead an App Library, jiggle 
 of your choice.
 
 <p>
-  <img src="docs/screenshots/home.png" width="19%" alt="Home screen">
-  <img src="docs/screenshots/app-library.png" width="19%" alt="App Library">
-  <img src="docs/screenshots/edit-mode.png" width="19%" alt="Edit mode">
-  <img src="docs/screenshots/folder.png" width="19%" alt="Folder">
+  <img src="docs/screenshots/home.png" width="16%" alt="Home screen">
+  <img src="docs/screenshots/app-library.png" width="16%" alt="App Library">
+  <img src="docs/screenshots/edit-mode.png" width="16%" alt="Edit mode">
+  <img src="docs/screenshots/folder.png" width="16%" alt="Folder">
+  <img src="docs/screenshots/page-overview.png" width="16%" alt="Edit Pages">
 </p>
 
 ## Features
@@ -26,7 +27,7 @@ of your choice.
 - Swipe down on the left half for notifications, on the right half for quick settings.
 
 ### Edit mode (“jiggle mode”)
-<img src="docs/screenshots/edit-mode.png" width="24%" align="right" alt="Edit mode">
+<img src="docs/screenshots/page-overview.png" width="24%" align="right" alt="Edit Pages">
 
 - Long-press empty space, drag any icon or choose *Edit Home Screen* in a context menu.
 - Icons, folders and widgets wiggle and show a minus badge to remove them (apps can be removed
