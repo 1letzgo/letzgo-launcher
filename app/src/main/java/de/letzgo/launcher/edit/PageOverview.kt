@@ -7,6 +7,8 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.PictureDrawable
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -15,7 +17,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.window.OnBackInvokedCallback
 import android.window.OnBackInvokedDispatcher
-import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
@@ -111,55 +112,23 @@ class PageOverview(
             LayoutParams(MATCH, MATCH),
         )
         snap.attachToRecyclerView(list)
-        // Long-press and drag sideways reorders the pages
-        ItemTouchHelper(
-                object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.START or ItemTouchHelper.END, 0) {
-                    override fun onMove(
-                        rv: RecyclerView,
-                        from: RecyclerView.ViewHolder,
-                        to: RecyclerView.ViewHolder,
-                    ): Boolean {
-                        val page = pages.removeAt(from.bindingAdapterPosition)
-                        pages.add(to.bindingAdapterPosition, page)
-                        adapter.notifyItemMoved(from.bindingAdapterPosition, to.bindingAdapterPosition)
-                        current = to.bindingAdapterPosition
-                        updateChrome()
-                        return true
-                    }
+        // Long-press a card, then drag sideways: it swaps with its neighbor and the pager follows
+        list.addOnItemTouchListener(
+            object : RecyclerView.SimpleOnItemTouchListener() {
+                override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+                    lastTouchX = e.x
+                    return reordering >= 0
+                }
 
-                    override fun onSwiped(holder: RecyclerView.ViewHolder, direction: Int) {}
-
-                    // Neighbors are only partly on screen: swap with the next card once the dragged
-                    // card has moved a fifth of its width towards it
-                    override fun chooseDropTarget(
-                        selected: RecyclerView.ViewHolder,
-                        dropTargets: MutableList<RecyclerView.ViewHolder>,
-                        curX: Int,
-                        curY: Int,
-                    ): RecyclerView.ViewHolder? {
-                        val dx = curX - selected.itemView.left
-                        val step = selected.itemView.width / 5
-                        val position = selected.bindingAdapterPosition
-                        val wanted =
-                            when {
-                                dx > step -> position + 1
-                                dx < -step -> position - 1
-                                else -> return null
-                            }
-                        return dropTargets.firstOrNull { it.bindingAdapterPosition == wanted }
-                    }
-
-                    override fun getMoveThreshold(holder: RecyclerView.ViewHolder) = 0.05f
-
-
-                    // Back onto the centered card after dropping
-                    override fun clearView(rv: RecyclerView, holder: RecyclerView.ViewHolder) {
-                        super.clearView(rv, holder)
-                        rv.post { resnap() }
+                override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
+                    lastTouchX = e.x
+                    when (e.actionMasked) {
+                        MotionEvent.ACTION_MOVE -> onReorderMove(e.x)
+                        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> endReorder()
                     }
                 }
-            )
-            .attachToRecyclerView(list)
+            }
+        )
     }
 
     override fun setInsets(insets: Rect) {
@@ -240,6 +209,53 @@ class PageOverview(
             visibility = GONE
             onClosed()
         }.start()
+    }
+
+    private var reordering = -1
+    private var anchorX = 0f
+    private var lastTouchX = 0f
+
+    private fun startReorder(position: Int) {
+        if (position < 0 || pages.size < 2) return
+        reordering = position
+        anchorX = lastTouchX
+        list.stopScroll()
+        list.parent.requestDisallowInterceptTouchEvent(true)
+        performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        draggedView()?.animate()?.scaleX(LIFT_SCALE)?.scaleY(LIFT_SCALE)?.translationZ(dp(8).toFloat())?.setDuration(LIFT_MS)?.start()
+    }
+
+    private fun draggedView() = list.findViewHolderForAdapterPosition(reordering)?.itemView
+
+    /** The card follows the finger; past a quarter card width it swaps with the neighbor. */
+    private fun onReorderMove(x: Float) {
+        if (reordering < 0) return
+        val dx = x - anchorX
+        val step = cardWidth * SWAP_FRACTION
+        val direction = when {
+            dx > step && reordering < pages.size - 1 -> 1
+            dx < -step && reordering > 0 -> -1
+            else -> 0
+        }
+        if (direction != 0) {
+            val to = reordering + direction
+            java.util.Collections.swap(pages, reordering, to)
+            adapter.notifyItemMoved(reordering, to)
+            reordering = to
+            current = to
+            anchorX = x
+            list.smoothScrollBy(direction * (cardWidth + 2 * dp(CARD_GAP_DP)), 0)
+            performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+            updateChrome()
+        }
+        draggedView()?.translationX = (x - anchorX) * FOLLOW
+    }
+
+    private fun endReorder() {
+        if (reordering < 0) return
+        draggedView()?.animate()?.scaleX(1f)?.scaleY(1f)?.translationX(0f)?.translationZ(0f)?.setDuration(LIFT_MS)?.start()
+        reordering = -1
+        list.post { resnap() }
     }
 
     private fun resnap() {
@@ -474,6 +490,10 @@ class PageOverview(
                     val pad = dp(12)
                     setPadding(pad, pad, pad, pad)
                     setOnClickListener { close(apply = true, goTo = holder.bindingAdapterPosition) }
+                    setOnLongClickListener {
+                        startReorder(holder.bindingAdapterPosition)
+                        true
+                    }
                 },
                 LayoutParams(cardWidth, cardHeight, Gravity.CENTER),
             )
@@ -488,6 +508,10 @@ class PageOverview(
         const val FADE_MS = 180L
         const val RELOAD_DELAY_MS = 300L
         const val STAY = -1
+        const val SWAP_FRACTION = 0.25f
+        const val FOLLOW = 0.6f
+        const val LIFT_SCALE = 1.04f
+        const val LIFT_MS = 150L
         const val CARD_WIDTH = 0.76f
         const val CARD_GAP_DP = 12
         const val DOT_TOUCH_DP = 28
