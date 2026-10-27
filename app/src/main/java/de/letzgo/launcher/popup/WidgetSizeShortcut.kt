@@ -2,7 +2,6 @@ package de.letzgo.launcher.popup
 
 import android.appwidget.AppWidgetManager
 import android.view.View
-import android.widget.Toast
 import com.android.launcher3.AbstractFloatingView
 import com.android.launcher3.CellLayout
 import com.android.launcher3.InvariantDeviceProfile
@@ -17,6 +16,7 @@ import com.android.launcher3.widget.LauncherAppWidgetHostView
 import com.android.launcher3.widget.LauncherAppWidgetProviderInfo
 import com.android.launcher3.widget.util.WidgetSizeHandler.Companion.updateSizeRanges
 import de.letzgo.launcher.LetzgoApplication
+import de.letzgo.launcher.ui.M3
 
 /**
  * Widget-Größen wie auf iOS im Kontextmenü eines Homescreen-Widgets: klein (2 x 2), mittel (4 x 2)
@@ -75,7 +75,7 @@ object WidgetSizeShortcut {
         val provider = widget.appWidgetInfo as? LauncherAppWidgetProviderInfo
         val fits = spanY <= cellLayout.countY && (provider == null || supports(provider, spanX to spanY))
         if (!fits) {
-            Toast.makeText(target.asContext(), R.string.widget_size_unsupported, Toast.LENGTH_SHORT).show()
+            M3.snackbar(cellLayout, R.string.widget_size_unsupported)
             return
         }
         // Am alten Ort bleiben, soweit die neue Größe auf die Seite passt
@@ -83,7 +83,7 @@ object WidgetSizeShortcut {
         val cellY = lp.cellY.coerceAtMost(cellLayout.countY - spanY).coerceAtLeast(0)
         val direction = intArrayOf(1, 1)
         if (!cellLayout.createAreaForResize(cellX, cellY, spanX, spanY, widget, direction, false)) {
-            Toast.makeText(target.asContext(), R.string.widget_size_no_space, Toast.LENGTH_SHORT).show()
+            M3.snackbar(cellLayout, R.string.widget_size_no_space)
             return
         }
         lp.tmpCellX = cellX

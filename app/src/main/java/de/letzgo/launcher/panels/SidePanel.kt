@@ -14,6 +14,7 @@ import androidx.dynamicanimation.animation.SpringForce
 import com.android.launcher3.Insettable
 import com.android.launcher3.Launcher
 import de.letzgo.launcher.LetzgoLauncher
+import de.letzgo.launcher.ui.dpF
 import kotlin.math.abs
 
 /**
@@ -95,7 +96,7 @@ abstract class SidePanel(protected val launcher: Launcher, private val fromLeft:
 
     /** Finger losgelassen: öffnen oder zurückfedern, je nach Strecke und Geschwindigkeit. */
     fun release(velocityTowardsOpen: Float) {
-        val fling = FLING_VELOCITY_DP * resources.displayMetrics.density
+        val fling = dpF(FLING_VELOCITY_DP)
         val open = velocityTowardsOpen > fling || (velocityTowardsOpen > -fling && progress > 0.4f)
         // Die Feder übernimmt die Geschwindigkeit des Fingers (in Seitenbreiten pro Sekunde)
         animateTo(if (open) 1f else 0f, velocityTowardsOpen / width.coerceAtLeast(1))

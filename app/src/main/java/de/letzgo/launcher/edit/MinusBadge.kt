@@ -17,7 +17,7 @@ class MinusBadge(context: Context, private val diameter: Float) : Drawable() {
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = M3.color(m3, MaterialR.attr.colorSurfaceContainerHighest)
             // Leichter Schatten: sichtbar auch auf hellem Hintergrundbild
-            setShadowLayer(diameter * 0.1f, 0f, diameter * 0.04f, 0x55000000)
+            setShadowLayer(diameter * 0.1f, 0f, diameter * 0.04f, M3.SHADOW)
         }
     private val minus =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {

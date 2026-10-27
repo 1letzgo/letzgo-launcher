@@ -5,7 +5,6 @@ import android.content.Intent
 import android.graphics.Rect
 import android.graphics.RenderEffect
 import android.graphics.Shader
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -47,6 +46,8 @@ import de.letzgo.launcher.popup.RemoveAppShortcut
 import de.letzgo.launcher.ui.Backdrop
 import de.letzgo.launcher.ui.DockBackground
 import de.letzgo.launcher.ui.FolderTitle
+import de.letzgo.launcher.ui.M3
+import de.letzgo.launcher.ui.dpF
 import de.letzgo.launcher.system.SystemPanels
 import de.letzgo.launcher.update.AppUpdate
 import de.letzgo.launcher.update.AppUpdateDialog
@@ -169,14 +170,15 @@ class LetzgoLauncher : Launcher() {
         homeDimmedForFolder = dim
         val alpha = if (dim) 0f else 1f
         listOf(workspace, hotseat, workspace.pageIndicator as View).forEach {
-            it.animate().alpha(alpha).setDuration(FOLDER_FADE_MS).start()
+            it.animate().alpha(alpha).setDuration(FOLDER_FADE_MS).setInterpolator(M3.Motion.STANDARD).start()
         }
         animateBackdrop(Backdrop.FOLDER, dim)
     }
 
     private fun animateBackdrop(key: String, on: Boolean) {
         ValueAnimator.ofFloat(if (on) 0f else 1f, if (on) 1f else 0f).apply {
-            duration = FOLDER_FADE_MS * 2
+            duration = M3.Motion.MEDIUM2
+            interpolator = M3.Motion.STANDARD
             addUpdateListener { backdrop.set(key, it.animatedValue as Float) }
             start()
         }
@@ -276,7 +278,7 @@ class LetzgoLauncher : Launcher() {
             popupAnchor = null
             return
         }
-        val radius = POPUP_BLUR_DP * resources.displayMetrics.density
+        val radius = dpF(POPUP_BLUR_DP)
         val effect = RenderEffect.createBlurEffect(radius, radius, Shader.TileMode.CLAMP)
         val page = workspace.getChildAt(workspace.currentPage) as? CellLayout
         listOfNotNull(page, hotseat).forEach { layout ->
@@ -322,7 +324,7 @@ class LetzgoLauncher : Launcher() {
     /** Seitenpunkte über dem Dock bleiben sichtbar und sind immer weiß (Launcher3 blendet sie aus). */
     private fun showPageDots() {
         workspace.pageIndicator.setShouldAutoHide(false)
-        workspace.pageIndicator.setPaintColor(Color.WHITE)
+        workspace.pageIndicator.setPaintColor(M3.ON_WALLPAPER)
     }
 
     /**
@@ -350,7 +352,7 @@ class LetzgoLauncher : Launcher() {
     private fun layoutDockAccessories() {
         val capsuleTop = dock.capsuleTop ?: return
         val indicator = workspace.pageIndicator as View
-        val centerY = hotseat.top + capsuleTop - DOCK_ACCESSORY_GAP_DP * resources.displayMetrics.density
+        val centerY = hotseat.top + capsuleTop - dpF(DOCK_ACCESSORY_GAP_DP)
         val lp = indicator.layoutParams as ViewGroup.MarginLayoutParams
         val wanted = (dragLayer.height - centerY - indicator.height / 2f).toInt()
         if (indicator.height > 0 && lp.bottomMargin != wanted) {
@@ -403,7 +405,7 @@ class LetzgoLauncher : Launcher() {
     private companion object {
         const val SYNC_DELAY_MS = 300L
         const val DOCK_ACCESSORY_GAP_DP = 20f
-        const val FOLDER_FADE_MS = 150L
+        const val FOLDER_FADE_MS = M3.Motion.SHORT3
         const val POPUP_BLUR_DP = 6f
         const val KEEP_EDIT_RESET_MS = 1000L
         const val RESUME_EDIT_MS = 120_000L

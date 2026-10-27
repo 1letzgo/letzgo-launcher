@@ -2,7 +2,6 @@ package de.letzgo.launcher.settings
 
 import android.app.role.RoleManager
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.preference.Preference
 import com.android.launcher3.BuildConfig
@@ -10,6 +9,7 @@ import com.android.launcher3.R
 import com.android.launcher3.settings.SettingsActivity.LauncherSettingsFragment
 import com.android.launcher3.util.Executors.MAIN_EXECUTOR
 import com.android.launcher3.util.Executors.THREAD_POOL_EXECUTOR
+import de.letzgo.launcher.ui.M3
 import de.letzgo.launcher.update.AppUpdate
 import de.letzgo.launcher.update.AppUpdateDialog
 
@@ -85,7 +85,7 @@ class LetzgoSettingsFragment : LauncherSettingsFragment() {
                 result
                     .onSuccess { release ->
                         if (release == null) {
-                            Toast.makeText(activity, R.string.update_none, Toast.LENGTH_SHORT).show()
+                            view?.let { M3.snackbar(it, R.string.update_none) }
                         } else {
                             updateDialog =
                                 AppUpdateDialog(activity, release) { updateDialog = null }
@@ -93,7 +93,7 @@ class LetzgoSettingsFragment : LauncherSettingsFragment() {
                         }
                     }
                     .onFailure {
-                        Toast.makeText(activity, R.string.update_check_failed, Toast.LENGTH_SHORT).show()
+                        view?.let { M3.snackbar(it, R.string.update_check_failed) }
                     }
             }
         }

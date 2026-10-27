@@ -12,7 +12,7 @@ import com.android.launcher3.InsettableFrameLayout
 import com.android.launcher3.Launcher
 
 /**
- * Halbtransparente Fläche hinter den Dock-Icons in der Farbe der Ordner-Kacheln, mit großen
+ * Fläche hinter den Dock-Icons ([M3.surface] wie Ordner und Mediathek-Kacheln), mit extra großen
  * M3-Ecken. Reicht fast bis an die Bildschirmränder und umschließt die Icons vertikal mit etwas Abstand.
  *
  * Eigene View in der DragLayer direkt unter dem [Hotseat], nicht dessen Hintergrund: Die Fläche ragt
@@ -24,10 +24,9 @@ class DockBackground(private val launcher: Launcher) :
     View(launcher), View.OnLayoutChangeListener, ViewTreeObserver.OnPreDrawListener {
 
     private val hotseat: Hotseat = launcher.hotseat
-    private val density = resources.displayMetrics.density
     private val fill =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = M3.folderTileColor(launcher)
+            color = M3.surface(launcher)
         }
     // Kapsel in Hotseat-Koordinaten
     private val capsule = RectF()
@@ -65,8 +64,8 @@ class DockBackground(private val launcher: Launcher) :
         val icon = all.firstOrNull() ?: return
         icon.getIconBounds(iconBounds)
         val iconTop = icons.top + icon.top + iconBounds.top
-        val padding = PADDING_DP * density
-        val margin = MARGIN_DP * density
+        val padding = dpF(PADDING_DP)
+        val margin = dpF(MARGIN_DP)
         // Breit genug für alle Icons samt Rand (bei 5 Spalten liegen sie weiter außen), sonst wie
         // die Icon-Spalten bis kurz vor den Bildschirmrand
         val outer =
@@ -110,13 +109,13 @@ class DockBackground(private val launcher: Launcher) :
             (hotseatLocation[1] - location[1]).toFloat(),
         )
         canvas.scale(hotseat.scaleX, hotseat.scaleY)
-        val radius = M3.SHAPE_EXTRA_LARGE_DP * density
+        val radius = dpF(M3.Shape.EXTRA_LARGE)
         canvas.drawRoundRect(capsule, radius, radius, fill)
         canvas.restore()
     }
 
     private companion object {
         const val MARGIN_DP = 12f
-        const val PADDING_DP = 10f
+        const val PADDING_DP = 12f
     }
 }

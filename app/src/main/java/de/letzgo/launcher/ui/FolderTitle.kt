@@ -2,7 +2,6 @@ package de.letzgo.launcher.ui
 
 import android.content.Context
 import android.graphics.Paint
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -27,13 +26,12 @@ class FolderTitle(private val launcher: Launcher, private val onClosing: () -> U
     private var lastState = Folder.STATE_CLOSED
     private val stateListener = Folder.OnFolderStateChangedListener { state -> onFolderState(state) }
     private val view =
-        EditText(launcher).apply {
+        EditText(M3.context(launcher)).apply {
             style(this)
             background = null
             setSingleLine()
             imeOptions = EditorInfo.IME_ACTION_DONE or EditorInfo.IME_FLAG_NO_EXTRACT_UI
             setHint(R.string.folder_hint_text)
-            setHintTextColor(0xB3FFFFFF.toInt())
             setOnEditorActionListener { _, action, _ ->
                 if (action == EditorInfo.IME_ACTION_DONE) commit()
                 action == EditorInfo.IME_ACTION_DONE
@@ -68,7 +66,7 @@ class FolderTitle(private val launcher: Launcher, private val onClosing: () -> U
         view.isLongClickable = editable
         view.visibility = View.VISIBLE
         place(open)
-        view.animate().alpha(1f).setDuration(FADE_MS).setStartDelay(FADE_MS / 2).start()
+        view.animate().alpha(1f).setDuration(FADE_MS).setStartDelay(FADE_MS / 2).setInterpolator(M3.Motion.STANDARD).start()
     }
 
     /** Über die Ordnerfläche; deren Lage steht beim Öffnen schon in den LayoutParams. */
@@ -97,7 +95,7 @@ class FolderTitle(private val launcher: Launcher, private val onClosing: () -> U
             commit()
             view.clearFocus()
         }
-        view.animate().alpha(0f).setStartDelay(0).setDuration(CLOSE_FADE_MS).withEndAction {
+        view.animate().alpha(0f).setStartDelay(0).setDuration(CLOSE_FADE_MS).setInterpolator(M3.Motion.STANDARD).withEndAction {
             view.visibility = View.GONE
         }.start()
     }
@@ -113,25 +111,23 @@ class FolderTitle(private val launcher: Launcher, private val onClosing: () -> U
     companion object {
         private const val MATCH = FrameLayout.LayoutParams.MATCH_PARENT
         private const val WRAP = FrameLayout.LayoutParams.WRAP_CONTENT
-        private const val FADE_MS = 150L
-        private const val CLOSE_FADE_MS = 100L
-        private const val TITLE_SP = 28f
+        private const val FADE_MS = M3.Motion.SHORT3
+        private const val CLOSE_FADE_MS = M3.Motion.SHORT2
         private const val GAP_DP = 20
 
         /** Titel über einem geöffneten Ordner oder einer Kategorie. */
         fun style(text: TextView) {
-            M3.onWallpaper(text)
-            text.setTextSize(TypedValue.COMPLEX_UNIT_SP, TITLE_SP)
+            M3.text(text, M3.Type.HEADLINE_MEDIUM, null)
             text.gravity = Gravity.CENTER
             text.paintFlags = text.paintFlags or Paint.SUBPIXEL_TEXT_FLAG
         }
 
         /** Abstand zwischen Titel und Ordnerfläche. */
-        fun gap(context: Context) = (GAP_DP * context.resources.displayMetrics.density).toInt()
+        fun gap(context: Context) = context.dp(GAP_DP)
 
         /** Platz, den der Titel über der Ordnerfläche braucht (zum Zentrieren beider zusammen). */
         fun spaceAbove(context: Context): Int {
-            val text = TextView(context).also(::style)
+            val text = TextView(M3.context(context)).also(::style)
             return text.paint.fontMetricsInt.let { it.descent - it.ascent } + gap(context)
         }
     }

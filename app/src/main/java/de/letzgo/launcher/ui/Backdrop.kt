@@ -19,7 +19,6 @@ class Backdrop(private val launcher: Launcher) {
 
     private val levels = mutableMapOf<String, Float>()
     private var applied = -1f
-    private val density = launcher.resources.displayMetrics.density
     private val scrim by lazy {
         View(launcher).apply {
             setBackgroundColor(Color.BLACK)
@@ -43,7 +42,7 @@ class Backdrop(private val launcher: Launcher) {
         scrim.visibility = if (level > 0f) View.VISIBLE else View.GONE
         val windowManager = launcher.getSystemService(WindowManager::class.java)
         if (windowManager.isCrossWindowBlurEnabled) {
-            launcher.window?.setBackgroundBlurRadius((level * BLUR_DP * density).toInt())
+            launcher.window?.setBackgroundBlurRadius((level * launcher.dpF(BLUR_DP)).toInt())
         }
     }
 

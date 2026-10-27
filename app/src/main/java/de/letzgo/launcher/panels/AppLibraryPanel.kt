@@ -2,11 +2,9 @@ package de.letzgo.launcher.panels
 
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.drawable.GradientDrawable
 import android.os.Process
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewConfiguration
@@ -39,6 +37,8 @@ import de.letzgo.launcher.ui.DragIconView
 import de.letzgo.launcher.ui.LetterIndex
 import de.letzgo.launcher.ui.M3
 import de.letzgo.launcher.ui.SearchBar
+import de.letzgo.launcher.ui.dp
+import de.letzgo.launcher.ui.dpF
 import com.google.android.material.R as MaterialR
 
 /**
@@ -53,7 +53,6 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
     private data class Group(val category: AppCategory, val apps: List<AppInfo>)
 
     private val m3 = M3.context(launcher)
-    private val density = resources.displayMetrics.density
     private var groups = emptyList<Group>()
     private var allApps = emptyList<AppInfo>()
     private var grid = IconGrid.of(launcher)
@@ -177,12 +176,12 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
     /** Kategorie wie einen Ordner öffnen; die Mediathek tritt dahinter zurück (wie der Homescreen). */
     private fun openCategory(group: Group, tile: View) {
         categoryFolder.show(group.category, group.apps, grid, tile)
-        content.animate().alpha(0f).setDuration(FADE_MS).start()
+        content.animate().alpha(0f).setDuration(FADE_MS).setInterpolator(M3.Motion.STANDARD).start()
     }
 
     private fun closeCategory() {
         categoryFolder.hide()
-        content.animate().alpha(1f).setDuration(FADE_MS).start()
+        content.animate().alpha(1f).setDuration(FADE_MS).setInterpolator(M3.Motion.STANDARD).start()
     }
 
     private var navBottom = 0
@@ -376,7 +375,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
                                 }
                             )
                         }
-                        foreground = M3.ripple(m3, cornerRadius = M3.SHAPE_LARGE_DP * density)
+                        foreground = M3.ripple(m3, cornerRadius = dpF(M3.Shape.LARGE))
                         setOnClickListener { openCategory(group, card) }
                     }
                 )
@@ -386,8 +385,7 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
                 TextView(m3).apply {
                     setText(group.category.title)
                     gravity = Gravity.CENTER
-                    M3.onWallpaper(this)
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                    M3.text(this, M3.Type.BODY_SMALL, null)
                     setSingleLine()
                 },
                 LinearLayout.LayoutParams(tileSize, WRAP).apply {
@@ -417,14 +415,8 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
         }
     }
 
-    /** Karte in der Farbe der Ordner-Kacheln, extra große M3-Ecken. */
-    private fun card() =
-        GradientDrawable().apply {
-            cornerRadius = M3.SHAPE_EXTRA_LARGE_DP * density
-            setColor(M3.folderTileColor(m3))
-        }
-
-    private fun dp(value: Int) = (value * density).toInt()
+    /** Karte auf der letzgo-Fläche, extra große M3-Ecken. */
+    private fun card() = M3.surfaceDrawable(m3)
 
     private fun sortKey(app: AppInfo) = app.title.toString().lowercase()
 
@@ -469,8 +461,8 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
         const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
         const val RECENT_COUNT = 8
         const val SUGGESTION_COUNT = 4
-        const val TILE_PADDING = 14
-        const val TILE_GAP = 10
-        const val FADE_MS = 180L
+        const val TILE_PADDING = 12
+        const val TILE_GAP = 12
+        const val FADE_MS = M3.Motion.SHORT4
     }
 }

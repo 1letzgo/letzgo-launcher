@@ -21,6 +21,8 @@ import com.android.launcher3.popup.WorkspaceLongPressOptions
 import com.android.launcher3.popup.PopupCategory
 import com.android.launcher3.popup.PopupContainer
 import com.android.launcher3.popup.PopupData
+import de.letzgo.launcher.ui.M3
+import de.letzgo.launcher.ui.dpF
 import java.util.WeakHashMap
 import kotlin.math.PI
 import kotlin.math.hypot
@@ -39,7 +41,6 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
     /** Set while our own widget picker is in front: leaving the launcher keeps edit mode. */
     var keepWhileAway = false
 
-    private val density = launcher.resources.displayMetrics.density
     private val badges = WeakHashMap<View, MinusBadge>()
     // View, in deren Overlay das Badge liegt (bei Widgets der Container, siehe [badgeHost])
     private val badgeHosts = WeakHashMap<View, View>()
@@ -150,13 +151,13 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         tmpRect.contains(x.toInt(), y.toInt())
     }
 
-    /** Element, dessen Minus-Badge unter dem Punkt liegt (mit etwas größerer Trefferfläche). */
+    /** Element, dessen Minus-Badge unter dem Punkt liegt (Trefferfläche 48 dp wie M3 verlangt). */
     fun badgeViewAt(x: Float, y: Float): View? = visibleItemViews().firstOrNull { view ->
         val badge = badges[view] ?: return@firstOrNull false
         tmpPoint[0] = badge.bounds.exactCenterX()
         tmpPoint[1] = badge.bounds.exactCenterY()
         val scale = launcher.dragLayer.getDescendantCoordRelativeToSelf(badgeHosts[view] ?: view, tmpPoint)
-        hypot(x - tmpPoint[0], y - tmpPoint[1]) <= BADGE_TOUCH_DP * density * scale
+        hypot(x - tmpPoint[0], y - tmpPoint[1]) <= launcher.dpF(M3.TOUCH_TARGET_DP / 2) * scale
     }
 
     fun onBadgeTapped(view: View) {
@@ -232,7 +233,7 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         val badge =
             badges.getOrPut(view) {
                 badgeHosts[view] = host
-                MinusBadge(launcher, BADGE_DIAMETER_DP * density).also { host.overlay.add(it) }
+                MinusBadge(launcher, launcher.dpF(BADGE_DIAMETER_DP)).also { host.overlay.add(it) }
             }
         when (view) {
             is BubbleTextView -> view.getIconBounds(tmpRect)
@@ -241,12 +242,12 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
             else -> tmpRect.set(view.paddingLeft, view.paddingTop, view.width - view.paddingRight, view.height - view.paddingBottom)
         }
         if (host !== view) tmpRect.offset((view.left + view.translationX).toInt(), (view.top + view.translationY).toInt())
-        val inset = BADGE_DIAMETER_DP * density * 0.15f
+        val inset = launcher.dpF(BADGE_DIAMETER_DP) * 0.15f
         badge.setCenter(tmpRect.left + inset, tmpRect.top + inset)
         if (view is AppWidgetHostView) {
             val handle =
                 handles.getOrPut(view) {
-                    ResizeHandle(launcher, HANDLE_DP * density).also { host.overlay.add(it) }
+                    ResizeHandle(launcher, launcher.dpF(HANDLE_DP)).also { host.overlay.add(it) }
                 }
             handle.setCorner(tmpRect.right.toFloat(), tmpRect.bottom.toFloat())
         }
@@ -258,7 +259,7 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
         tmpPoint[0] = handle.bounds.exactCenterX()
         tmpPoint[1] = handle.bounds.exactCenterY()
         val scale = launcher.dragLayer.getDescendantCoordRelativeToSelf(badgeHosts[view] ?: view, tmpPoint)
-        hypot(x - tmpPoint[0], y - tmpPoint[1]) <= HANDLE_DP * density * scale
+        hypot(x - tmpPoint[0], y - tmpPoint[1]) <= launcher.dpF(M3.TOUCH_TARGET_DP / 2) * scale
     }
 
     /** Eckgriff angetippt: Launcher3-Rahmen zum Ziehen der Größe. */
@@ -298,8 +299,8 @@ class JiggleMode(private val launcher: Launcher) : Choreographer.FrameCallback {
     private companion object {
         const val AMPLITUDE_DEG = 1.6
         const val PERIOD_S = 0.28
-        const val BADGE_DIAMETER_DP = 22f
-        const val BADGE_TOUCH_DP = 22f
+        // Größe eines M3-Symbols
+        const val BADGE_DIAMETER_DP = 24f
         // Etwa der Eckenradius der Widgets
         const val HANDLE_DP = 20f
         const val NEW_PAGE_DELAY_MS = 250L

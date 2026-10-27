@@ -2,8 +2,6 @@ package de.letzgo.launcher.panels
 
 import android.content.Context
 import android.graphics.Rect
-import android.graphics.drawable.GradientDrawable
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -13,12 +11,12 @@ import android.widget.TextView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.core.view.doOnPreDraw
-import com.android.app.animation.Interpolators
 import com.android.launcher3.icons.BitmapInfo.Companion.FLAG_THEMED
 import com.android.launcher3.model.data.AppInfo
 import de.letzgo.launcher.ui.DragIconView
 import de.letzgo.launcher.ui.FolderTitle
 import de.letzgo.launcher.ui.M3
+import de.letzgo.launcher.ui.dp
 
 /**
  * Geöffnete Kategorie der App-Mediathek wie ein geöffneter Ordner (iOS): Titel über einer Fläche in
@@ -32,13 +30,12 @@ class CategoryFolder(
     private val onClose: () -> Unit,
 ) : FrameLayout(context) {
 
-    private val density = resources.displayMetrics.density
     private var apps = emptyList<AppInfo>()
     private var grid: IconGrid? = null
     // Lage der Kachel in Koordinaten dieser View; beim Öffnen ermittelt (ohne eigene Transformation)
     private var origin: Rect? = null
     private val title =
-        TextView(context).apply { FolderTitle.style(this) }
+        TextView(M3.context(context)).apply { FolderTitle.style(this) }
     private val adapter = AppAdapter()
     private val list =
         RecyclerView(context).apply {
@@ -47,11 +44,7 @@ class CategoryFolder(
         }
     private val sheet =
         FrameLayout(context).apply {
-            background =
-                GradientDrawable().apply {
-                    cornerRadius = M3.SHAPE_EXTRA_LARGE_DP * density
-                    setColor(M3.folderSheetColor(context))
-                }
+            background = M3.surfaceDrawable(context)
             isClickable = true
             addView(list, LayoutParams(MATCH, WRAP))
         }
@@ -113,7 +106,7 @@ class CategoryFolder(
             applyOriginTransform()
             animate()
                 .alpha(1f).scaleX(1f).scaleY(1f).translationX(0f).translationY(0f)
-                .setInterpolator(Interpolators.EMPHASIZED_DECELERATE)
+                .setInterpolator(M3.Motion.EMPHASIZED_DECELERATE)
                 .setDuration(OPEN_MS)
                 .start()
         }
@@ -126,7 +119,7 @@ class CategoryFolder(
         animate()
             .alpha(0f)
             .scaleX(target[0]).scaleY(target[0]).translationX(target[1]).translationY(target[2])
-            .setInterpolator(Interpolators.EMPHASIZED_ACCELERATE)
+            .setInterpolator(M3.Motion.EMPHASIZED_ACCELERATE)
             .setDuration(CLOSE_MS)
             .withEndAction { visibility = GONE }
             .start()
@@ -181,11 +174,9 @@ class CategoryFolder(
                 }
             cell.addView(icon, LinearLayout.LayoutParams(grid.iconSize, grid.iconSize))
             cell.addView(
-                TextView(context).apply {
+                TextView(M3.context(context)).apply {
                     text = app.title
-                    // Auf der Ordnerfläche: Schriftfarbe der Launcher3-Ordner
-                    setTextColor(M3.onFolderColor(context))
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                    M3.text(this, M3.Type.BODY_SMALL, M3.onSurface(context))
                     setSingleLine()
                     gravity = Gravity.CENTER
                 },
@@ -194,14 +185,13 @@ class CategoryFolder(
         }
     }
 
-    private fun dp(value: Int) = (value * density).toInt()
 
     private companion object {
         const val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
         const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
         const val SHEET_PADDING_DP = 16
         const val LABEL_HEIGHT_DP = 18
-        const val OPEN_MS = 400L
-        const val CLOSE_MS = 200L
+        const val OPEN_MS = M3.Motion.MEDIUM4
+        const val CLOSE_MS = M3.Motion.SHORT4
     }
 }

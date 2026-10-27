@@ -1,11 +1,9 @@
 package de.letzgo.launcher.edit
 
-import android.content.res.ColorStateList
 import android.graphics.Picture
 import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.PictureDrawable
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
@@ -34,6 +32,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.letzgo.launcher.LetzgoLauncher
 import de.letzgo.launcher.ui.Backdrop
 import de.letzgo.launcher.ui.M3
+import de.letzgo.launcher.ui.dp
+import de.letzgo.launcher.ui.dpF
 
 /**
  * Edit Pages, laid out like the page editor of Samsung's launcher (Material 3 surfaces): the pages
@@ -53,7 +53,6 @@ class PageOverview(
     private data class Page(val screenId: Int, val preview: Picture, val itemCount: Int)
 
     private val m3 = M3.context(launcher)
-    private val density = resources.displayMetrics.density
     private val backCallback = OnBackInvokedCallback { close(apply = true, goTo = current) }
     private val pages = mutableListOf<Page>()
     private var originalOrder = emptyList<Int>()
@@ -100,8 +99,8 @@ class PageOverview(
                 orientation = LinearLayout.VERTICAL
                 addView(
                     FrameLayout(m3).apply {
-                        addView(homeButton, LayoutParams(dp(48), dp(48), Gravity.START or Gravity.CENTER_VERTICAL))
-                        addView(trashButton, LayoutParams(dp(48), dp(48), Gravity.END or Gravity.CENTER_VERTICAL))
+                        addView(homeButton, LayoutParams(WRAP, WRAP, Gravity.START or Gravity.CENTER_VERTICAL))
+                        addView(trashButton, LayoutParams(WRAP, WRAP, Gravity.END or Gravity.CENTER_VERTICAL))
                     },
                     LinearLayout.LayoutParams(MATCH, dp(64)).apply { topMargin = dp(24) },
                 )
@@ -173,7 +172,7 @@ class PageOverview(
         bringToFront()
         visibility = VISIBLE
         alpha = 0f
-        animate().alpha(1f).setDuration(FADE_MS).start()
+        animate().alpha(1f).setDuration(FADE_MS).setInterpolator(M3.Motion.STANDARD).start()
         setHomeVisible(false)
         post {
             layoutCards()
@@ -205,7 +204,7 @@ class PageOverview(
             }, RELOAD_DELAY_MS)
         }
         setHomeVisible(true)
-        animate().alpha(0f).setDuration(FADE_MS).withEndAction {
+        animate().alpha(0f).setDuration(FADE_MS).setInterpolator(M3.Motion.STANDARD).withEndAction {
             visibility = GONE
             onClosed()
         }.start()
@@ -222,7 +221,7 @@ class PageOverview(
         list.stopScroll()
         list.parent.requestDisallowInterceptTouchEvent(true)
         performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-        draggedView()?.animate()?.scaleX(LIFT_SCALE)?.scaleY(LIFT_SCALE)?.translationZ(dp(8).toFloat())?.setDuration(LIFT_MS)?.start()
+        draggedView()?.animate()?.scaleX(LIFT_SCALE)?.scaleY(LIFT_SCALE)?.translationZ(dpF(8))?.setDuration(LIFT_MS)?.setInterpolator(M3.Motion.STANDARD)?.start()
     }
 
     private fun draggedView() = list.findViewHolderForAdapterPosition(reordering)?.itemView
@@ -253,7 +252,7 @@ class PageOverview(
 
     private fun endReorder() {
         if (reordering < 0) return
-        draggedView()?.animate()?.scaleX(1f)?.scaleY(1f)?.translationX(0f)?.translationZ(0f)?.setDuration(LIFT_MS)?.start()
+        draggedView()?.animate()?.scaleX(1f)?.scaleY(1f)?.translationX(0f)?.translationZ(0f)?.setDuration(LIFT_MS)?.setInterpolator(M3.Motion.STANDARD)?.start()
         reordering = -1
         list.post { resnap() }
     }
@@ -278,17 +277,17 @@ class PageOverview(
         val page = pages.getOrNull(current)
         val isDefault = page != null && page.screenId == defaultScreen
         homeButton.isActivated = isDefault
-        homeButton.setImageResource(if (isDefault) R.drawable.ic_letzgo_home else R.drawable.ic_letzgo_home_outline)
+        homeButton.setIconResource(if (isDefault) R.drawable.ic_letzgo_home else R.drawable.ic_letzgo_home_outline)
         trashButton.isEnabled = pages.size > 1
-        trashButton.alpha = if (pages.size > 1) 1f else DISABLED_ALPHA
+        trashButton.alpha = if (pages.size > 1) M3.Emphasis.HIGH else M3.Emphasis.DISABLED
         dots.removeAllViews()
         pages.forEachIndexed { index, p ->
             val isHome = p.screenId == defaultScreen
             dots.addView(
                 ImageView(m3).apply {
                     if (isHome) setImageResource(R.drawable.ic_letzgo_home) else setImageDrawable(dot())
-                    imageTintList = ColorStateList.valueOf(ON_WALLPAPER)
-                    alpha = if (index == current) 1f else INACTIVE_ALPHA
+                    M3.onWallpaper(this)
+                    alpha = if (index == current) M3.Emphasis.HIGH else M3.Emphasis.INACTIVE
                     scaleType = ImageView.ScaleType.CENTER_INSIDE
                     setOnClickListener { list.smoothScrollToPosition(index) }
                 },
@@ -298,8 +297,8 @@ class PageOverview(
         dots.addView(
             ImageView(m3).apply {
                 setImageResource(R.drawable.ic_plus)
-                imageTintList = ColorStateList.valueOf(ON_WALLPAPER)
-                alpha = INACTIVE_ALPHA
+                M3.onWallpaper(this)
+                alpha = M3.Emphasis.INACTIVE
                 contentDescription = context.getString(R.string.page_overview_add)
                 val pad = dp(DOT_PAD_DP)
                 setPadding(pad, pad, pad, pad)
@@ -312,11 +311,13 @@ class PageOverview(
         )
     }
 
+    /** Seitenpunkt wie die Punkte über dem Dock (Launcher3, 6 dp). */
     private fun dot() =
         GradientDrawable().apply {
             shape = GradientDrawable.OVAL
-            setColor(ON_WALLPAPER)
-            setSize(dp(8), dp(8))
+            setColor(M3.ON_WALLPAPER)
+            val size = resources.getDimensionPixelSize(R.dimen.page_indicator_dot_size)
+            setSize(size, size)
         }
 
     /** Wallpaper & style, widgets, home settings: icon above label, white on the wallpaper. */
@@ -327,20 +328,19 @@ class PageOverview(
                 LinearLayout(m3).apply {
                     orientation = LinearLayout.VERTICAL
                     gravity = Gravity.CENTER_HORIZONTAL
-                    foreground = M3.ripple(m3, cornerRadius = M3.SHAPE_LARGE_DP * density)
+                    foreground = M3.ripple(m3, cornerRadius = dpF(M3.Shape.LARGE))
                     setPadding(dp(4), dp(8), dp(4), dp(8))
                     addView(
                         ImageView(m3).apply {
                             setImageResource(action.iconResId)
-                            imageTintList = ColorStateList.valueOf(ON_WALLPAPER)
+                            M3.onWallpaper(this)
                         },
-                        LinearLayout.LayoutParams(dp(28), dp(28)),
+                        LinearLayout.LayoutParams(dp(24), dp(24)),
                     )
                     addView(
                         TextView(m3).apply {
                             setText(action.labelResId)
-                            M3.onWallpaper(this)
-                            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                            M3.text(this, M3.Type.LABEL_LARGE, null)
                             gravity = Gravity.CENTER
                         },
                         LinearLayout.LayoutParams(WRAP, WRAP).apply { topMargin = dp(8) },
@@ -358,21 +358,14 @@ class PageOverview(
     }
 
     private fun toolButton(icon: Int, label: Int, onClick: () -> Unit) =
-        ImageView(m3).apply {
-            setImageResource(icon)
-            imageTintList = ColorStateList.valueOf(ON_WALLPAPER)
-            contentDescription = context.getString(label)
-            scaleType = ImageView.ScaleType.CENTER
-            foreground = M3.ripple(m3, cornerRadius = null)
-            setOnClickListener { onClick() }
-        }
+        M3.iconButton(launcher, icon, label, onWallpaper = true, onClick)
 
     /** Homescreen, Dock und Seitenpunkte treten hinter der Übersicht zurück. */
     private fun setHomeVisible(visible: Boolean) {
         val alpha = if (visible) 1f else 0f
         (launcher as? LetzgoLauncher)?.backdrop?.set(Backdrop.OVERVIEW, 1f - alpha)
         listOf(launcher.workspace, launcher.hotseat, launcher.workspace.pageIndicator as View).forEach {
-            it.animate().alpha(alpha).setDuration(FADE_MS).start()
+            it.animate().alpha(alpha).setDuration(FADE_MS).setInterpolator(M3.Motion.STANDARD).start()
         }
     }
 
@@ -481,11 +474,7 @@ class PageOverview(
                     setImageDrawable(PictureDrawable(page.preview))
                     scaleType = ImageView.ScaleType.FIT_CENTER
                     // Card in the widget surface, like folders and the dock
-                    background =
-                        GradientDrawable().apply {
-                            cornerRadius = M3.SHAPE_EXTRA_LARGE_DP * density
-                            setColor(M3.folderSheetColor(m3))
-                        }
+                    background = M3.surfaceDrawable(m3)
                     clipToOutline = true
                     val pad = dp(12)
                     setPadding(pad, pad, pad, pad)
@@ -500,24 +489,19 @@ class PageOverview(
         }
     }
 
-    private fun dp(value: Int) = (value * density).toInt()
-
     private companion object {
         const val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
         const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
-        const val FADE_MS = 180L
+        const val FADE_MS = M3.Motion.SHORT4
         const val RELOAD_DELAY_MS = 300L
         const val STAY = -1
         const val SWAP_FRACTION = 0.25f
         const val FOLLOW = 0.6f
         const val LIFT_SCALE = 1.04f
-        const val LIFT_MS = 150L
+        const val LIFT_MS = M3.Motion.SHORT3
         const val CARD_WIDTH = 0.76f
         const val CARD_GAP_DP = 12
         const val DOT_TOUCH_DP = 28
         const val DOT_PAD_DP = 8
-        const val INACTIVE_ALPHA = 0.55f
-        const val DISABLED_ALPHA = 0.38f
-        const val ON_WALLPAPER = 0xFFFFFFFF.toInt()
     }
 }

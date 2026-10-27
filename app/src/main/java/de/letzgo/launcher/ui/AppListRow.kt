@@ -2,14 +2,12 @@ package de.letzgo.launcher.ui
 
 import android.content.Context
 import android.graphics.drawable.Drawable
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.R as MaterialR
 
 /**
  * Listenzeile nach Material 3: 56 dp, 40-dp-Icon, Text in „body large“. Mit [onWallpaper] liegt die
@@ -17,22 +15,20 @@ import com.google.android.material.R as MaterialR
  */
 class AppListRow(context: Context, onWallpaper: Boolean = false) : LinearLayout(context) {
 
-    private val density = resources.displayMetrics.density
     val icon = DragIconView(context)
     private val title =
         TextView(context).apply {
-            if (onWallpaper) M3.onWallpaper(this) else setTextColor(M3.color(context, MaterialR.attr.colorOnSurface))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+            M3.text(this, M3.Type.BODY_LARGE, if (onWallpaper) null else M3.onSurface(context))
             setSingleLine()
         }
 
     init {
         orientation = HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
-        minimumHeight = dp(56)
+        minimumHeight = dp(HEIGHT_DP)
         layoutParams = RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         // Abgerundete Markierung statt des rechteckigen Standard-Ripples
-        background = M3.ripple(context, cornerRadius = dp(28).toFloat())
+        background = M3.ripple(context, cornerRadius = dpF(M3.Shape.full(HEIGHT_DP)))
         setPadding(dp(12), 0, dp(12), 0)
         addView(icon, LayoutParams(dp(40), dp(40)))
         addView(title, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(16) })
@@ -42,7 +38,7 @@ class AppListRow(context: Context, onWallpaper: Boolean = false) : LinearLayout(
         icon.setImageDrawable(drawable)
         icon.imageTintList =
             if (tintIcon) {
-                android.content.res.ColorStateList.valueOf(M3.color(context, MaterialR.attr.colorOnSurfaceVariant))
+                android.content.res.ColorStateList.valueOf(M3.onSurfaceVariant(context))
             } else {
                 null
             }
@@ -50,5 +46,7 @@ class AppListRow(context: Context, onWallpaper: Boolean = false) : LinearLayout(
         title.text = text
     }
 
-    private fun dp(value: Int) = (value * density).toInt()
+    private companion object {
+        const val HEIGHT_DP = 56
+    }
 }

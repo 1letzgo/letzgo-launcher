@@ -10,4 +10,8 @@
 
     <!-- Dock wie bei iOS etwas über der Gestenleiste -->
     <dimen name="dynamic_grid_hotseat_bottom_tall_padding">12dp</dimen>
+
+    <!-- Context menus lie flat like every letzgo surface; a shadow would show through the
+         translucent surface (color-v31/letzgo_surface_*) -->
+    <dimen name="deep_shortcuts_elevation">0dp</dimen>
 </resources>

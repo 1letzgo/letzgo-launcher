@@ -24,7 +24,7 @@ class ResizeHandle(context: Context, private val size: Float) : Drawable() {
             strokeWidth = size * 0.22f
             color = M3.color(m3, MaterialR.attr.colorSurfaceContainerHighest)
             // Schatten wie beim Minus-Badge, damit der Griff auf hellen Widgets sichtbar ist
-            setShadowLayer(size * 0.12f, 0f, size * 0.04f, SHADOW)
+            setShadowLayer(size * 0.12f, 0f, size * 0.04f, M3.SHADOW)
         }
     private val arc = RectF()
 
@@ -54,8 +54,4 @@ class ResizeHandle(context: Context, private val size: Float) : Drawable() {
 
     @Deprecated("Deprecated in Java")
     override fun getOpacity() = PixelFormat.TRANSLUCENT
-
-    private companion object {
-        const val SHADOW = 0x55000000
-    }
 }

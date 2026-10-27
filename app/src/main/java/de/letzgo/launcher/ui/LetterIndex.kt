@@ -3,11 +3,11 @@ package de.letzgo.launcher.ui
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
+import android.widget.TextView
 
 /**
  * Buchstabenleiste am rechten Rand einer alphabetischen Liste (wie in der iOS-Mediathek): Tippen
@@ -15,14 +15,15 @@ import android.view.View
  */
 class LetterIndex(context: Context, private val onLetter: (Char) -> Unit) : View(context) {
 
-    private val density = resources.displayMetrics.density
     private val paint =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.WHITE
             textAlign = Paint.Align.CENTER
-            textSize = 11 * resources.displayMetrics.scaledDensity
-            isFakeBoldText = true
-            setShadowLayer(3f, 0f, 1f, 0x8A000000.toInt())
+            // Schriftrolle wie die übrigen Texte auf dem Hintergrundbild, nur gezeichnet
+            val style = TextView(M3.context(context)).also { M3.text(it, M3.Type.LABEL_SMALL, null) }
+            typeface = style.typeface
+            textSize = style.textSize
+            color = style.currentTextColor
+            setShadowLayer(style.shadowRadius, style.shadowDx, style.shadowDy, style.shadowColor)
         }
     private var letters = emptyList<Char>()
     private var current: Char? = null
@@ -43,7 +44,7 @@ class LetterIndex(context: Context, private val onLetter: (Char) -> Unit) : View
     }
 
     /** Zeilenhöhe: höchstens 18 dp, bei vielen Buchstaben kleiner, damit alle passen. */
-    private fun rowHeight() = minOf(MAX_ROW_DP * density, height.toFloat() / letters.size.coerceAtLeast(1))
+    private fun rowHeight() = minOf(dpF(MAX_ROW_DP), height.toFloat() / letters.size.coerceAtLeast(1))
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {

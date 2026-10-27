@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The one surface of letzgo (dark): M3 role surfaceContainerHigh, translucent so the wallpaper
+    shows through. Dock, folders, App Library tiles and categories, search bars, page cards and
+    context menus all use it (via the overrides next to this file and M3.surface).
+    Keep the alpha in sync with letzgo_surface_light.
+-->
+<!-- minSdk 34: v31 is the default -->
+<selector
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingDefaultResource">
+    <item
+        android:color="@android:color/system_surface_container_high_dark"
+        android:alpha="0.8" />
+</selector>

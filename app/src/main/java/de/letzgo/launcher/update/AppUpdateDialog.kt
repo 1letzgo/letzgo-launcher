@@ -2,7 +2,6 @@ package de.letzgo.launcher.update
 
 import android.app.Activity
 import android.content.DialogInterface
-import android.graphics.Typeface
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -13,6 +12,8 @@ import com.android.launcher3.util.Executors.THREAD_POOL_EXECUTOR
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import de.letzgo.launcher.ui.M3
+import de.letzgo.launcher.ui.dp
+import com.google.android.material.R as MaterialR
 import java.io.File
 
 /**
@@ -27,8 +28,11 @@ class AppUpdateDialog(
 ) {
 
     private val m3 = M3.context(activity)
-    private val density = activity.resources.displayMetrics.density
-    private val status = TextView(m3).apply { visibility = View.GONE }
+    private val status =
+        TextView(m3).apply {
+            M3.text(this, M3.Type.BODY_MEDIUM, M3.color(m3, MaterialR.attr.colorOnSurfaceVariant))
+            visibility = View.GONE
+        }
     private val progressBar =
         LinearProgressIndicator(m3).apply {
             max = PROGRESS_MAX
@@ -41,22 +45,23 @@ class AppUpdateDialog(
     private var waitingForPermission = false
 
     fun show() {
-        val padding = (24 * density).toInt()
+        val padding = m3.dp(24)
         val content =
             LinearLayout(m3).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(padding, padding / 2, padding, 0)
                 addView(TextView(m3).apply {
                     text = release.name
-                    setTypeface(typeface, Typeface.BOLD)
+                    M3.text(this, M3.Type.TITLE_MEDIUM, M3.color(m3, MaterialR.attr.colorOnSurface))
                 })
                 if (release.notes.isNotEmpty()) {
                     addView(TextView(m3).apply {
                         text = release.notes
-                        setPadding(0, padding / 3, 0, 0)
+                        M3.text(this, M3.Type.BODY_MEDIUM, M3.color(m3, MaterialR.attr.colorOnSurfaceVariant))
+                        setPadding(0, m3.dp(8), 0, 0)
                     })
                 }
-                addView(status.apply { setPadding(0, padding / 3, 0, 0) })
+                addView(status.apply { setPadding(0, m3.dp(8), 0, 0) })
                 addView(progressBar)
             }
         dialog =

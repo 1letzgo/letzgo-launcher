@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingDefaultResource">
+    <!-- Text on the letzgo surface (color-v31/letzgo_surface_*): M3 onSurface / onSurfaceVariant.
+         Overrides Launcher3 colors for folders and context menus. -->
+    <color name="letzgo_on_surface_light">@android:color/system_on_surface_light</color>
+    <color name="letzgo_on_surface_dark">@android:color/system_on_surface_dark</color>
+    <color name="letzgo_on_surface_variant_light">@android:color/system_on_surface_variant_light</color>
+    <color name="letzgo_on_surface_variant_dark">@android:color/system_on_surface_variant_dark</color>
+
+    <color name="folder_text_color_light" tools:override="true">@color/letzgo_on_surface_light</color>
+    <color name="folder_text_color_dark" tools:override="true">@color/letzgo_on_surface_dark</color>
+    <color name="folder_hint_text_color_light" tools:override="true">@color/letzgo_on_surface_variant_light</color>
+    <color name="folder_hint_text_color_dark" tools:override="true">@color/letzgo_on_surface_variant_dark</color>
+    <color name="popup_text_color_light" tools:override="true">@color/letzgo_on_surface_light</color>
+    <color name="popup_text_color_dark" tools:override="true">@color/letzgo_on_surface_dark</color>
+</resources>

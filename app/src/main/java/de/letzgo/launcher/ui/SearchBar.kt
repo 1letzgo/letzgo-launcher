@@ -2,15 +2,12 @@ package de.letzgo.launcher.ui
 
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.drawable.GradientDrawable
-import android.util.TypedValue
 import android.view.Gravity
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.annotation.StringRes
 import com.android.launcher3.R
-import com.google.android.material.R as MaterialR
 
 /**
  * Suchleiste nach Material 3: 56 dp hoch, volle Rundung, Tonfläche, Lupe als führendes Icon.
@@ -18,8 +15,7 @@ import com.google.android.material.R as MaterialR
  */
 class SearchBar(context: Context, @StringRes hint: Int, editable: Boolean) : LinearLayout(context) {
 
-    private val density = resources.displayMetrics.density
-    private val onSurfaceVariant = M3.color(context, MaterialR.attr.colorOnSurfaceVariant)
+    private val onSurfaceVariant = M3.onSurfaceVariant(context)
 
     val leading =
         ImageView(context).apply {
@@ -31,10 +27,9 @@ class SearchBar(context: Context, @StringRes hint: Int, editable: Boolean) : Lin
 
     val field =
         EditText(context).apply {
+            M3.text(this, M3.Type.BODY_LARGE, M3.onSurface(context))
             setHint(hint)
             setHintTextColor(onSurfaceVariant)
-            setTextColor(M3.color(context, MaterialR.attr.colorOnSurface))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
             setSingleLine()
             background = null
             setPadding(0, 0, dp(16), 0)
@@ -48,15 +43,10 @@ class SearchBar(context: Context, @StringRes hint: Int, editable: Boolean) : Lin
     init {
         orientation = HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
-        minimumHeight = dp(56)
+        minimumHeight = dp(HEIGHT_DP)
         setPadding(dp(4), 0, 0, 0)
-        background =
-            GradientDrawable().apply {
-                cornerRadius = dp(28).toFloat()
-                // Wie die Ordner-Kacheln: dunkel und halbtransparent
-                setColor(M3.folderTileColor(context))
-            }
-        addView(leading, LayoutParams(dp(48), dp(48)))
+        background = M3.surfaceDrawable(context, M3.Shape.full(HEIGHT_DP))
+        addView(leading, LayoutParams(dp(M3.TOUCH_TARGET_DP), dp(M3.TOUCH_TARGET_DP)))
         addView(field, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
     }
 
@@ -65,5 +55,7 @@ class SearchBar(context: Context, @StringRes hint: Int, editable: Boolean) : Lin
         leading.setImageResource(if (back) R.drawable.ic_letzgo_back else R.drawable.ic_letzgo_search)
     }
 
-    private fun dp(value: Int) = (value * density).toInt()
+    private companion object {
+        const val HEIGHT_DP = 56
+    }
 }
