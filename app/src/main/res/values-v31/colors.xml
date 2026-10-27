@@ -13,4 +13,8 @@
     <color name="folder_hint_text_color_dark" tools:override="true">@color/letzgo_on_surface_variant_dark</color>
     <color name="popup_text_color_light" tools:override="true">@color/letzgo_on_surface_light</color>
     <color name="popup_text_color_dark" tools:override="true">@color/letzgo_on_surface_dark</color>
+
+    <!-- Home settings: large top app bar on surface, surfaceContainer once scrolled -->
+    <color name="home_settings_header_expanded" tools:override="true">@android:color/system_surface_light</color>
+    <color name="home_settings_header_collapsed" tools:override="true">@android:color/system_surface_container_light</color>
 </resources>

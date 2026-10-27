@@ -23,7 +23,7 @@
             launcher:minWidthDps="320"
             launcher:minHeightDps="568"
             launcher:iconImageSize="54"
-            launcher:iconTextSize="11.5"
+            launcher:iconTextSize="12.0"
             launcher:allAppsBorderSpace="16"
             launcher:allAppsCellHeight="104"
             launcher:canBeDefault="true" />
@@ -67,7 +67,7 @@
             launcher:minWidthDps="320"
             launcher:minHeightDps="568"
             launcher:iconImageSize="54"
-            launcher:iconTextSize="11.5"
+            launcher:iconTextSize="12.0"
             launcher:allAppsBorderSpace="16"
             launcher:allAppsCellHeight="104"
             launcher:canBeDefault="false" />

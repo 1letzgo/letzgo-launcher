@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Icon labels, folder names and context menu entries (Launcher3 BubbleTextView): M3 type
+         scale like our own texts (M3.Type). Body small for labels; the size comes from
+         device_profiles.xml (12 sp, 11 sp = label small size in the denser 5-column grids). -->
+    <style name="BaseIconRoot" parent="TextAppearance.Material3.BodySmall" tools:override="true" />
+</resources>

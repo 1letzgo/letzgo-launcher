@@ -14,4 +14,10 @@
     <!-- Context menus lie flat like every letzgo surface; a shadow would show through the
          translucent surface (color-v31/letzgo_surface_*) -->
     <dimen name="deep_shortcuts_elevation">0dp</dimen>
+
+    <!-- App shortcuts in context menus look like the other entries: leading icon at M3 icon size
+         (26 dp shows as 24 dp, see Launcher3's comment on deep_shortcut_icon_size), centered on
+         the same line as the 20 dp system icons (16 dp margin + 10 dp) -->
+    <dimen name="deep_shortcut_icon_size">26dp</dimen>
+    <dimen name="popup_padding_start">13dp</dimen>
 </resources>

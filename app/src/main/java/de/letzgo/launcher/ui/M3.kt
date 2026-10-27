@@ -214,8 +214,21 @@ object M3 {
 
     /** Kurze Rückmeldung am unteren Rand (M3-Snackbar statt Toast). */
     fun snackbar(anchor: View, @StringRes text: Int) {
-        Snackbar.make(context(anchor.context), anchor, anchor.context.getString(text), Snackbar.LENGTH_SHORT).show()
+        // Im Inhalt des Fensters statt in Launcher3s DragLayer, die die Ränder verwerfen würde
+        val parent = anchor.rootView.findViewById<View>(android.R.id.content) ?: anchor
+        val snackbar =
+            Snackbar.make(context(anchor.context), parent, anchor.context.getString(text), Snackbar.LENGTH_SHORT)
+        // M3-Rand rundum; im Launcher-Kontext kommt er nicht aus dem Stil. Den Abstand zu
+        // Navigations- und Gestenleiste ergänzt die Snackbar selbst.
+        (snackbar.view.layoutParams as? ViewGroup.MarginLayoutParams)?.let { lp ->
+            val margin = anchor.context.dp(SNACKBAR_MARGIN_DP)
+            lp.setMargins(margin, margin, margin, margin)
+            snackbar.view.layoutParams = lp
+        }
+        snackbar.show()
     }
+
+    private const val SNACKBAR_MARGIN_DP = 8
 
     /**
      * Einträge für eine Einfachauswahl im M3-Dialog mit sichtbarem Radiobutton (der Standard des

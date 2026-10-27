@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Home settings in Material 3 (overrides the Launcher3 styles of the same name): dynamic colors,
+    large top app bar, list items with the M3 type scale, M3 switch.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="HomeSettings.Theme" parent="Theme.Material3.DynamicColors.DayNight.NoActionBar" tools:override="true">
+        <!-- Start like the title of the top app bar (expandedTitleMarginStart in Launcher3's layout) -->
+        <item name="android:listPreferredItemPaddingStart">24dp</item>
+        <item name="android:listPreferredItemPaddingEnd">24dp</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">?attr/isLightTheme</item>
+        <item name="android:windowLightNavigationBar">?attr/isLightTheme</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:textAppearanceListItem">@style/TextAppearance.Material3.BodyLarge</item>
+        <item name="android:textAppearanceListItemSecondary">@style/TextAppearance.Material3.BodyMedium</item>
+        <item name="preferenceTheme">@style/HomeSettings.PreferenceTheme</item>
+    </style>
+
+    <!-- Large top app bar (Launcher3's collapsing toolbar): surface, scrolled surfaceContainer
+         (colors in values-v31/colors.xml), M3 type roles -->
+    <style name="HomeSettings.CollapsingToolbar" parent="Theme.Material3.DynamicColors.DayNight" tools:override="true">
+        <item name="android:colorPrimary">@color/home_settings_header_expanded</item>
+    </style>
+
+    <style name="HomeSettings.CollapsedToolbarTitle" parent="TextAppearance.Material3.TitleLarge" tools:override="true">
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="HomeSettings.ExpandedToolbarTitle" parent="TextAppearance.Material3.HeadlineMedium" tools:override="true">
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="HomeSettings.PreferenceTheme" parent="@style/PreferenceThemeOverlay" tools:override="true">
+        <item name="preferenceCategoryStyle">@style/HomeSettings.CategoryStyle</item>
+        <item name="preferenceCategoryTitleTextAppearance">@style/HomeSettings.CategoryTitle</item>
+        <item name="preferenceFragmentCompatStyle">@style/HomeSettings.FragmentCompatStyle</item>
+        <item name="preferenceScreenStyle">@style/HomeSettings.PreferenceScreenStyle</item>
+        <item name="preferenceStyle">@style/HomeSettings.PreferenceStyle</item>
+        <item name="switchPreferenceStyle">@style/HomeSettings.SwitchPreferenceStyle</item>
+        <item name="seekBarPreferenceStyle">@style/HomeSettings.SeekBarPreferenceStyle</item>
+    </style>
+
+    <style name="HomeSettings.CategoryStyle" parent="@style/Preference.Category.Material" tools:override="true">
+        <item name="allowDividerAbove">false</item>
+        <item name="allowDividerBelow">false</item>
+        <item name="iconSpaceReserved">false</item>
+    </style>
+
+    <style name="HomeSettings.CategoryTitle" parent="TextAppearance.Material3.TitleSmall" tools:override="true">
+        <item name="android:textColor">?attr/colorPrimary</item>
+    </style>
+
+    <style name="HomeSettings.PreferenceStyle" parent="@style/Preference.Material" tools:override="true">
+        <item name="iconSpaceReserved">false</item>
+    </style>
+
+    <style name="HomeSettings.PreferenceScreenStyle" parent="@style/Preference.PreferenceScreen.Material" tools:override="true">
+        <item name="iconSpaceReserved">false</item>
+    </style>
+
+    <style name="HomeSettings.SwitchPreferenceStyle" parent="@style/Preference.SwitchPreference.Material" tools:override="true">
+        <item name="iconSpaceReserved">false</item>
+        <item name="android:widgetLayout">@layout/letzgo_preference_switch</item>
+    </style>
+
+    <style name="HomeSettings.SeekBarPreferenceStyle" parent="@style/Preference.SeekBarPreference.Material">
+        <item name="iconSpaceReserved">false</item>
+    </style>
+</resources>

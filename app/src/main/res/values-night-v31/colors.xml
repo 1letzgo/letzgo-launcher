@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Home settings at night (Launcher3 defines these in values-night-v31, see values-v31) -->
+    <color name="home_settings_header_expanded" tools:override="true">@android:color/system_surface_dark</color>
+    <color name="home_settings_header_collapsed" tools:override="true">@android:color/system_surface_container_dark</color>
+</resources>
