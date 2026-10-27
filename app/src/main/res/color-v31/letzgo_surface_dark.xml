@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     The one surface of letzgo (dark): M3 role surfaceContainerHigh, translucent so the wallpaper
-    shows through. Dock, folders, App Library tiles and categories, search bars, page cards and
-    context menus all use it (via the overrides next to this file and M3.surface).
+    shows through. Dock, folders, App Library tiles and categories, search bars and page cards
+    use it (via the overrides next to this file and M3.surface). Context menus use the same role,
+    opaque (popup_shade_first).
     Keep the alpha in sync with letzgo_surface_light.
 -->
 <!-- minSdk 34: v31 is the default -->

@@ -71,7 +71,8 @@ class LetzgoLauncher : Launcher() {
     val backdrop by lazy { Backdrop(this) }
     private val folderTitle by lazy { FolderTitle(this) { dimHomeForFolder(false) } }
     private var popupOpen = false
-    private var popupAnchor: View? = null
+    /** Element, zu dem das offene Kontextmenü gehört; bleibt scharf ([blurAroundPopup]). */
+    var popupAnchor: View? = null
     private var resumeEditUntil = 0L
     private val blurredViews = mutableListOf<View>()
 
@@ -266,8 +267,8 @@ class LetzgoLauncher : Launcher() {
     }
 
     /**
-     * Wie auf iOS: Bei offenem Kontextmenü werden die übrigen Elemente der Seite und des Docks
-     * unscharf, das gedrückte bleibt scharf.
+     * Wie auf iOS: Bei offenem Kontextmenü werden die übrigen Elemente der Seite und des Docks (oder
+     * der Mediathek) unscharf, das gedrückte bleibt scharf.
      */
     private fun blurAroundPopup(on: Boolean) {
         // Immer genau die Views zurücksetzen, die unscharf gemacht wurden (auch wenn inzwischen die
@@ -288,6 +289,12 @@ class LetzgoLauncher : Launcher() {
                 if (child === popupAnchor) continue
                 child.setRenderEffect(effect)
                 blurredViews += child
+            }
+        }
+        if (appLibrary.isOpen) {
+            appLibrary.blurTargets().filter { it !== popupAnchor }.forEach {
+                it.setRenderEffect(effect)
+                blurredViews += it
             }
         }
     }

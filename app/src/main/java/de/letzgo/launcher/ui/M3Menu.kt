@@ -8,6 +8,7 @@ import com.android.launcher3.Launcher
 import com.android.launcher3.popup.PopupCategory
 import com.android.launcher3.popup.PopupContainer
 import com.android.launcher3.popup.PopupData
+import de.letzgo.launcher.LetzgoLauncher
 
 /**
  * Context menu anchored at an element, drawn by the same Launcher3 popup as the context menus of
@@ -37,6 +38,7 @@ object M3Menu {
                     item.action()
                 }
             }
+        (launcher as? LetzgoLauncher)?.popupAnchor = anchor
         PopupContainer.showForMenuItems(launcher, anchor, entries)
     }
 }

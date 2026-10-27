@@ -302,6 +302,24 @@ class AppLibraryPanel(launcher: Launcher) : SidePanel(launcher, fromLeft = false
             .show()
     }
 
+    /**
+     * Was hinter einem Kontextmenü unscharf wird: die einzelnen Icons und Texte (nicht die Kacheln
+     * selbst, sonst würde das gedrückte Icon mit unscharf).
+     */
+    fun blurTargets(): List<View> {
+        val views = mutableListOf<View>()
+        fun collect(view: View) {
+            if (view.visibility != VISIBLE) return
+            if (view is ViewGroup && view !is DragIconView && view.childCount > 0) {
+                for (i in 0 until view.childCount) collect(view.getChildAt(i))
+            } else {
+                views += view
+            }
+        }
+        collect(content)
+        return views
+    }
+
     private fun hideKeyboard() =
         context.getSystemService(InputMethodManager::class.java)
             .hideSoftInputFromWindow(windowToken, 0)

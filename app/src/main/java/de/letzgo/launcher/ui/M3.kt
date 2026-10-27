@@ -32,8 +32,9 @@ import com.google.android.material.R as MaterialR
  * Design tokens and components of letzgo, the only place that decides how our own UI looks:
  * Material 3 with dynamic colors (from the wallpaper, light/dark like the system). Launcher3 itself
  * has no Material Components theme, so our views and dialogs get a context with the M3 theme
- * ([context]); Launcher3's own folders and context menus get the same surface through color
- * overrides in res/color-v31 and res/values-v31.
+ * ([context]); Launcher3's own folders get the same surface and its context menus the same role
+ * (opaque, so text stays readable over translucent tiles) through color overrides in
+ * res/color-v31 and res/values-v31.
  *
  * - Colors: [surface] (one translucent tonal surface for everything that lies on the wallpaper),
  *   [onSurface], [onSurfaceVariant], [onWallpaper] for text and icons directly on the wallpaper.
@@ -62,8 +63,8 @@ object M3 {
 
     /**
      * Die eine Fläche auf dem Hintergrundbild: M3-Rolle surfaceContainerHigh, halbtransparent
-     * (res/color-v31/letzgo_surface_*). Dock, Ordner, Mediathek-Kacheln, Kategorien, Suchleisten,
-     * Seitenkarten und Kontextmenüs.
+     * (res/color-v31/letzgo_surface_*). Dock, Ordner, Mediathek-Kacheln, Kategorien, Suchleisten
+     * und Seitenkarten. Kontextmenüs: dieselbe Rolle, aber deckend (popup_shade_first).
      */
     fun surface(context: Context): Int =
         context.getColor(if (isNight(context)) R.color.letzgo_surface_dark else R.color.letzgo_surface_light)
